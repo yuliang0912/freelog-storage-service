@@ -1,0 +1,67 @@
+export default (appInfo: any) => {
+    const config: any = {};
+
+    config.keys = appInfo.name;
+
+    config.middleware = [
+        'errorHandler'
+    ];
+
+    config.mongoose = {
+        url: 'mongodb://127.0.0.1:27017/storage'
+    };
+
+    config.onerror = {
+        all(err, ctx) {
+            ctx.type = 'application/json';
+            ctx.body = JSON.stringify({ret: -1, msg: err.toString(), data: null});
+            ctx.status = 500;
+        }
+    };
+
+    config.i18n = {
+        enable: true,
+        defaultLocale: 'zh-CN'
+    };
+
+    config.security = {
+        xframe: {
+            enable: false,
+        },
+        csrf: {
+            enable: false,
+        }
+    };
+
+    config.bodyParser = {
+        enable: true,
+        enableTypes: ['json', 'form', 'text']
+    };
+
+    config.multipart = {
+        autoFields: false,
+        defaultCharset: 'utf8',
+        fieldNameSize: 100,
+        fieldSize: '100kb',
+        fields: 20,
+        fileSize: '100mb',
+        files: 10,
+        fileExtensions: [],
+        whitelist: (fileName) => true,
+    };
+
+    config.uploadConfig = {
+        aliOss: {
+            enable: true,
+            isCryptographic: true,
+            accessKeyId: 'TFRBSTRGcGNBRWdCWm05UHlON3BhY0tU',
+            accessKeySecret: 'M2NBYmRwQ1VESnpCa2ZDcnVzN1d2SXc1alhmNDNF',
+            bucket: 'freelog-shenzhen',
+            internal: false,
+            region: 'oss-cn-shenzhen',
+            timeout: 180000
+        },
+        amzS3: {}
+    };
+    return config;
+};
