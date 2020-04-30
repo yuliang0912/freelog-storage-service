@@ -3,8 +3,8 @@ import * as MongoBaseOperation from 'egg-freelog-database/lib/database/mongo-bas
 
 @provide()
 @scope('Singleton')
-export default class BucketProvider extends MongoBaseOperation {
-    constructor(@inject('model.bucket') bucketModel) {
+export default class FileStorageProvider extends MongoBaseOperation {
+    constructor(@inject('model.fileStorageInfo') bucketModel) {
         super(bucketModel);
     }
 }

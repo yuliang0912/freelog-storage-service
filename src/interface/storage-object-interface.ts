@@ -1,37 +1,31 @@
-export enum ServiceProviderEnum {AliOss = 'aliOss', AmazonS3 = 'amazonS3'}
+import {FileStorageInfo} from './file-storage-info-interface';
 
-export interface FileOssInfo {
-    serviceProvider: ServiceProviderEnum;
-    filename: string;
-    objectKey: string;
-    bucket: string;
-    region: string;
-    url: string;
-}
+export enum ServiceProviderEnum {AliOss = 'aliOss', AmazonS3 = 'amazonS3'}
 
 export interface StorageObject {
     sha1: string;
     objectName: string;
     bucketName: string;
     resourceType: string;
-    fileOss?: FileOssInfo;
-    systemMeta?: object;
+    bucketId?: string;
+    systemMeta?: FileSystemMeta;
     customMeta?: object;
 }
 
 export interface FileSystemMeta {
     sha1?: string;
-    fileSize?: number;
+    fileSize: number;
     mimeType?: string;
     width?: number | undefined;
     height?: number | undefined;
 }
 
-export interface UpdateFileOptions {
-    fileStream: object;
+export interface CreateStorageObjectOptions {
+    objectName: string;
     bucketName: string;
     resourceType: string;
     userId: number;
+    fileStorageInfo: FileStorageInfo;
 }
 
 /**
@@ -39,7 +33,7 @@ export interface UpdateFileOptions {
  */
 export interface IStorageObjectService {
 
-    createObject(updateFileOptions: UpdateFileOptions): Promise<StorageObject>;
+    createObject(options: CreateStorageObjectOptions): Promise<StorageObject>;
 
     findOne(condition: object): Promise<StorageObject>;
 

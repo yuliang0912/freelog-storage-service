@@ -1,6 +1,7 @@
 import {provide, inject} from 'midway';
-import {IBucketService, BucketInfo} from '../interface/bucket-interface';
-import {ApplicationError} from 'egg-freelog-base/error';
+import {IBucketService, BucketInfo, BucketTypeEnum} from '../interface/bucket-interface';
+import {ApplicationError, ArgumentError} from 'egg-freelog-base/error';
+import {StorageObject} from '../interface/storage-object-interface';
 
 @provide('bucketService')
 export class BucketService implements IBucketService {
@@ -12,18 +13,44 @@ export class BucketService implements IBucketService {
     bucketCreatedLimitCount = 5;
 
     /**
-     * 创建bucket
+     * 用户创建bucket
      * @param {BucketInfo} bucket
      * @returns {Promise<BucketInfo>}
      */
     async createBucket(bucketInfo: BucketInfo): Promise<BucketInfo> {
 
-        const createdBucketCount: number = await this.bucketProvider.count({userId: this.ctx.request.userId});
+        if (bucketInfo.bucketType !== BucketTypeEnum.UserStorage) {
+            throw new ArgumentError('please check code param:bucketType!');
+        }
+        const createdBucketCount: number = await this.bucketProvider.count({
+            userId: bucketInfo.userId,
+            bucketType: BucketTypeEnum.UserStorage
+        });
         if (createdBucketCount >= this.bucketCreatedLimitCount) {
             throw new ApplicationError(this.ctx.gettext('bucket-create-count-limit-validate-failed', this.bucketCreatedLimitCount));
         }
 
-        const existBucket: object = await this.bucketProvider.findOne({bucketName: bucketInfo.bucketName});
+        bucketInfo.bucketUniqueKey = this.generateBucketUniqueKey(bucketInfo);
+        const existBucket: object = await this.bucketProvider.findOne({bucketUniqueKey: bucketInfo.bucketUniqueKey});
+        if (existBucket) {
+            throw new ApplicationError(this.ctx.gettext('bucket-name-create-duplicate-error'));
+        }
+
+        return this.bucketProvider.create(bucketInfo);
+    }
+
+    /**
+     * 系统创建bucket
+     * @param {BucketInfo} bucketInfo
+     * @returns {Promise<BucketInfo>}
+     */
+    async createSystemBucket(bucketInfo: BucketInfo): Promise<BucketInfo> {
+
+        if (bucketInfo.bucketType !== BucketTypeEnum.SystemStorage) {
+            throw new ArgumentError('please check code param:bucketType!');
+        }
+        bucketInfo.bucketUniqueKey = this.generateBucketUniqueKey(bucketInfo);
+        const existBucket: object = await this.bucketProvider.findOne({bucketUniqueKey: bucketInfo.bucketUniqueKey});
         if (existBucket) {
             throw new ApplicationError(this.ctx.gettext('bucket-name-create-duplicate-error'));
         }
@@ -38,7 +65,8 @@ export class BucketService implements IBucketService {
      */
     async deleteBucket(bucketName: string): Promise<boolean> {
 
-        const bucketInfo: BucketInfo = await this.bucketProvider.findOne({bucketName});
+        const userId = this.ctx.request.userId;
+        const bucketInfo: BucketInfo = await this.bucketProvider.findOne({bucketName, userId});
 
         this.ctx.entityNullValueAndUserAuthorizationCheck(bucketInfo, {
             msg: this.ctx.gettext('params-validate-failed', 'bucketName'),
@@ -77,5 +105,47 @@ export class BucketService implements IBucketService {
      */
     async count(condition: object): Promise<number> {
         return this.bucketProvider.count(condition);
+    }
+
+    /**
+     * 生成唯一失败符
+     * @param {BucketInfo} bucketInfo
+     * @returns {string}
+     */
+    generateBucketUniqueKey(bucketInfo: BucketInfo) {
+        return bucketInfo.bucketType === BucketTypeEnum.UserStorage ? bucketInfo.bucketName : `${bucketInfo.userId}/${bucketInfo.bucketName}`;
+    }
+
+    /**
+     * bucket中同一个object发生替换.重新计算整个bucket总文件大小
+     * @param {StorageObject} newStorageObject
+     * @param {StorageObject} oldStorageObject
+     */
+    replaceStorageObjectEventHandle(newStorageObject: StorageObject, oldStorageObject: StorageObject): void {
+        if (oldStorageObject.systemMeta.fileSize === newStorageObject.systemMeta.fileSize) {
+            return;
+        }
+        if (oldStorageObject.bucketName !== newStorageObject.bucketName || oldStorageObject.objectName !== newStorageObject.objectName) {
+            throw new ArgumentError('code logic error');
+        }
+        this.bucketProvider.updateOne({bucketName: newStorageObject.bucketName}, {
+            $inc: {
+                totalFileSize: newStorageObject.systemMeta.fileSize - oldStorageObject.systemMeta.fileSize
+            }
+        });
+    }
+
+    /**
+     * bucket新增文件事件处理
+     * @param {StorageObject} storageObject
+     */
+    addStorageObjectEventHandle(storageObject: StorageObject): void {
+        this.bucketProvider.updateOne({bucketName: storageObject.bucketName}, {
+            $inc: {totalFileQuantity: 1, totalFileSize: storageObject.systemMeta.fileSize}
+        });
+    }
+
+    deleteStorageObjectEventHandle(storageObject: StorageObject): void {
+
     }
 }

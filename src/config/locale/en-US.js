@@ -20,6 +20,8 @@ module.exports = {
 
     'resource-invalid': '未找到有效资源',
 
+    'bucket-entity-not-found': '未找到bucket信息',
+
     'node-entity-not-found': '未找到节点',
 
     'node-invalid': '未找到有效节点',

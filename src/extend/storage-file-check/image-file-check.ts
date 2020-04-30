@@ -1,10 +1,10 @@
+import {pick} from 'lodash';
+import {getType} from 'mime';
+import {imageSize} from 'image-size';
 import {IFileCheck} from './index';
 import {inject, provide} from 'midway';
-import {getType} from 'mime';
 import {ApplicationError} from 'egg-freelog-base';
-import {imageSize} from 'image-size';
 import {FileSystemMeta} from '../../interface/storage-object-interface';
-import {pick} from 'lodash';
 
 @provide('imageFileCheck')
 export default class ImageFileCheck implements IFileCheck {
@@ -12,6 +12,11 @@ export default class ImageFileCheck implements IFileCheck {
     @inject()
     ctx;
 
+    /**
+     * 图片文件检查
+     * @param fileStream
+     * @returns {Promise<FileSystemMeta>}
+     */
     async check(fileStream: any): Promise<FileSystemMeta> {
 
         const fileBuffer: Buffer = await new Promise((resolve, reject) => {

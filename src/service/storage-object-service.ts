@@ -1,55 +1,55 @@
-import {v4} from 'uuid';
+import {pick} from 'lodash';
 import {provide, config, plugin, inject} from 'midway';
-import {ApplicationError} from 'egg-freelog-base';
-import {
-    IStorageObjectService, StorageObject, UpdateFileOptions,
-    FileOssInfo, ServiceProviderEnum
-} from '../interface/storage-object-interface';
-
-const sendToWormhole = require('stream-wormhole')
+// import {ApplicationError} from 'egg-freelog-base';
+import {IStorageObjectService, StorageObject, CreateStorageObjectOptions} from '../interface/storage-object-interface';
+import {IBucketService} from '../interface/bucket-interface';
 
 @provide('storageObjectService')
 export class StorageObjectService implements IStorageObjectService {
+    @inject()
+    ctx;
     @plugin()
     ossClient;
     @config('uploadConfig')
     uploadConfig;
     @inject()
+    bucketService: IBucketService;
+    @inject()
     storageObjectProvider;
     @inject()
     storageFileCheck;
 
-    async createObject(updateFileOptions: UpdateFileOptions): Promise<StorageObject> {
+    /**
+     * 创建文件对象
+     * @param {UpdateFileOptions} updateFileOptions
+     * @returns {Promise<StorageObject>}
+     */
+    async createObject(options: CreateStorageObjectOptions): Promise<StorageObject> {
 
-        const objectKey = `User/${updateFileOptions.userId}/${v4().replace(/-/g, '')}`.toLowerCase()
-        // const fileCheckAsync = ctx.helper.resourceFileCheck({fileStream, resourceType})
-        const fileCheckTask = this.storageFileCheck(updateFileOptions.fileStream, updateFileOptions.resourceType);
-        const fileUploadTask = this.ossClient.putStream(objectKey, updateFileOptions.fileStream);
-
-        const [fileMateInfo, ossResponseData] = await Promise.all([fileCheckTask, fileUploadTask]).catch(error => {
-            sendToWormhole(updateFileOptions.fileStream)
-            throw new ApplicationError(error.toString(), error);
-        })
-
-        const fileOssInfo: FileOssInfo = {
-            url: ossResponseData.url,
-            objectKey: ossResponseData.name,
-            filename: updateFileOptions.fileStream['filename'],
-            bucket: this.uploadConfig.aliOss.bucket,
-            region: this.uploadConfig.aliOss.region,
-            serviceProvider: ServiceProviderEnum.AliOss
-        }
+        const bucketInfo = await this.bucketService.findOne({bucketName: options.bucketName, userId: options.userId});
+        this.ctx.entityNullObjectCheck(bucketInfo, this.ctx.gettext('bucket-entity-not-found'));
 
         const storageObject: StorageObject = {
-            sha1: fileMateInfo.sha1,
-            objectName: fileOssInfo.filename,
-            bucketName: updateFileOptions.bucketName,
-            resourceType: updateFileOptions.resourceType,
-            fileOss: fileOssInfo,
-            systemMeta: fileMateInfo
+            sha1: options.fileStorageInfo.sha1,
+            objectName: options.objectName,
+            bucketId: bucketInfo.bucketId,
+            bucketName: bucketInfo.bucketName,
+            resourceType: options.resourceType,
+            systemMeta: {
+                fileSize: options.fileStorageInfo.fileSize
+            }
         };
 
-        return this.storageObjectProvider.create(storageObject);
+        const findCondition = pick(storageObject, ['bucketName', 'objectName']);
+        const oldStorageObject = await this.storageObjectProvider.findOneAndUpdate(findCondition, storageObject, {new: false})
+
+        if (oldStorageObject) {
+            this.bucketService.replaceStorageObjectEventHandle(storageObject, oldStorageObject);
+            return this.storageObjectProvider.findOne(findCondition);
+        }
+        return this.storageObjectProvider.create(storageObject).tap(() => {
+            this.bucketService.addStorageObjectEventHandle(storageObject);
+        });
     }
 
     async findOne(condition: object): Promise<StorageObject> {

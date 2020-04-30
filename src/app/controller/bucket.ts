@@ -5,7 +5,7 @@ import {visitorIdentity, InternalClient} from '../extend/vistorIdentityDecorator
 
 @provide()
 @controller('/v1/storages/buckets')
-export default class BucketController {
+export class BucketController {
 
     @inject()
     bucketService: IBucketService;
@@ -27,14 +27,15 @@ export default class BucketController {
     async create(ctx) {
 
         // 只允许小写字母、数字、中划线（-），且不能以短横线开头或结尾
-        const bucketName: string = ctx.checkBody('bucketName').exist().isBucketName().value
+        const bucketName: string = ctx.checkBody('bucketName').exist().isBucketName().value;
+        const bucketType: number = ctx.checkBody('bucketType').optional().toInt().in([BucketTypeEnum.UserStorage, BucketTypeEnum.SystemStorage]).default(BucketTypeEnum.UserStorage).value;
+
         ctx.validateParams();
 
         const bucketInfo: BucketInfo = {
-            bucketName,
-            bucketType: BucketTypeEnum.UserStorage,
+            bucketName, bucketType,
             userId: ctx.request.userId
-        }
+        };
 
         await this.bucketService.createBucket(bucketInfo).then(ctx.success);
     }
@@ -43,7 +44,7 @@ export default class BucketController {
     @visitorIdentity(LoginUser)
     async destroy(ctx) {
 
-        const bucketName: string = ctx.checkBody('bucketName').exist().isBucketName().value
+        const bucketName: string = ctx.checkBody('bucketName').exist().isBucketName().value;
         ctx.validateParams();
 
         await this.bucketService.deleteBucket(bucketName).then(ctx.success);

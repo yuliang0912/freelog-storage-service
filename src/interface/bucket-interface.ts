@@ -1,4 +1,6 @@
-export enum BucketTypeEnum {UserStorage = 1, NodeStorage = 2}
+import {StorageObject} from './storage-object-interface';
+
+export enum BucketTypeEnum {UserStorage = 1, SystemStorage = 2}
 
 /**
  * bucket实体结构
@@ -6,8 +8,9 @@ export enum BucketTypeEnum {UserStorage = 1, NodeStorage = 2}
 export interface BucketInfo {
     bucketName: string;
     userId: number;
-    nodeId?: number;
-    bucketType?: BucketTypeEnum;
+    bucketType: BucketTypeEnum;
+    bucketId?: string;
+    bucketUniqueKey?: string;
     totalFileQuantity?: number;
     totalFileSize?: number;
 }
@@ -18,7 +21,15 @@ export interface BucketInfo {
 export interface IBucketService {
     createBucket(bucket: BucketInfo): Promise<BucketInfo>;
 
+    createSystemBucket(bucket: BucketInfo): Promise<BucketInfo>;
+
     deleteBucket(bucketName: string): Promise<boolean>;
+
+    replaceStorageObjectEventHandle(newStorageObject: StorageObject, oldStorageObject: StorageObject): void;
+
+    addStorageObjectEventHandle(storageObject: StorageObject): void;
+
+    deleteStorageObjectEventHandle(storageObject: StorageObject): void;
 
     findOne(condition: object): Promise<BucketInfo>;
 
