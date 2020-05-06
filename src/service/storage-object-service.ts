@@ -1,8 +1,9 @@
 import {pick} from 'lodash';
 import {provide, config, plugin, inject} from 'midway';
-// import {ApplicationError} from 'egg-freelog-base';
-import {IStorageObjectService, StorageObject, CreateStorageObjectOptions} from '../interface/storage-object-interface';
-import {IBucketService} from '../interface/bucket-interface';
+import {
+    IStorageObjectService, StorageObject, CreateStorageObjectOptions, CreateUserNodeDataObjectOptions
+} from '../interface/storage-object-interface';
+import {IBucketService, BucketInfo, BucketTypeEnum} from '../interface/bucket-interface';
 
 @provide('storageObjectService')
 export class StorageObjectService implements IStorageObjectService {
@@ -18,10 +19,11 @@ export class StorageObjectService implements IStorageObjectService {
     storageObjectProvider;
     @inject()
     storageFileCheck;
+    readonly UserNodeDataBucketName = 'UserNodeData';
 
     /**
      * 创建文件对象
-     * @param {UpdateFileOptions} updateFileOptions
+     * @param {CreateStorageObjectOptions} options
      * @returns {Promise<StorageObject>}
      */
     async createObject(options: CreateStorageObjectOptions): Promise<StorageObject> {
@@ -40,8 +42,46 @@ export class StorageObjectService implements IStorageObjectService {
             }
         };
 
-        const findCondition = pick(storageObject, ['bucketName', 'objectName']);
-        const oldStorageObject = await this.storageObjectProvider.findOneAndUpdate(findCondition, storageObject, {new: false})
+        const findCondition = pick(storageObject, ['bucketId', 'objectName']);
+        const oldStorageObject = await this.storageObjectProvider.findOneAndUpdate(findCondition, storageObject, {new: false});
+
+        if (oldStorageObject) {
+            this.bucketService.replaceStorageObjectEventHandle(storageObject, oldStorageObject);
+            return this.storageObjectProvider.findOne(findCondition);
+        }
+        return this.storageObjectProvider.create(storageObject).tap(() => {
+            this.bucketService.addStorageObjectEventHandle(storageObject);
+        });
+    }
+
+    /**
+     * 创建用户节点数据
+     * @param {CreateUserNodeDataObjectOptions} options
+     * @returns {Promise<StorageObject>}
+     */
+    async createUserNodeObject(options: CreateUserNodeDataObjectOptions): Promise<StorageObject> {
+
+        const bucket: BucketInfo = {
+            bucketName: this.UserNodeDataBucketName,
+            bucketType: BucketTypeEnum.SystemStorage,
+            userId: options.userId
+        };
+
+        const bucketInfo = await this.bucketService.createOrFindSystemBucket(bucket);
+
+        const storageObject: StorageObject = {
+            sha1: options.fileStorageInfo.sha1,
+            objectName: `${options.nodeInfo.nodeDomain}.ncfg`,
+            bucketId: bucketInfo.bucketId,
+            bucketName: bucketInfo.bucketName,
+            resourceType: 'node-config',
+            systemMeta: {
+                fileSize: options.fileStorageInfo.fileSize
+            }
+        };
+
+        const findCondition = pick(storageObject, ['bucketId', 'objectName']);
+        const oldStorageObject = await this.storageObjectProvider.findOneAndUpdate(findCondition, storageObject, {new: false});
 
         if (oldStorageObject) {
             this.bucketService.replaceStorageObjectEventHandle(storageObject, oldStorageObject);

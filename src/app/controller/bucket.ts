@@ -1,7 +1,7 @@
 import {inject, controller, get, post, del, provide} from 'midway';
 import {IBucketService, BucketInfo, BucketTypeEnum} from '../../interface/bucket-interface';
-import {LoginUser} from 'egg-freelog-base';
-import {visitorIdentity, InternalClient} from '../extend/vistorIdentityDecorator';
+import {LoginUser, InternalClient} from 'egg-freelog-base';
+import {visitorIdentity} from '../extend/vistorIdentityDecorator';
 
 @provide()
 @controller('/v1/storages/buckets')
@@ -28,12 +28,12 @@ export class BucketController {
 
         // 只允许小写字母、数字、中划线（-），且不能以短横线开头或结尾
         const bucketName: string = ctx.checkBody('bucketName').exist().isBucketName().value;
-        const bucketType: number = ctx.checkBody('bucketType').optional().toInt().in([BucketTypeEnum.UserStorage, BucketTypeEnum.SystemStorage]).default(BucketTypeEnum.UserStorage).value;
-
+        // const bucketType: number = ctx.checkBody('bucketType').optional().toInt().in([BucketTypeEnum.UserStorage, BucketTypeEnum.SystemStorage]).default(BucketTypeEnum.UserStorage).value;
         ctx.validateParams();
 
+        // 系统级存储bucket不能通过API创建.由对应的业务来处理
         const bucketInfo: BucketInfo = {
-            bucketName, bucketType,
+            bucketName, bucketType: BucketTypeEnum.UserStorage,
             userId: ctx.request.userId
         };
 

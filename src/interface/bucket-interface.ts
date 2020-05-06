@@ -21,7 +21,7 @@ export interface BucketInfo {
 export interface IBucketService {
     createBucket(bucket: BucketInfo): Promise<BucketInfo>;
 
-    createSystemBucket(bucket: BucketInfo): Promise<BucketInfo>;
+    createOrFindSystemBucket(bucket: BucketInfo): Promise<BucketInfo>;
 
     deleteBucket(bucketName: string): Promise<boolean>;
 

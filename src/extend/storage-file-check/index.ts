@@ -19,7 +19,7 @@ async function baseFileCheckHandle(fileStream): Promise<FileSystemMeta> {
             sha1sum.update(chunk)
             fileSize += chunk.length;
         }).on('end', () => resolve({
-            sha1: sha1sum.digest('hex'), fileSize, mimeType, filename: fileStream.filename.trim()
+            sha1: sha1sum.digest('hex'), fileSize, mimeType
         })).on('error', reject);
     });
 }

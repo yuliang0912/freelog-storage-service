@@ -33,7 +33,7 @@ export class BucketInfoModel {
             toObject: toObjectOptions
         });
 
-        bucketScheme.index({bucketName: 1, userId: 1, nodeId: 1})
+        bucketScheme.index({bucketName: 1, userId: 1})
         bucketScheme.index({bucketUniqueKey: 1}, {unique: true});
 
         bucketScheme.virtual('bucketId').get(function (this: any) {

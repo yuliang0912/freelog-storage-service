@@ -14,7 +14,7 @@ export class BucketService implements IBucketService {
 
     /**
      * 用户创建bucket
-     * @param {BucketInfo} bucket
+     * @param {BucketInfo} bucketInfo
      * @returns {Promise<BucketInfo>}
      */
     async createBucket(bucketInfo: BucketInfo): Promise<BucketInfo> {
@@ -30,7 +30,7 @@ export class BucketService implements IBucketService {
             throw new ApplicationError(this.ctx.gettext('bucket-create-count-limit-validate-failed', this.bucketCreatedLimitCount));
         }
 
-        bucketInfo.bucketUniqueKey = this.generateBucketUniqueKey(bucketInfo);
+        bucketInfo.bucketUniqueKey = BucketService.generateBucketUniqueKey(bucketInfo);
         const existBucket: object = await this.bucketProvider.findOne({bucketUniqueKey: bucketInfo.bucketUniqueKey});
         if (existBucket) {
             throw new ApplicationError(this.ctx.gettext('bucket-name-create-duplicate-error'));
@@ -44,15 +44,16 @@ export class BucketService implements IBucketService {
      * @param {BucketInfo} bucketInfo
      * @returns {Promise<BucketInfo>}
      */
-    async createSystemBucket(bucketInfo: BucketInfo): Promise<BucketInfo> {
+    async createOrFindSystemBucket(bucketInfo: BucketInfo): Promise<BucketInfo> {
 
         if (bucketInfo.bucketType !== BucketTypeEnum.SystemStorage) {
             throw new ArgumentError('please check code param:bucketType!');
         }
-        bucketInfo.bucketUniqueKey = this.generateBucketUniqueKey(bucketInfo);
-        const existBucket: object = await this.bucketProvider.findOne({bucketUniqueKey: bucketInfo.bucketUniqueKey});
+        bucketInfo.bucketUniqueKey = BucketService.generateBucketUniqueKey(bucketInfo);
+        const existBucket: BucketInfo = await this.bucketProvider.findOne({bucketUniqueKey: bucketInfo.bucketUniqueKey});
         if (existBucket) {
-            throw new ApplicationError(this.ctx.gettext('bucket-name-create-duplicate-error'));
+            // throw new ApplicationError(this.ctx.gettext('bucket-name-create-duplicate-error'));
+            return existBucket;
         }
 
         return this.bucketProvider.create(bucketInfo);
@@ -112,7 +113,7 @@ export class BucketService implements IBucketService {
      * @param {BucketInfo} bucketInfo
      * @returns {string}
      */
-    generateBucketUniqueKey(bucketInfo: BucketInfo) {
+    static generateBucketUniqueKey(bucketInfo: BucketInfo) {
         return bucketInfo.bucketType === BucketTypeEnum.UserStorage ? bucketInfo.bucketName : `${bucketInfo.userId}/${bucketInfo.bucketName}`;
     }
 
@@ -125,10 +126,10 @@ export class BucketService implements IBucketService {
         if (oldStorageObject.systemMeta.fileSize === newStorageObject.systemMeta.fileSize) {
             return;
         }
-        if (oldStorageObject.bucketName !== newStorageObject.bucketName || oldStorageObject.objectName !== newStorageObject.objectName) {
+        if (oldStorageObject.bucketId !== newStorageObject.bucketId || oldStorageObject.objectName !== newStorageObject.objectName) {
             throw new ArgumentError('code logic error');
         }
-        this.bucketProvider.updateOne({bucketName: newStorageObject.bucketName}, {
+        this.bucketProvider.updateOne({bucketId: newStorageObject.bucketId}, {
             $inc: {
                 totalFileSize: newStorageObject.systemMeta.fileSize - oldStorageObject.systemMeta.fileSize
             }
@@ -140,7 +141,7 @@ export class BucketService implements IBucketService {
      * @param {StorageObject} storageObject
      */
     addStorageObjectEventHandle(storageObject: StorageObject): void {
-        this.bucketProvider.updateOne({bucketName: storageObject.bucketName}, {
+        this.bucketProvider.updateOne({bucketId: storageObject.bucketId}, {
             $inc: {totalFileQuantity: 1, totalFileSize: storageObject.systemMeta.fileSize}
         });
     }

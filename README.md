@@ -1,12 +1,8 @@
-# my_first_midway_project
+# 飞致网络存储服务
 
 {{description}}
 
 ## QuickStart
-
-<!-- add docs here for user -->
-
-see [midway docs][midway] for more detail.
 
 ### Development
 
