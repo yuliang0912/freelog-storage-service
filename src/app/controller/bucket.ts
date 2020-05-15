@@ -13,10 +13,19 @@ export class BucketController {
     @get('/')
     @visitorIdentity(LoginUser)
     async index(ctx) {
-        await this.bucketService.find({userId: ctx.request.userId}).then(ctx.success);
+
+        const bucketType: number = ctx.checkQuery('bucketType').optional().toInt().in([0, 1, 2]).default(0).value;
+
+        const condition = {
+            userId: ctx.request.userId
+        }
+        if (bucketType) {
+            condition['bucketType'] = bucketType;
+        }
+        await this.bucketService.find(condition).then(ctx.success);
     }
 
-    @get('/count')
+    @get('/Count') // 需要首字母大写,避免和bucketName冲突
     @visitorIdentity(LoginUser)
     async createdCount(ctx) {
         const condition = {
@@ -54,11 +63,11 @@ export class BucketController {
         await this.bucketService.deleteBucket(bucketName).then(ctx.success);
     }
 
-    @get('/isExist')
+    @get('/:bucketName/isExist')
     @visitorIdentity(LoginUser | InternalClient)
     async isExistBucketName(ctx) {
 
-        const bucketName = ctx.checkQuery('bucketName').exist().isStrictBucketName().value;
+        const bucketName = ctx.checkParams('bucketName').exist().isStrictBucketName().value;
         ctx.validateParams();
 
         await this.bucketService.count({bucketName}).then(data => ctx.success(Boolean(data)));

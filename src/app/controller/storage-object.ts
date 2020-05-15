@@ -37,7 +37,6 @@ export class ObjectController {
     @visitorIdentity(LoginUser)
     @get('/buckets/:bucketName/objects')
     async index(ctx) {
-
         const page: number = ctx.checkQuery('page').optional().default(1).gt(0).toInt().value;
         const pageSize: number = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
         const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
@@ -55,7 +54,7 @@ export class ObjectController {
         }
         if (keywords) {
             const regex: object = {$regex: keywords, $options: 'i'};
-            condition.$or = [{name: regex}, {bucketName: regex}];
+            condition.$or = [{objectName: regex}, {bucketName: regex}];
         }
 
         let dataList = [];
@@ -123,10 +122,10 @@ export class ObjectController {
     async editUserNodeData(ctx) {
         const nodeId: number = ctx.checkParams('nodeId').exist().toInt().value;
         const removeFields: string[] = ctx.checkBody('removeFields').optional().isArray().default([]).value;
-        const setOrReplaceFields: [{ field: string, value: any }] = ctx.checkBody('setOrReplaceFields').optional().isArray().value;
+        const addOrReplaceFields: [{ field: string, value: any }] = ctx.checkBody('addOrReplaceFields').optional().isArray().value;
         ctx.validateParams();
 
-        const validateResult = this.userNodeDataEditValidator.validate(setOrReplaceFields);
+        const validateResult = this.userNodeDataEditValidator.validate(addOrReplaceFields);
         if (validateResult.errors.length) {
             throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'setOrReplaceFields'), {validateResult});
         }
@@ -159,9 +158,9 @@ export class ObjectController {
             return res;
         });
 
-        const objectOperations: JsonObjectOperation[] = setOrReplaceFields.map(x => Object({
+        const objectOperations: JsonObjectOperation[] = addOrReplaceFields.map(x => Object({
             key: x.field, value: x.value, type: JsonObjectOperationTypeEnum.SetOrReplace
-        }))
+        }));
         removeFields.forEach(item => objectOperations.push({key: item, type: JsonObjectOperationTypeEnum.Remove}));
 
         const transformStream = this.userNodeDataFileOperation.edit(fileStream, objectOperations);

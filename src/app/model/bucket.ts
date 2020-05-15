@@ -13,7 +13,7 @@ export class BucketInfoModel {
 
         const toObjectOptions: object = {
             transform(doc, ret, options) {
-                return omit(ret, ['_id']);
+                return omit(ret, ['_id', 'bucketUniqueKey']);
             }
         };
 
