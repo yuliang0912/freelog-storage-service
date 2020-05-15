@@ -2,6 +2,10 @@ import {StorageObject} from './storage-object-interface';
 
 export enum BucketTypeEnum {UserStorage = 1, SystemStorage = 2}
 
+export enum SystemBucketName {
+    UserNodeData = '.UserNodeData'
+}
+
 /**
  * bucket实体结构
  */

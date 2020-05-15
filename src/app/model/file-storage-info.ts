@@ -1,15 +1,16 @@
-import {scope, provide, plugin} from 'midway';
+import {scope, config, provide, plugin} from 'midway';
 
 // 文件实际存储信息
 @scope('Singleton')
 @provide('model.fileStorageInfo')
 export class BucketInfoModel {
 
-    constructor(@plugin('mongoose') mongoose) {
-        return this.buildBucketModel(mongoose);
+    constructor(@plugin('mongoose') mongoose, @config('uploadConfig') uploadConfig) {
+        return this.buildBucketModel(mongoose, uploadConfig);
     }
 
-    buildBucketModel(mongoose): any {
+    buildBucketModel(mongoose, ossConfig: any): any {
+        const isInternal = ossConfig.aliOss.internal;
         const objectScheme = new mongoose.Schema({
             sha1: {type: String, required: true},
             fileSize: {type: Number, required: true},
@@ -22,10 +23,18 @@ export class BucketInfoModel {
             }
         }, {
             versionKey: false,
-            timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'}
+            timestamps: {createdAt: 'createDate'}
         });
 
         objectScheme.index({sha1: 1}, {unique: true});
+
+        objectScheme.virtual('fileUrl').get(function (this: any) {
+            const {serviceProvider, storageInfo} = this;
+            if (serviceProvider === 'amazonS3') {
+                throw new Error('not implements');
+            }
+            return `http://${storageInfo.bucket}.${storageInfo.region}${isInternal ? '-internal' : ''}.aliyuncs.com/${storageInfo.objectKey}`;
+        })
 
         return mongoose.model('file-storage-infos', objectScheme);
     }

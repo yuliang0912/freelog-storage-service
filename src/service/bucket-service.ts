@@ -74,7 +74,7 @@ export class BucketService implements IBucketService {
             data: {bucketName}
         });
 
-        if (bucketInfo.totalFileQuantity > 0) {
+        if (bucketInfo.totalFileSize > 0) {
             throw new ApplicationError({msg: this.ctx.gettext('bucket-delete-validate-error')});
         }
 

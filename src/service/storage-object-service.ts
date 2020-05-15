@@ -3,7 +3,8 @@ import {provide, config, plugin, inject} from 'midway';
 import {
     IStorageObjectService, StorageObject, CreateStorageObjectOptions, CreateUserNodeDataObjectOptions
 } from '../interface/storage-object-interface';
-import {IBucketService, BucketInfo, BucketTypeEnum} from '../interface/bucket-interface';
+import {IBucketService, BucketInfo, BucketTypeEnum, SystemBucketName} from '../interface/bucket-interface';
+import {FileStorageInfo} from '../interface/file-storage-info-interface';
 
 @provide('storageObjectService')
 export class StorageObjectService implements IStorageObjectService {
@@ -17,9 +18,6 @@ export class StorageObjectService implements IStorageObjectService {
     bucketService: IBucketService;
     @inject()
     storageObjectProvider;
-    @inject()
-    storageFileCheck;
-    readonly UserNodeDataBucketName = 'UserNodeData';
 
     /**
      * 创建文件对象
@@ -62,7 +60,7 @@ export class StorageObjectService implements IStorageObjectService {
     async createUserNodeObject(options: CreateUserNodeDataObjectOptions): Promise<StorageObject> {
 
         const bucket: BucketInfo = {
-            bucketName: this.UserNodeDataBucketName,
+            bucketName: SystemBucketName.UserNodeData,
             bucketType: BucketTypeEnum.SystemStorage,
             userId: options.userId
         };
@@ -90,6 +88,26 @@ export class StorageObjectService implements IStorageObjectService {
         return this.storageObjectProvider.create(storageObject).tap(() => {
             this.bucketService.addStorageObjectEventHandle(storageObject);
         });
+    }
+
+    /**
+     * 更新用户存储数据
+     * @param {StorageObject} 原有的存储信息
+     * @param {FileStorageInfo} 新的文件信息
+     * @returns {Promise<StorageObject>}
+     */
+    async updateObject(oldStorageObject: StorageObject, newFileStorageInfo: FileStorageInfo): Promise<StorageObject> {
+
+        const updateStorageObjectInfo = {
+            sha1: newFileStorageInfo.sha1,
+            systemMeta: {
+                fileSize: newFileStorageInfo.fileSize
+            }
+        };
+        const findCondition = pick(oldStorageObject, ['bucketId', 'objectName']);
+        const newStorageObject = await this.storageObjectProvider.findOneAndUpdate(findCondition, updateStorageObjectInfo, {new: true});
+        this.bucketService.replaceStorageObjectEventHandle(newStorageObject, oldStorageObject);
+        return this.storageObjectProvider.findOne(findCondition);
     }
 
     async findOne(condition: object): Promise<StorageObject> {

@@ -5,6 +5,7 @@ export default class AppBootHook {
 
     public constructor(app) {
         this.app = app;
+        // this.test().then();
     }
 
     async willReady() {

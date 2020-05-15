@@ -26,6 +26,8 @@ module.exports = {
 
     'node-invalid': '未找到有效节点',
 
+    'storage-object-not-found': '用户存储对象不存在',
+
     'presentable-entity-not-found': '未找到节点资源',
 
     'presentable-invalid': '未找到有效节点资源',

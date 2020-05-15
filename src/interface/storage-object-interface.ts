@@ -35,13 +35,31 @@ export interface CreateUserNodeDataObjectOptions {
 }
 
 /**
- * bucket服务抽象接口
+ * 用户对象存储服务接口
  */
 export interface IStorageObjectService {
 
+    /**
+     * 创建用户存储对象
+     * @param {CreateStorageObjectOptions} options
+     * @returns {Promise<StorageObject>}
+     */
     createObject(options: CreateStorageObjectOptions): Promise<StorageObject>;
 
+    /**
+     * 创建用户节点数据
+     * @param {CreateUserNodeDataObjectOptions} options
+     * @returns {Promise<StorageObject>}
+     */
     createUserNodeObject(options: CreateUserNodeDataObjectOptions): Promise<StorageObject>;
+
+    /**
+     * 更新用户存储对象
+     * @param {StorageObject} 原有的存储信息
+     * @param {FileStorageInfo} 新的文件信息
+     * @returns {Promise<StorageObject>}
+     */
+    updateObject(oldStorageObject: StorageObject, newFileStorageInfo: FileStorageInfo): Promise<StorageObject>;
 
     findOne(condition: object): Promise<StorageObject>;
 

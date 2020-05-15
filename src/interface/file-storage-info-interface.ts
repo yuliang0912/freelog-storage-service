@@ -21,5 +21,9 @@ export declare interface FileStorageInfo {
 export declare interface IFileStorageService {
     upload(fileStream): Promise<FileStorageInfo>;
 
+    uploadUserNodeDataFile(fileStream): Promise<FileStorageInfo>;
+
     findBySha1(sha1: string): Promise<FileStorageInfo>;
+
+    fileStreamErrorHandler(fileStream): void;
 }

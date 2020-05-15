@@ -19,7 +19,11 @@ export class BucketController {
     @get('/count')
     @visitorIdentity(LoginUser)
     async createdCount(ctx) {
-        await this.bucketService.count({userId: ctx.request.userId}).then(ctx.success);
+        const condition = {
+            userId: ctx.request.userId,
+            bucketType: BucketTypeEnum.UserStorage
+        }
+        await this.bucketService.count(condition).then(ctx.success);
     }
 
     @post('/')
@@ -27,7 +31,7 @@ export class BucketController {
     async create(ctx) {
 
         // 只允许小写字母、数字、中划线（-），且不能以短横线开头或结尾
-        const bucketName: string = ctx.checkBody('bucketName').exist().isBucketName().value;
+        const bucketName: string = ctx.checkBody('bucketName').exist().isStrictBucketName().value;
         // const bucketType: number = ctx.checkBody('bucketType').optional().toInt().in([BucketTypeEnum.UserStorage, BucketTypeEnum.SystemStorage]).default(BucketTypeEnum.UserStorage).value;
         ctx.validateParams();
 
@@ -44,7 +48,7 @@ export class BucketController {
     @visitorIdentity(LoginUser)
     async destroy(ctx) {
 
-        const bucketName: string = ctx.checkBody('bucketName').exist().isBucketName().value;
+        const bucketName: string = ctx.checkBody('bucketName').exist().isStrictBucketName().value;
         ctx.validateParams();
 
         await this.bucketService.deleteBucket(bucketName).then(ctx.success);
@@ -54,7 +58,7 @@ export class BucketController {
     @visitorIdentity(LoginUser | InternalClient)
     async isExistBucketName(ctx) {
 
-        const bucketName = ctx.checkQuery('bucketName').exist().isBucketName().value;
+        const bucketName = ctx.checkQuery('bucketName').exist().isStrictBucketName().value;
         ctx.validateParams();
 
         await this.bucketService.count({bucketName}).then(data => ctx.success(Boolean(data)));
@@ -72,6 +76,9 @@ export class BucketController {
         const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
         ctx.validateParams();
 
-        await this.bucketService.findOne({bucketName}).then(ctx.success);
+        const condition = {
+            userId: ctx.request.userId, bucketName
+        }
+        await this.bucketService.findOne(condition).then(ctx.success);
     }
 }

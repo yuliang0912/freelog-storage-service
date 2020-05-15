@@ -63,5 +63,12 @@ export default (appInfo: any) => {
         },
         amzS3: {}
     };
+
+    config.clientCredentialInfo = {
+        clientId: 1002,
+        publicKey: 'ad472200bda12d65666df7b97282a7c6',
+        privateKey: '9d3761da71ee041e648cafb2e322d968'
+    };
+
     return config;
 };

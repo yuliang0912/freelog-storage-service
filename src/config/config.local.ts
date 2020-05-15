@@ -3,6 +3,7 @@ export const development = {
         'app',
         'lib',
         'service',
+        'extend',
         'config',
         'app.ts',
         'agent.ts',
@@ -19,7 +20,7 @@ export default () => {
     ];
 
     config.localIdentity = {
-        userId: 50022,
+        userId: 50021,
         username: 'yuliang'
     };
 
