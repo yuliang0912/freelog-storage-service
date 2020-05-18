@@ -7,10 +7,13 @@ export interface NodeInfo {
 }
 
 export enum JsonObjectOperationTypeEnum {
-    SetOrReplace = 'SetOrReplace',
+    AppendOrReplace = 'AppendOrReplace',
     Remove = 'Remove'
 }
 
+/**
+ * 针对json文件流的编辑操作
+ */
 export interface JsonObjectOperation {
     key: string;
     type: JsonObjectOperationTypeEnum;
@@ -18,6 +21,9 @@ export interface JsonObjectOperation {
     isExecute?: boolean;
 }
 
+/**
+ * 针对object做校验的基础接口
+ */
 export interface IJsonSchemaValidate {
     validate(instance: [] | object): ValidatorResult;
 }

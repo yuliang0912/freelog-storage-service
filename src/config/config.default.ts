@@ -3,13 +3,15 @@ export default (appInfo: any) => {
 
     config.keys = appInfo.name;
 
-    config.middleware = [
-        'errorHandler'
-    ];
-
-    config.mongoose = {
-        url: 'mongodb://127.0.0.1:27017/storage'
+    config.cluster = {
+        listen: {
+            port: 7002
+        }
     };
+
+    config.middleware = [
+        'errorHandler', 'identityAuthentication'
+    ];
 
     config.onerror = {
         all(err, ctx) {

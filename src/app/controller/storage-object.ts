@@ -1,14 +1,13 @@
 import {inject, controller, get, post, put, provide} from 'midway';
 import {LoginUser, ApplicationError, ArgumentError} from 'egg-freelog-base/index';
 import {IBucketService, SystemBucketName} from '../../interface/bucket-interface';
-import {visitorIdentity} from '../extend/vistorIdentityDecorator';
+import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {FileStorageInfo, IFileStorageService} from '../../interface/file-storage-info-interface';
 import {
     CreateStorageObjectOptions,
     CreateUserNodeDataObjectOptions,
     IStorageObjectService
 } from '../../interface/storage-object-interface';
-
 const sendToWormhole = require('stream-wormhole');
 import {
     IJsonSchemaValidate,
@@ -122,12 +121,12 @@ export class ObjectController {
     async editUserNodeData(ctx) {
         const nodeId: number = ctx.checkParams('nodeId').exist().toInt().value;
         const removeFields: string[] = ctx.checkBody('removeFields').optional().isArray().default([]).value;
-        const addOrReplaceFields: [{ field: string, value: any }] = ctx.checkBody('addOrReplaceFields').optional().isArray().value;
+        const appendOrReplaceFields: [{ field: string, value: any }] = ctx.checkBody('appendOrReplaceFields').optional().isArray().value;
         ctx.validateParams();
 
-        const validateResult = this.userNodeDataEditValidator.validate(addOrReplaceFields);
+        const validateResult = this.userNodeDataEditValidator.validate(appendOrReplaceFields);
         if (validateResult.errors.length) {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'setOrReplaceFields'), {validateResult});
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'appendOrReplaceFields'), {validateResult});
         }
 
         const nodeInfo: NodeInfo = await ctx.curlIntranetApi(`${ctx.webApi.nodeInfo}/${nodeId}`);
@@ -158,8 +157,8 @@ export class ObjectController {
             return res;
         });
 
-        const objectOperations: JsonObjectOperation[] = addOrReplaceFields.map(x => Object({
-            key: x.field, value: x.value, type: JsonObjectOperationTypeEnum.SetOrReplace
+        const objectOperations: JsonObjectOperation[] = appendOrReplaceFields.map(x => Object({
+            key: x.field, value: x.value, type: JsonObjectOperationTypeEnum.AppendOrReplace
         }));
         removeFields.forEach(item => objectOperations.push({key: item, type: JsonObjectOperationTypeEnum.Remove}));
 

@@ -21,7 +21,7 @@ class JsonObjectReplaceTransformStream extends StreamBase {
     initial(objectOperations: JsonObjectOperation[]) {
         this.push(`{`); // 防止一个object-key也不存在时,也可以正常生成空的json文件
         this.removeObjectKeys = objectOperations.filter(x => x.type === JsonObjectOperationTypeEnum.Remove).map(x => x.key);
-        this.replaceOrAddObjects = objectOperations.filter(x => x.type === JsonObjectOperationTypeEnum.SetOrReplace).map(x => Object({
+        this.replaceOrAddObjects = objectOperations.filter(x => x.type === JsonObjectOperationTypeEnum.AppendOrReplace).map(x => Object({
             key: x.key,
             value: x.value
         }));

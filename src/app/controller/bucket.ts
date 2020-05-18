@@ -1,7 +1,7 @@
 import {inject, controller, get, post, del, provide} from 'midway';
 import {IBucketService, BucketInfo, BucketTypeEnum} from '../../interface/bucket-interface';
 import {LoginUser, InternalClient} from 'egg-freelog-base';
-import {visitorIdentity} from '../extend/vistorIdentityDecorator';
+import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 
 @provide()
 @controller('/v1/storages/buckets')
@@ -11,7 +11,7 @@ export class BucketController {
     bucketService: IBucketService;
 
     @get('/')
-    @visitorIdentity(LoginUser)
+    @visitorIdentity(LoginUser | InternalClient)
     async index(ctx) {
 
         const bucketType: number = ctx.checkQuery('bucketType').optional().toInt().in([0, 1, 2]).default(0).value;
