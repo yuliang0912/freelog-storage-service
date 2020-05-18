@@ -1,6 +1,6 @@
 import * as sendToWormhole from 'stream-wormhole';
 import {inject, controller, get, post, provide} from 'midway';
-import {LoginUser, ArgumentError} from 'egg-freelog-base/index';
+import {LoginUser, ApplicationError, ArgumentError} from 'egg-freelog-base/index';
 import {IBucketService} from '../../interface/bucket-interface';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {FileStorageInfo, IFileStorageService} from '../../interface/file-storage-info-interface';
@@ -109,6 +109,34 @@ export class ObjectController {
             return sendToWormhole(fileStream).then(() => {
                 throw error;
             });
+        });
+    }
+
+    @visitorIdentity(LoginUser)
+    @get('/buckets/:bucketName/objects/:objectName/file')
+    async download(ctx) {
+        const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
+        const objectName: string = ctx.checkParams('objectName').exist().type('string').value;
+        ctx.validateParams();
+
+        const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.request.userId});
+        ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
+
+        const storageObject = await this.storageObjectService.findOne({bucketId: bucketInfo.bucketId, objectName});
+        if (!storageObject) {
+            throw new ApplicationError(ctx.gettext('storage-object-not-found'));
+        }
+        const fileStorageInfo = await this.fileStorageService.findBySha1(storageObject.sha1);
+        await ctx.curl(fileStorageInfo['fileUrl'], {streaming: true}).then(({status, headers, res}) => {
+            if (status < 200 || status > 299) {
+                throw new ApplicationError(ctx.gettext('文件流读取失败'), {httpStatus: status});
+            }
+            ctx.status = status;
+            ctx.body = res;
+            ctx.set('content-type', headers['content-type'])
+            ctx.set('content-length', headers['content-length'])
+            ctx.attachment(storageObject.objectName);
+            return res;
         });
     }
 
