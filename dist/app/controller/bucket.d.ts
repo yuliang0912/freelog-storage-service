@@ -6,10 +6,5 @@ export declare class BucketController {
     create(ctx: any): Promise<void>;
     destroy(ctx: any): Promise<void>;
     isExistBucketName(ctx: any): Promise<void>;
-    /**
-     * 获取bucket详情
-     * @param ctx
-     * @returns {Promise<void>}
-     */
     show(ctx: any): Promise<void>;
 }

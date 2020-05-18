@@ -13,12 +13,11 @@ export class BucketController {
     @get('/')
     @visitorIdentity(LoginUser | InternalClient)
     async index(ctx) {
-
         const bucketType: number = ctx.checkQuery('bucketType').optional().toInt().in([0, 1, 2]).default(0).value;
 
         const condition = {
             userId: ctx.request.userId
-        }
+        };
         if (bucketType) {
             condition['bucketType'] = bucketType;
         }
@@ -31,7 +30,7 @@ export class BucketController {
         const condition = {
             userId: ctx.request.userId,
             bucketType: BucketTypeEnum.UserStorage
-        }
+        };
         await this.bucketService.count(condition).then(ctx.success);
     }
 
@@ -73,11 +72,6 @@ export class BucketController {
         await this.bucketService.count({bucketName}).then(data => ctx.success(Boolean(data)));
     }
 
-    /**
-     * 获取bucket详情
-     * @param ctx
-     * @returns {Promise<void>}
-     */
     @get('/:bucketName')
     @visitorIdentity(LoginUser)
     async show(ctx) {
@@ -87,7 +81,11 @@ export class BucketController {
 
         const condition = {
             userId: ctx.request.userId, bucketName
-        }
+        };
         await this.bucketService.findOne(condition).then(ctx.success);
     }
+
+    // async spaceStatistics(ctx) {
+    //
+    // }
 }

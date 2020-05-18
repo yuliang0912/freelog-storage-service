@@ -14,16 +14,19 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const midway_1 = require("midway");
 const MongoBaseOperation = require("egg-freelog-database/lib/database/mongo-base-operation");
-let BucketProvider = class BucketProvider extends MongoBaseOperation {
-    constructor(bucketModel) {
-        super(bucketModel);
-    }
-};
-BucketProvider = __decorate([
-    midway_1.provide(),
-    midway_1.scope('Singleton'),
-    __param(0, midway_1.inject('model.bucket')),
-    __metadata("design:paramtypes", [Object])
-], BucketProvider);
+let BucketProvider = /** @class */ (() => {
+    let BucketProvider = class BucketProvider extends MongoBaseOperation {
+        constructor(bucketModel) {
+            super(bucketModel);
+        }
+    };
+    BucketProvider = __decorate([
+        midway_1.provide(),
+        midway_1.scope('Singleton'),
+        __param(0, midway_1.inject('model.bucket')),
+        __metadata("design:paramtypes", [Object])
+    ], BucketProvider);
+    return BucketProvider;
+})();
 exports.default = BucketProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYnVja2V0LXByb3ZpZGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vc3JjL2RhdGEtcHJvdmlkZXIvYnVja2V0LXByb3ZpZGVyLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7O0FBQUEsbUNBQThDO0FBQzlDLDZGQUE2RjtBQUk3RixJQUFxQixjQUFjLEdBQW5DLE1BQXFCLGNBQWUsU0FBUSxrQkFBa0I7SUFDMUQsWUFBb0MsV0FBVztRQUMzQyxLQUFLLENBQUMsV0FBVyxDQUFDLENBQUM7SUFDdkIsQ0FBQztDQUNKLENBQUE7QUFKb0IsY0FBYztJQUZsQyxnQkFBTyxFQUFFO0lBQ1QsY0FBSyxDQUFDLFdBQVcsQ0FBQztJQUVGLFdBQUEsZUFBTSxDQUFDLGNBQWMsQ0FBQyxDQUFBOztHQURsQixjQUFjLENBSWxDO2tCQUpvQixjQUFjIn0=
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYnVja2V0LXByb3ZpZGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vc3JjL2RhdGEtcHJvdmlkZXIvYnVja2V0LXByb3ZpZGVyLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7O0FBQUEsbUNBQThDO0FBQzlDLDZGQUE2RjtBQUk3RjtJQUFBLElBQXFCLGNBQWMsR0FBbkMsTUFBcUIsY0FBZSxTQUFRLGtCQUFrQjtRQUMxRCxZQUFvQyxXQUFXO1lBQzNDLEtBQUssQ0FBQyxXQUFXLENBQUMsQ0FBQztRQUN2QixDQUFDO0tBQ0osQ0FBQTtJQUpvQixjQUFjO1FBRmxDLGdCQUFPLEVBQUU7UUFDVCxjQUFLLENBQUMsV0FBVyxDQUFDO1FBRUYsV0FBQSxlQUFNLENBQUMsY0FBYyxDQUFDLENBQUE7O09BRGxCLGNBQWMsQ0FJbEM7SUFBRCxxQkFBQztLQUFBO2tCQUpvQixjQUFjIn0=

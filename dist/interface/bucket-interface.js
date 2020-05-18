@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.SystemBucketName = exports.BucketTypeEnum = void 0;
 var BucketTypeEnum;
 (function (BucketTypeEnum) {
     BucketTypeEnum[BucketTypeEnum["UserStorage"] = 1] = "UserStorage";
@@ -9,4 +10,4 @@ var SystemBucketName;
 (function (SystemBucketName) {
     SystemBucketName["UserNodeData"] = ".UserNodeData";
 })(SystemBucketName = exports.SystemBucketName || (exports.SystemBucketName = {}));
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYnVja2V0LWludGVyZmFjZS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9pbnRlcmZhY2UvYnVja2V0LWludGVyZmFjZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOztBQUVBLElBQVksY0FBbUQ7QUFBL0QsV0FBWSxjQUFjO0lBQUUsaUVBQWUsQ0FBQTtJQUFFLHFFQUFpQixDQUFBO0FBQUEsQ0FBQyxFQUFuRCxjQUFjLEdBQWQsc0JBQWMsS0FBZCxzQkFBYyxRQUFxQztBQUUvRCxJQUFZLGdCQUVYO0FBRkQsV0FBWSxnQkFBZ0I7SUFDeEIsa0RBQThCLENBQUE7QUFDbEMsQ0FBQyxFQUZXLGdCQUFnQixHQUFoQix3QkFBZ0IsS0FBaEIsd0JBQWdCLFFBRTNCIn0=
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYnVja2V0LWludGVyZmFjZS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9pbnRlcmZhY2UvYnVja2V0LWludGVyZmFjZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7QUFFQSxJQUFZLGNBQW1EO0FBQS9ELFdBQVksY0FBYztJQUFFLGlFQUFlLENBQUE7SUFBRSxxRUFBaUIsQ0FBQTtBQUFBLENBQUMsRUFBbkQsY0FBYyxHQUFkLHNCQUFjLEtBQWQsc0JBQWMsUUFBcUM7QUFFL0QsSUFBWSxnQkFFWDtBQUZELFdBQVksZ0JBQWdCO0lBQ3hCLGtEQUE4QixDQUFBO0FBQ2xDLENBQUMsRUFGVyxnQkFBZ0IsR0FBaEIsd0JBQWdCLEtBQWhCLHdCQUFnQixRQUUzQiJ9

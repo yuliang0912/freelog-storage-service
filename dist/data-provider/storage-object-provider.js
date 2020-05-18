@@ -14,16 +14,19 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const midway_1 = require("midway");
 const MongoBaseOperation = require("egg-freelog-database/lib/database/mongo-base-operation");
-let StorageObjectProvider = class StorageObjectProvider extends MongoBaseOperation {
-    constructor(bucketModel) {
-        super(bucketModel);
-    }
-};
-StorageObjectProvider = __decorate([
-    midway_1.provide(),
-    midway_1.scope('Singleton'),
-    __param(0, midway_1.inject('model.object')),
-    __metadata("design:paramtypes", [Object])
-], StorageObjectProvider);
+let StorageObjectProvider = /** @class */ (() => {
+    let StorageObjectProvider = class StorageObjectProvider extends MongoBaseOperation {
+        constructor(bucketModel) {
+            super(bucketModel);
+        }
+    };
+    StorageObjectProvider = __decorate([
+        midway_1.provide(),
+        midway_1.scope('Singleton'),
+        __param(0, midway_1.inject('model.object')),
+        __metadata("design:paramtypes", [Object])
+    ], StorageObjectProvider);
+    return StorageObjectProvider;
+})();
 exports.default = StorageObjectProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic3RvcmFnZS1vYmplY3QtcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9zcmMvZGF0YS1wcm92aWRlci9zdG9yYWdlLW9iamVjdC1wcm92aWRlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7OztBQUFBLG1DQUE4QztBQUM5Qyw2RkFBNkY7QUFJN0YsSUFBcUIscUJBQXFCLEdBQTFDLE1BQXFCLHFCQUFzQixTQUFRLGtCQUFrQjtJQUNqRSxZQUFvQyxXQUFXO1FBQzNDLEtBQUssQ0FBQyxXQUFXLENBQUMsQ0FBQztJQUN2QixDQUFDO0NBQ0osQ0FBQTtBQUpvQixxQkFBcUI7SUFGekMsZ0JBQU8sRUFBRTtJQUNULGNBQUssQ0FBQyxXQUFXLENBQUM7SUFFRixXQUFBLGVBQU0sQ0FBQyxjQUFjLENBQUMsQ0FBQTs7R0FEbEIscUJBQXFCLENBSXpDO2tCQUpvQixxQkFBcUIifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic3RvcmFnZS1vYmplY3QtcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9zcmMvZGF0YS1wcm92aWRlci9zdG9yYWdlLW9iamVjdC1wcm92aWRlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7OztBQUFBLG1DQUE4QztBQUM5Qyw2RkFBNkY7QUFJN0Y7SUFBQSxJQUFxQixxQkFBcUIsR0FBMUMsTUFBcUIscUJBQXNCLFNBQVEsa0JBQWtCO1FBQ2pFLFlBQW9DLFdBQVc7WUFDM0MsS0FBSyxDQUFDLFdBQVcsQ0FBQyxDQUFDO1FBQ3ZCLENBQUM7S0FDSixDQUFBO0lBSm9CLHFCQUFxQjtRQUZ6QyxnQkFBTyxFQUFFO1FBQ1QsY0FBSyxDQUFDLFdBQVcsQ0FBQztRQUVGLFdBQUEsZUFBTSxDQUFDLGNBQWMsQ0FBQyxDQUFBOztPQURsQixxQkFBcUIsQ0FJekM7SUFBRCw0QkFBQztLQUFBO2tCQUpvQixxQkFBcUIifQ==

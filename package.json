@@ -4,16 +4,16 @@
   "description": "{{description}}",
   "private": true,
   "dependencies": {
-    "ali-oss": "^6.7.0",
-    "egg-freelog-base": "^1.2.37",
+    "ali-oss": "^6.8.0",
+    "egg-freelog-base": "^1.2.38",
     "egg-freelog-database": "^1.0.17",
     "egg-scripts": "^2.10.0",
     "image-size": "^0.8.3",
     "jsonschema": "^1.2.6",
-    "midway": "^1.19.0",
+    "midway": "^1.19.1",
     "mime": "^2.4.5",
     "moment": "^2.25.3",
-    "mongoose": "^5.9.12",
+    "mongoose": "^5.9.14",
     "stream-json": "^1.5.0",
     "stream-wormhole": "^1.1.0",
     "uuid": "^7.0.3"
@@ -26,10 +26,10 @@
     "midway-bin": "1",
     "midway-mock": "1",
     "ts-node": "^8.10.1",
-    "tslib": "^1.11.2",
+    "tslib": "^1.13.0",
     "tslint": "^5.11.0",
     "tslint-midway-contrib": "1",
-    "typescript": "^3.5.0"
+    "typescript": "^3.9.2"
   },
   "engines": {
     "node": ">=10.16.0"
