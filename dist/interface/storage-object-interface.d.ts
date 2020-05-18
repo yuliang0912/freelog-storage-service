@@ -46,14 +46,15 @@ export interface IStorageObjectService {
      */
     createUserNodeObject(options: CreateUserNodeDataObjectOptions): Promise<StorageObject>;
     /**
-     * 更新用户存储对象
-     * @param {StorageObject} 原有的存储信息
-     * @param {FileStorageInfo} 新的文件信息
+     * 更新用户存储数据
+     * @param {StorageObject} oldStorageObject - 现有的对象存储信息
+     * @param {FileStorageInfo} newFileStorageInfo - 新的文件存储信息
      * @returns {Promise<StorageObject>}
      */
     updateObject(oldStorageObject: StorageObject, newFileStorageInfo: FileStorageInfo): Promise<StorageObject>;
     findOne(condition: object): Promise<StorageObject>;
     find(condition: object): Promise<StorageObject[]>;
+    deleteObject(bucketId: string, objectName: string): Promise<boolean>;
     count(condition: object): Promise<number>;
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<StorageObject[]>;
 }

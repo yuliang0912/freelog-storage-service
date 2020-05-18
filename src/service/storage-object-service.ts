@@ -92,8 +92,8 @@ export class StorageObjectService implements IStorageObjectService {
 
     /**
      * 更新用户存储数据
-     * @param {StorageObject} 原有的存储信息
-     * @param {FileStorageInfo} 新的文件信息
+     * @param {StorageObject} oldStorageObject - 现有的对象存储信息
+     * @param {FileStorageInfo} newFileStorageInfo - 新的文件存储信息
      * @returns {Promise<StorageObject>}
      */
     async updateObject(oldStorageObject: StorageObject, newFileStorageInfo: FileStorageInfo): Promise<StorageObject> {
@@ -108,6 +108,10 @@ export class StorageObjectService implements IStorageObjectService {
         const newStorageObject = await this.storageObjectProvider.findOneAndUpdate(findCondition, updateStorageObjectInfo, {new: true});
         this.bucketService.replaceStorageObjectEventHandle(newStorageObject, oldStorageObject);
         return this.storageObjectProvider.findOne(findCondition);
+    }
+
+    async deleteObject(bucketId: string, objectName: string): Promise<boolean> {
+        return this.storageObjectProvider.deleteOne({bucketId, objectName}).then(data => Boolean(data.ok));
     }
 
     async findOne(condition: object): Promise<StorageObject> {

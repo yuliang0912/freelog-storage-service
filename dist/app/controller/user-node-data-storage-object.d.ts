@@ -9,5 +9,5 @@ export declare class UserNodeDataObjectController {
     userNodeDataFileOperation: any;
     create(ctx: any): Promise<void>;
     update(ctx: any): Promise<void>;
-    show(ctx: any): Promise<Buffer>;
+    download(ctx: any): Promise<Buffer>;
 }

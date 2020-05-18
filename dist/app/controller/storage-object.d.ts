@@ -9,5 +9,6 @@ export declare class ObjectController {
     show(ctx: any): Promise<void>;
     create(ctx: any): Promise<void>;
     download(ctx: any): Promise<void>;
+    destroy(ctx: any): Promise<boolean>;
     uploadFile(ctx: any): Promise<void>;
 }

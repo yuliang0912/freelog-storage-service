@@ -121,7 +121,7 @@ export class UserNodeDataObjectController {
 
     @visitorIdentity(LoginUser)
     @get('/objects/:nodeId/file')
-    async show(ctx) {
+    async download(ctx) {
         const nodeId: number = ctx.checkParams('nodeId').exist().toInt().value;
         const fields: string[] = ctx.checkQuery('fields').optional().toSplitArray().default([]).value;
         ctx.validateParams();

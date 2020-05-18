@@ -21,11 +21,12 @@ export declare class StorageObjectService implements IStorageObjectService {
     createUserNodeObject(options: CreateUserNodeDataObjectOptions): Promise<StorageObject>;
     /**
      * 更新用户存储数据
-     * @param {StorageObject} 原有的存储信息
-     * @param {FileStorageInfo} 新的文件信息
+     * @param {StorageObject} oldStorageObject - 现有的对象存储信息
+     * @param {FileStorageInfo} newFileStorageInfo - 新的文件存储信息
      * @returns {Promise<StorageObject>}
      */
     updateObject(oldStorageObject: StorageObject, newFileStorageInfo: FileStorageInfo): Promise<StorageObject>;
+    deleteObject(bucketId: string, objectName: string): Promise<boolean>;
     findOne(condition: object): Promise<StorageObject>;
     find(condition: object): Promise<StorageObject[]>;
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<StorageObject[]>;
