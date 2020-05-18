@@ -41,6 +41,15 @@ export declare class BucketService implements IBucketService {
      */
     count(condition: object): Promise<number>;
     /**
+     * bucket空间使用数据统计
+     * @param {number} userId
+     * @returns {Promise<any>}
+     */
+    spaceStatistics(userId: number): Promise<{
+        bucketCount: number;
+        totalFileSize: number;
+    }>;
+    /**
      * 生成唯一失败符
      * @param {BucketInfo} bucketInfo
      * @returns {string}

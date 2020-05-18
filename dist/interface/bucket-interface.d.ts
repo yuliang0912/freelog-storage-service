@@ -31,4 +31,8 @@ export interface IBucketService {
     findOne(condition: object): Promise<BucketInfo>;
     find(condition: object): Promise<BucketInfo[]>;
     count(condition: object): Promise<number>;
+    spaceStatistics(userId: number): Promise<{
+        bucketCount: number;
+        totalFileSize: number;
+    }>;
 }

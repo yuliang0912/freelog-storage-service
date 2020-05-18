@@ -1,18 +1,11 @@
+import * as sendToWormhole from 'stream-wormhole';
+import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {inject, controller, get, post, put, provide, priority} from 'midway';
 import {LoginUser, ApplicationError, ArgumentError} from 'egg-freelog-base/index';
 import {IBucketService, SystemBucketName} from '../../interface/bucket-interface';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {FileStorageInfo, IFileStorageService} from '../../interface/file-storage-info-interface';
-import {
-    CreateUserNodeDataObjectOptions, IStorageObjectService
-} from '../../interface/storage-object-interface';
-
-const sendToWormhole = require('stream-wormhole');
-import {
-    JsonObjectOperation,
-    JsonObjectOperationTypeEnum,
-    NodeInfo
-} from '../../interface/common-interface';
+import {CreateUserNodeDataObjectOptions, IStorageObjectService} from '../../interface/storage-object-interface';
+import {JsonObjectOperation, JsonObjectOperationTypeEnum, NodeInfo} from '../../interface/common-interface';
 
 @provide()
 @priority(1)

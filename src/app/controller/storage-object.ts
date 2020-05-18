@@ -1,13 +1,10 @@
+import * as sendToWormhole from 'stream-wormhole';
 import {inject, controller, get, post, provide} from 'midway';
 import {LoginUser, ArgumentError} from 'egg-freelog-base/index';
 import {IBucketService} from '../../interface/bucket-interface';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {FileStorageInfo, IFileStorageService} from '../../interface/file-storage-info-interface';
-import {
-    CreateStorageObjectOptions, IStorageObjectService
-} from '../../interface/storage-object-interface';
-
-const sendToWormhole = require('stream-wormhole');
+import {CreateStorageObjectOptions, IStorageObjectService} from '../../interface/storage-object-interface';
 
 @provide()
 @controller('/v1/storages/')
@@ -19,10 +16,6 @@ export class ObjectController {
     fileStorageService: IFileStorageService;
     @inject()
     storageObjectService: IStorageObjectService;
-    @inject()
-    userNodeDataFileOperation;
-    @inject()
-    fileBaseInfoCalculateTransform: (algorithm?: string, encoding?: string) => any;
 
     @visitorIdentity(LoginUser)
     @get('/buckets/:bucketName/objects')
@@ -72,9 +65,8 @@ export class ObjectController {
     @visitorIdentity(LoginUser)
     @post('/buckets/:bucketName/objects')
     async create(ctx) {
-
         let fileStream = null;
-        try {
+        const createObjectFuncAsync = async () => {
             if (ctx.is('multipart')) {
                 fileStream = await ctx.getFileStream({requireFile: false});
                 ctx.request.body = fileStream.fields;
@@ -98,7 +90,6 @@ export class ObjectController {
             } else {
                 fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
             }
-
             const updateFileOptions: CreateStorageObjectOptions = {
                 bucketName, resourceType, objectName,
                 userId: ctx.request.userId,
@@ -109,14 +100,16 @@ export class ObjectController {
                     storageInfo: fileStorageInfo.storageInfo
                 }
             };
-
-            await this.storageObjectService.createObject(updateFileOptions).then(ctx.success);
-        } catch (error) {
-            if (fileStream) {
-                await sendToWormhole(fileStream);
+            return this.storageObjectService.createObject(updateFileOptions);
+        };
+        await createObjectFuncAsync().then(ctx.success).catch(error => {
+            if (!fileStream) {
+                throw error;
             }
-            throw error;
-        }
+            return sendToWormhole(fileStream).then(() => {
+                throw error;
+            });
+        });
     }
 
     @visitorIdentity(LoginUser)

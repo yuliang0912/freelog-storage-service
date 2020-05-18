@@ -72,6 +72,12 @@ export class BucketController {
         await this.bucketService.count({bucketName}).then(data => ctx.success(Boolean(data)));
     }
 
+    @get('/spaceStatistics')
+    @visitorIdentity(LoginUser)
+    async spaceStatistics(ctx) {
+        await this.bucketService.spaceStatistics(ctx.request.userId).then(ctx.success);
+    }
+
     @get('/:bucketName')
     @visitorIdentity(LoginUser)
     async show(ctx) {
@@ -84,8 +90,4 @@ export class BucketController {
         };
         await this.bucketService.findOne(condition).then(ctx.success);
     }
-
-    // async spaceStatistics(ctx) {
-    //
-    // }
 }

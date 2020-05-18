@@ -109,6 +109,23 @@ export class BucketService implements IBucketService {
     }
 
     /**
+     * bucket空间使用数据统计
+     * @param {number} userId
+     * @returns {Promise<any>}
+     */
+    async spaceStatistics(userId: number): Promise<{ bucketCount: number, totalFileSize: number }> {
+        const [statisticsInfo] = await this.bucketProvider.aggregate([{
+            $match: {userId}
+        }, {
+            $group: {_id: '$userId', totalFileSize: {$sum: '$totalFileSize'}, bucketCount: {$sum: 1}}
+        }]);
+        if (!statisticsInfo) {
+            return {bucketCount: 0, totalFileSize: 0};
+        }
+        return {bucketCount: statisticsInfo['bucketCount'], totalFileSize: statisticsInfo['totalFileSize']};
+    }
+
+    /**
      * 生成唯一失败符
      * @param {BucketInfo} bucketInfo
      * @returns {string}

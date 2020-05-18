@@ -5,8 +5,6 @@ export declare class ObjectController {
     bucketService: IBucketService;
     fileStorageService: IFileStorageService;
     storageObjectService: IStorageObjectService;
-    userNodeDataFileOperation: any;
-    fileBaseInfoCalculateTransform: (algorithm?: string, encoding?: string) => any;
     index(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
     create(ctx: any): Promise<void>;

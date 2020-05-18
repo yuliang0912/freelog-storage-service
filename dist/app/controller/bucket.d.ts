@@ -6,5 +6,6 @@ export declare class BucketController {
     create(ctx: any): Promise<void>;
     destroy(ctx: any): Promise<void>;
     isExistBucketName(ctx: any): Promise<void>;
+    spaceStatistics(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
 }
