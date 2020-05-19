@@ -46,6 +46,7 @@ export declare class BucketService implements IBucketService {
      * @returns {Promise<any>}
      */
     spaceStatistics(userId: number): Promise<{
+        storageLimit: number;
         bucketCount: number;
         totalFileSize: number;
     }>;

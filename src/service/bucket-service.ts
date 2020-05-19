@@ -113,16 +113,21 @@ export class BucketService implements IBucketService {
      * @param {number} userId
      * @returns {Promise<any>}
      */
-    async spaceStatistics(userId: number): Promise<{ bucketCount: number, totalFileSize: number }> {
+    async spaceStatistics(userId: number): Promise<{ storageLimit: number, bucketCount: number, totalFileSize: number }> {
+        const storageLimit = 5368709120; // 目前限制为5G
         const [statisticsInfo] = await this.bucketProvider.aggregate([{
             $match: {userId}
         }, {
             $group: {_id: '$userId', totalFileSize: {$sum: '$totalFileSize'}, bucketCount: {$sum: 1}}
         }]);
         if (!statisticsInfo) {
-            return {bucketCount: 0, totalFileSize: 0};
+            return {storageLimit, bucketCount: 0, totalFileSize: 0};
         }
-        return {bucketCount: statisticsInfo['bucketCount'], totalFileSize: statisticsInfo['totalFileSize']};
+        return {
+            storageLimit,
+            bucketCount: statisticsInfo['bucketCount'],
+            totalFileSize: statisticsInfo['totalFileSize']
+        };
     }
 
     /**
