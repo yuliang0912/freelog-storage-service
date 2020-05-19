@@ -23,7 +23,7 @@ export class UserNodeDataObjectController {
 
     @visitorIdentity(LoginUser)
     @post('/objects')
-    async create(ctx) {
+    async createOrReplace(ctx) {
 
         let fileStream = null;
         try {
@@ -31,14 +31,18 @@ export class UserNodeDataObjectController {
                 fileStream = await ctx.getFileStream({requireFile: false});
                 ctx.request.body = fileStream.fields;
             }
-            const nodeId: number = ctx.checkBody('nodeId').exist().toInt().value;
+            const nodeId: number = ctx.checkBody('nodeId').optional().toInt().value;
+            const nodeDomain: string = ctx.checkBody('nodeDomain').optional().isNodeDomain().value;
             const sha1: string = ctx.checkBody('sha1').optional().isResourceId().toLowercase().value;
             ctx.validateParams();
 
+            if (!nodeId && !nodeDomain) {
+                throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'nodeId or nodeDomain'));
+            }
             if (!sha1 && (!fileStream || !fileStream.filename)) {
                 throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'file or sha1'));
             }
-            const nodeInfo = await ctx.curlIntranetApi(`${ctx.webApi.nodeInfo}/${nodeId}`);
+            const nodeInfo = await ctx.curlIntranetApi(`${ctx.webApi.nodeInfo}/${nodeId ? nodeId : `detail?nodeDomain=${nodeDomain}`}`);
             if (!nodeInfo) {
                 throw new ArgumentError(ctx.gettext('node-entity-not-found'));
             }

@@ -1,5 +1,5 @@
 import * as sendToWormhole from 'stream-wormhole';
-import {inject, controller, get, del, post, provide} from 'midway';
+import {inject, controller, get, del, post, put, provide} from 'midway';
 import {LoginUser, ApplicationError, ArgumentError} from 'egg-freelog-base/index';
 import {IBucketService} from '../../interface/bucket-interface';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
@@ -160,10 +160,34 @@ export class ObjectController {
     }
 
     @visitorIdentity(LoginUser)
+    @put('/buckets/:bucketName/objects/:objectName')
+    async updateProperty(ctx) {
+        const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
+        const objectName: string = ctx.checkParams('objectName').exist().type('string').value;
+        const customMeta: object = ctx.checkBody('customMeta').optional().isObject().value;
+        const resourceType: string = ctx.checkBody('resourceType').optional().isResourceType().toLow().value;
+        const newObjectName: string = ctx.checkBody('newObjectName').optional().type('string').value;
+        ctx.validateParams();
+
+        ctx.success({bucketName, objectName, customMeta, resourceType, newObjectName});
+    }
+
+    @visitorIdentity(LoginUser)
     // @post('/buckets/:bucketName/objects/upload') 此接口目前暂不对外提供.需要看业务实际设计
     async uploadFile(ctx) {
         const fileStream = await ctx.getFileStream();
         const fileStorageInfo = await this.fileStorageService.upload(fileStream);
         ctx.success({sha1: fileStorageInfo.sha1, fileSize: fileStorageInfo.fileSize});
+    }
+
+    @visitorIdentity(LoginUser)
+    @get('/fileIsExist')
+    async fileIsExist(ctx) {
+        const sha1: string = ctx.checkQuery('sha1').exist().isResourceId().toLowercase().value;
+        ctx.validateParams();
+
+        const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
+
+        ctx.success(Boolean(fileStorageInfo));
     }
 }

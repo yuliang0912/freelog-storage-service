@@ -4,7 +4,7 @@ import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 // 文件实际存储信息
 @scope('Singleton')
 @provide('model.fileStorageInfo')
-export class BucketInfoModel extends MongooseModelBase implements IMongooseModelBase {
+export class FileStorageInfoModel extends MongooseModelBase implements IMongooseModelBase {
 
     buildMongooseModel() {
         const isInternal = this.uploadConfig.aliOss.internal;

@@ -18,8 +18,12 @@ export class BucketInfoModel extends MongooseModelBase implements IMongooseModel
         }, {
             versionKey: false,
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
-            toJSON: this.toObjectOptions,
-            toObject: this.toObjectOptions
+            toJSON: BucketInfoModel.toObjectOptions,
+            toObject: BucketInfoModel.toObjectOptions
+        });
+
+        objectScheme.virtual('storageObjectId').get(function (this: any) {
+            return this.id;
         });
 
         objectScheme.index({bucketId: 1, objectName: 1}, {unique: true});
@@ -27,9 +31,9 @@ export class BucketInfoModel extends MongooseModelBase implements IMongooseModel
         return this.mongoose.model('objects', objectScheme);
     }
 
-    get toObjectOptions() {
+    static get toObjectOptions() {
         return {
-            transform(doc, ret, options) {
+            transform(doc, ret) {
                 return omit(ret, ['_id']);
             }
         };

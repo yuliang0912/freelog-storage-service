@@ -7,7 +7,7 @@ export declare class UserNodeDataObjectController {
     fileStorageService: IFileStorageService;
     storageObjectService: IStorageObjectService;
     userNodeDataFileOperation: any;
-    create(ctx: any): Promise<void>;
+    createOrReplace(ctx: any): Promise<void>;
     update(ctx: any): Promise<void>;
     download(ctx: any): Promise<Buffer>;
 }
