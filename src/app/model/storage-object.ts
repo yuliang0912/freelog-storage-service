@@ -1,23 +1,13 @@
 import {omit} from 'lodash';
-import {scope, provide, plugin} from 'midway';
+import {scope, provide} from 'midway';
+import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
 @scope('Singleton')
 @provide('model.object')
-export class BucketInfoModel {
+export class BucketInfoModel extends MongooseModelBase implements IMongooseModelBase {
 
-    constructor(@plugin('mongoose') mongoose) {
-        return this.buildBucketModel(mongoose);
-    }
-
-    buildBucketModel(mongoose): any {
-
-        const toObjectOptions: object = {
-            transform(doc, ret, options) {
-                return omit(ret, ['_id', 'fileOss']);
-            }
-        };
-
-        const objectScheme = new mongoose.Schema({
+    buildMongooseModel() {
+        const objectScheme = new this.mongoose.Schema({
             sha1: {type: String, required: true},
             objectName: {type: String, required: true},
             bucketId: {type: String, required: true},
@@ -28,12 +18,20 @@ export class BucketInfoModel {
         }, {
             versionKey: false,
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
-            toJSON: toObjectOptions,
-            toObject: toObjectOptions
+            toJSON: this.toObjectOptions,
+            toObject: this.toObjectOptions
         });
 
         objectScheme.index({bucketId: 1, objectName: 1}, {unique: true});
 
-        return mongoose.model('objects', objectScheme);
+        return this.mongoose.model('objects', objectScheme);
+    }
+
+    get toObjectOptions() {
+        return {
+            transform(doc, ret, options) {
+                return omit(ret, ['_id']);
+            }
+        };
     }
 }

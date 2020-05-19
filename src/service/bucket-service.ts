@@ -146,7 +146,7 @@ export class BucketService implements IBucketService {
         if (oldStorageObject.bucketId !== newStorageObject.bucketId || oldStorageObject.objectName !== newStorageObject.objectName) {
             throw new ArgumentError('code logic error');
         }
-        this.bucketProvider.updateOne({bucketId: newStorageObject.bucketId}, {
+        this.bucketProvider.updateOne({_id: newStorageObject.bucketId}, {
             $inc: {
                 totalFileSize: newStorageObject.systemMeta.fileSize - oldStorageObject.systemMeta.fileSize
             }
@@ -158,7 +158,7 @@ export class BucketService implements IBucketService {
      * @param {StorageObject} storageObject
      */
     addStorageObjectEventHandle(storageObject: StorageObject): void {
-        this.bucketProvider.updateOne({bucketId: storageObject.bucketId}, {
+        this.bucketProvider.updateOne({_id: storageObject.bucketId}, {
             $inc: {totalFileQuantity: 1, totalFileSize: storageObject.systemMeta.fileSize}
         });
     }
@@ -168,7 +168,7 @@ export class BucketService implements IBucketService {
      * @param {StorageObject} storageObject
      */
     deleteStorageObjectEventHandle(storageObject: StorageObject): void {
-        this.bucketProvider.updateOne({bucketId: storageObject.bucketId}, {
+        this.bucketProvider.updateOne({_id: storageObject.bucketId}, {
             $inc: {totalFileQuantity: -1, totalFileSize: -storageObject.systemMeta.fileSize}
         });
     }

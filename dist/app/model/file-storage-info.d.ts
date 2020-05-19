@@ -1,4 +1,4 @@
-export declare class BucketInfoModel {
-    constructor(mongoose: any, uploadConfig: any);
-    buildBucketModel(mongoose: any, ossConfig: any): any;
+import { MongooseModelBase, IMongooseModelBase } from './mongoose-model-base';
+export declare class BucketInfoModel extends MongooseModelBase implements IMongooseModelBase {
+    buildMongooseModel(): any;
 }

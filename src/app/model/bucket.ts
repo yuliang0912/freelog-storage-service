@@ -1,23 +1,13 @@
 import {omit} from 'lodash';
-import {scope, provide, plugin} from 'midway';
+import {scope, provide} from 'midway';
+import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
 @scope('Singleton')
 @provide('model.bucket')
-export class BucketInfoModel {
+export class BucketInfoModel extends MongooseModelBase implements IMongooseModelBase {
 
-    constructor(@plugin('mongoose') mongoose) {
-        return this.buildBucketModel(mongoose);
-    }
-
-    buildBucketModel(mongoose): any {
-
-        const toObjectOptions: object = {
-            transform(doc, ret, options) {
-                return omit(ret, ['_id', 'bucketUniqueKey']);
-            }
-        };
-
-        const bucketScheme = new mongoose.Schema({
+    buildMongooseModel() {
+        const bucketScheme = new this.mongoose.Schema({
             bucketName: {type: String, required: true},
             // 用于唯一性校验的排他索引,没有使用bucketName是考虑到不同用户的相同命名的系统存储bucket
             // 例如用户自己的则直接以bucketName作为索引.但是系统级的可能是userId/bucketName作为索引
@@ -29,8 +19,8 @@ export class BucketInfoModel {
         }, {
             versionKey: false,
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
-            toJSON: toObjectOptions,
-            toObject: toObjectOptions
+            toJSON: this.toObjectOptions,
+            toObject: this.toObjectOptions
         });
 
         bucketScheme.index({bucketName: 1, userId: 1})
@@ -40,6 +30,14 @@ export class BucketInfoModel {
             return this.id;
         })
 
-        return mongoose.model('buckets', bucketScheme);
+        return this.mongoose.model('buckets', bucketScheme);
+    }
+
+    get toObjectOptions() {
+        return {
+            transform(doc, ret, options) {
+                return omit(ret, ['_id', 'bucketUniqueKey']);
+            }
+        };
     }
 }

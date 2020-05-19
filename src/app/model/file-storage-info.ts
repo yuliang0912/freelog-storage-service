@@ -1,17 +1,14 @@
-import {scope, config, provide, plugin} from 'midway';
+import {scope, provide} from 'midway';
+import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
 // 文件实际存储信息
 @scope('Singleton')
 @provide('model.fileStorageInfo')
-export class BucketInfoModel {
+export class BucketInfoModel extends MongooseModelBase implements IMongooseModelBase {
 
-    constructor(@plugin('mongoose') mongoose, @config('uploadConfig') uploadConfig) {
-        return this.buildBucketModel(mongoose, uploadConfig);
-    }
-
-    buildBucketModel(mongoose, ossConfig: any): any {
-        const isInternal = ossConfig.aliOss.internal;
-        const objectScheme = new mongoose.Schema({
+    buildMongooseModel() {
+        const isInternal = this.uploadConfig.aliOss.internal;
+        const objectScheme = new this.mongoose.Schema({
             sha1: {type: String, required: true},
             fileSize: {type: Number, required: true},
             referencedQuantity: {type: Number, default: 1, required: true},
@@ -36,6 +33,6 @@ export class BucketInfoModel {
             return `http://${storageInfo.bucket}.${storageInfo.region}${isInternal ? '-internal' : ''}.aliyuncs.com/${storageInfo.objectKey}`;
         })
 
-        return mongoose.model('file-storage-infos', objectScheme);
+        return this.mongoose.model('file-storage-infos', objectScheme);
     }
 }
