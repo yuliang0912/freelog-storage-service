@@ -21,13 +21,11 @@ export class StorageObjectService implements IStorageObjectService {
 
     /**
      * 创建文件对象
+     * @param {BucketInfo} bucketInfo
      * @param {CreateStorageObjectOptions} options
      * @returns {Promise<StorageObject>}
      */
-    async createObject(options: CreateStorageObjectOptions): Promise<StorageObject> {
-
-        const bucketInfo = await this.bucketService.findOne({bucketName: options.bucketName, userId: options.userId});
-        this.ctx.entityNullObjectCheck(bucketInfo, this.ctx.gettext('bucket-entity-not-found'));
+    async createObject(bucketInfo: BucketInfo, options: CreateStorageObjectOptions): Promise<StorageObject> {
 
         const storageObject: StorageObject = {
             sha1: options.fileStorageInfo.sha1,
@@ -110,8 +108,16 @@ export class StorageObjectService implements IStorageObjectService {
         return this.storageObjectProvider.findOne(findCondition);
     }
 
-    async deleteObject(bucketId: string, objectName: string): Promise<boolean> {
-        return this.storageObjectProvider.deleteOne({bucketId, objectName}).then(data => Boolean(data.ok));
+    async deleteObject(storageObject: StorageObject): Promise<boolean> {
+        return this.storageObjectProvider.deleteOne({
+            bucketId: storageObject.bucketId,
+            objectName: storageObject.objectName
+        }).then(data => {
+            if (data.deletedCount) {
+                this.bucketService.deleteStorageObjectEventHandle(storageObject);
+            }
+            return Boolean(data.ok);
+        });
     }
 
     async findOne(condition: object): Promise<StorageObject> {

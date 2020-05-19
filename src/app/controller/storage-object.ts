@@ -64,7 +64,7 @@ export class ObjectController {
 
     @visitorIdentity(LoginUser)
     @post('/buckets/:bucketName/objects')
-    async create(ctx) {
+    async createOrReplace(ctx) {
         let fileStream = null;
         const createObjectFuncAsync = async () => {
             if (ctx.is('multipart')) {
@@ -80,6 +80,11 @@ export class ObjectController {
             if (!sha1 && (!fileStream || !fileStream.filename)) {
                 throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'file or sha1'));
             }
+            const bucketInfo = await this.bucketService.findOne({
+                bucketName,
+                userId: ctx.request.userId
+            });
+            ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
 
             let fileStorageInfo: FileStorageInfo = null;
             if (fileStream && fileStream.filename) {
@@ -91,8 +96,7 @@ export class ObjectController {
                 fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
             }
             const updateFileOptions: CreateStorageObjectOptions = {
-                bucketName, resourceType, objectName,
-                userId: ctx.request.userId,
+                resourceType, objectName,
                 fileStorageInfo: {
                     sha1: fileStorageInfo.sha1,
                     fileSize: fileStorageInfo.fileSize,
@@ -100,13 +104,10 @@ export class ObjectController {
                     storageInfo: fileStorageInfo.storageInfo
                 }
             };
-            return this.storageObjectService.createObject(updateFileOptions);
+            return this.storageObjectService.createObject(bucketInfo, updateFileOptions);
         };
         await createObjectFuncAsync().then(ctx.success).catch(error => {
-            if (!fileStream) {
-                throw error;
-            }
-            return sendToWormhole(fileStream).then(() => {
+            return this.fileStorageService.fileStreamErrorHandler(fileStream).finally(() => {
                 throw error;
             });
         });
@@ -155,7 +156,7 @@ export class ObjectController {
             throw new ApplicationError(ctx.gettext('storage-object-not-found'));
         }
 
-        return this.storageObjectService.deleteObject(storageObject.bucketId, storageObject.objectName);
+        return this.storageObjectService.deleteObject(storageObject);
     }
 
     @visitorIdentity(LoginUser)

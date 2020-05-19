@@ -25,5 +25,5 @@ export declare interface IFileStorageService {
 
     findBySha1(sha1: string): Promise<FileStorageInfo>;
 
-    fileStreamErrorHandler(fileStream): void;
+    fileStreamErrorHandler(fileStream): Promise<any>;
 }

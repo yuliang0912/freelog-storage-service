@@ -7,7 +7,7 @@ export declare class ObjectController {
     storageObjectService: IStorageObjectService;
     index(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
-    create(ctx: any): Promise<void>;
+    createOrReplace(ctx: any): Promise<void>;
     download(ctx: any): Promise<void>;
     destroy(ctx: any): Promise<boolean>;
     uploadFile(ctx: any): Promise<void>;

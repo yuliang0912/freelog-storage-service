@@ -1,5 +1,6 @@
 import {NodeInfo} from './common-interface';
 import {FileStorageInfo} from './file-storage-info-interface';
+import {BucketInfo} from "./bucket-interface";
 
 export interface StorageObject {
     sha1: string;
@@ -22,9 +23,7 @@ export interface FileSystemMeta {
 
 export interface CreateStorageObjectOptions {
     objectName: string;
-    bucketName: string;
     resourceType: string;
-    userId: number;
     fileStorageInfo: FileStorageInfo;
 }
 
@@ -41,10 +40,11 @@ export interface IStorageObjectService {
 
     /**
      * 创建用户存储对象
+     * @param {BucketInfo} bucketInfo
      * @param {CreateStorageObjectOptions} options
      * @returns {Promise<StorageObject>}
      */
-    createObject(options: CreateStorageObjectOptions): Promise<StorageObject>;
+    createObject(bucketInfo: BucketInfo, options: CreateStorageObjectOptions): Promise<StorageObject>;
 
     /**
      * 创建用户节点数据
@@ -65,7 +65,7 @@ export interface IStorageObjectService {
 
     find(condition: object): Promise<StorageObject[]>;
 
-    deleteObject(bucketId: string, objectName: string): Promise<boolean>;
+    deleteObject(storageObject: StorageObject): Promise<boolean>;
 
     count(condition: object): Promise<number>;
 

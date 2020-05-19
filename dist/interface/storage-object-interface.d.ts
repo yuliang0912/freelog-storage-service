@@ -1,5 +1,6 @@
 import { NodeInfo } from './common-interface';
 import { FileStorageInfo } from './file-storage-info-interface';
+import { BucketInfo } from "./bucket-interface";
 export interface StorageObject {
     sha1: string;
     objectName: string;
@@ -19,9 +20,7 @@ export interface FileSystemMeta {
 }
 export interface CreateStorageObjectOptions {
     objectName: string;
-    bucketName: string;
     resourceType: string;
-    userId: number;
     fileStorageInfo: FileStorageInfo;
 }
 export interface CreateUserNodeDataObjectOptions {
@@ -35,10 +34,11 @@ export interface CreateUserNodeDataObjectOptions {
 export interface IStorageObjectService {
     /**
      * 创建用户存储对象
+     * @param {BucketInfo} bucketInfo
      * @param {CreateStorageObjectOptions} options
      * @returns {Promise<StorageObject>}
      */
-    createObject(options: CreateStorageObjectOptions): Promise<StorageObject>;
+    createObject(bucketInfo: BucketInfo, options: CreateStorageObjectOptions): Promise<StorageObject>;
     /**
      * 创建用户节点数据
      * @param {CreateUserNodeDataObjectOptions} options
@@ -54,7 +54,7 @@ export interface IStorageObjectService {
     updateObject(oldStorageObject: StorageObject, newFileStorageInfo: FileStorageInfo): Promise<StorageObject>;
     findOne(condition: object): Promise<StorageObject>;
     find(condition: object): Promise<StorageObject[]>;
-    deleteObject(bucketId: string, objectName: string): Promise<boolean>;
+    deleteObject(storageObject: StorageObject): Promise<boolean>;
     count(condition: object): Promise<number>;
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<StorageObject[]>;
 }

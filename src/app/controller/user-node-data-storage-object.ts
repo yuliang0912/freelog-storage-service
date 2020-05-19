@@ -120,7 +120,7 @@ export class UserNodeDataObjectController {
     }
 
     @visitorIdentity(LoginUser)
-    @get('/objects/:nodeId/file')
+    @get('/objects/:nodeId/customPick')
     async download(ctx) {
         const nodeId: number = ctx.checkParams('nodeId').exist().toInt().value;
         const fields: string[] = ctx.checkQuery('fields').optional().toSplitArray().default([]).value;

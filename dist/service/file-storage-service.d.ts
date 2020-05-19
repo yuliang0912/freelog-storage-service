@@ -25,7 +25,7 @@ export declare class FileStorageService implements IFileStorageService {
      * @private
      */
     _uploadFile(fileStream: any): Promise<FileStorageInfo>;
-    fileStreamErrorHandler(fileStream: any): Promise<void>;
+    fileStreamErrorHandler(fileStream: any): Promise<any>;
     /**
      * 复制文件
      * @param oldObjectKey

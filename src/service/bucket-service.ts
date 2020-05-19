@@ -154,7 +154,7 @@ export class BucketService implements IBucketService {
     }
 
     /**
-     * bucket新增文件事件处理
+     * bucket新增对象事件处理
      * @param {StorageObject} storageObject
      */
     addStorageObjectEventHandle(storageObject: StorageObject): void {
@@ -163,7 +163,13 @@ export class BucketService implements IBucketService {
         });
     }
 
+    /**
+     * 删除存储对象,自动移除所占的空间
+     * @param {StorageObject} storageObject
+     */
     deleteStorageObjectEventHandle(storageObject: StorageObject): void {
-
+        this.bucketProvider.updateOne({bucketId: storageObject.bucketId}, {
+            $inc: {totalFileQuantity: -1, totalFileSize: -storageObject.systemMeta.fileSize}
+        });
     }
 }

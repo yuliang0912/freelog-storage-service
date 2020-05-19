@@ -24,7 +24,7 @@ export default () => {
     };
 
     config.localIdentity = {
-        userId: 50022,
+        userId: 50021,
         username: 'yuliang'
     };
 

@@ -1,5 +1,5 @@
 import { IStorageObjectService, StorageObject, CreateStorageObjectOptions, CreateUserNodeDataObjectOptions } from '../interface/storage-object-interface';
-import { IBucketService } from '../interface/bucket-interface';
+import { IBucketService, BucketInfo } from '../interface/bucket-interface';
 import { FileStorageInfo } from '../interface/file-storage-info-interface';
 export declare class StorageObjectService implements IStorageObjectService {
     ctx: any;
@@ -9,10 +9,11 @@ export declare class StorageObjectService implements IStorageObjectService {
     storageObjectProvider: any;
     /**
      * 创建文件对象
+     * @param {BucketInfo} bucketInfo
      * @param {CreateStorageObjectOptions} options
      * @returns {Promise<StorageObject>}
      */
-    createObject(options: CreateStorageObjectOptions): Promise<StorageObject>;
+    createObject(bucketInfo: BucketInfo, options: CreateStorageObjectOptions): Promise<StorageObject>;
     /**
      * 创建用户节点数据
      * @param {CreateUserNodeDataObjectOptions} options
@@ -26,7 +27,7 @@ export declare class StorageObjectService implements IStorageObjectService {
      * @returns {Promise<StorageObject>}
      */
     updateObject(oldStorageObject: StorageObject, newFileStorageInfo: FileStorageInfo): Promise<StorageObject>;
-    deleteObject(bucketId: string, objectName: string): Promise<boolean>;
+    deleteObject(storageObject: StorageObject): Promise<boolean>;
     findOne(condition: object): Promise<StorageObject>;
     find(condition: object): Promise<StorageObject[]>;
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<StorageObject[]>;

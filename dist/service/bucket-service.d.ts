@@ -62,9 +62,13 @@ export declare class BucketService implements IBucketService {
      */
     replaceStorageObjectEventHandle(newStorageObject: StorageObject, oldStorageObject: StorageObject): void;
     /**
-     * bucket新增文件事件处理
+     * bucket新增对象事件处理
      * @param {StorageObject} storageObject
      */
     addStorageObjectEventHandle(storageObject: StorageObject): void;
+    /**
+     * 删除存储对象,自动移除所占的空间
+     * @param {StorageObject} storageObject
+     */
     deleteStorageObjectEventHandle(storageObject: StorageObject): void;
 }

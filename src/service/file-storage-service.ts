@@ -4,7 +4,6 @@ import {ApplicationError} from 'egg-freelog-base';
 import {
     FileStorageInfo, IFileStorageService, ServiceProviderEnum, AliOssInfo
 } from '../interface/file-storage-info-interface';
-import {finished as streamFinished} from 'stream';
 
 const sendToWormhole = require('stream-wormhole');
 
@@ -92,11 +91,10 @@ export class FileStorageService implements IFileStorageService {
     }
 
     async fileStreamErrorHandler(fileStream) {
-        streamFinished(fileStream, (error) => {
-            if (error) {
-                sendToWormhole(fileStream);
-            }
-        });
+        if (!fileStream) {
+            return {};
+        }
+        return sendToWormhole(fileStream);
     }
 
     /**
