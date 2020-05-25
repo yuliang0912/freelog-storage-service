@@ -109,14 +109,14 @@ export class BucketService implements IBucketService {
     }
 
     /**
-     * bucket空间使用数据统计
+     * bucket使用数据统计
      * @param {number} userId
      * @returns {Promise<any>}
      */
     async spaceStatistics(userId: number): Promise<{ storageLimit: number, bucketCount: number, totalFileSize: number }> {
         const storageLimit = 5368709120; // 目前限制为5G
         const [statisticsInfo] = await this.bucketProvider.aggregate([{
-            $match: {userId}
+            $match: {userId, bucketType: BucketTypeEnum.UserStorage}
         }, {
             $group: {_id: '$userId', totalFileSize: {$sum: '$totalFileSize'}, bucketCount: {$sum: 1}}
         }]);

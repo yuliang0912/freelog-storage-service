@@ -11,6 +11,5 @@ export declare class ObjectController {
     download(ctx: any): Promise<void>;
     destroy(ctx: any): Promise<boolean>;
     updateProperty(ctx: any): Promise<void>;
-    uploadFile(ctx: any): Promise<void>;
     fileIsExist(ctx: any): Promise<void>;
 }

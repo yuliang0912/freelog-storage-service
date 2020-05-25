@@ -18,6 +18,7 @@ class FileBaseInfoCalculateTransform extends Transform {
         this.fileSize += chunk.length;
         this.hashAlgorithm.update(chunk)
         this.push(chunk, encoding);
+        this.emit('fileSize', this.fileSize);
         callback();
     }
 

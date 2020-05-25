@@ -173,14 +173,6 @@ export class ObjectController {
     }
 
     @visitorIdentity(LoginUser)
-    // @post('/buckets/:bucketName/objects/upload') 此接口目前暂不对外提供.需要看业务实际设计
-    async uploadFile(ctx) {
-        const fileStream = await ctx.getFileStream();
-        const fileStorageInfo = await this.fileStorageService.upload(fileStream);
-        ctx.success({sha1: fileStorageInfo.sha1, fileSize: fileStorageInfo.fileSize});
-    }
-
-    @visitorIdentity(LoginUser)
     @get('/fileIsExist')
     async fileIsExist(ctx) {
         const sha1: string = ctx.checkQuery('sha1').exist().isResourceId().toLowercase().value;

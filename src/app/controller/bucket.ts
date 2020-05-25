@@ -40,7 +40,6 @@ export class BucketController {
 
         // 只允许小写字母、数字、中划线（-），且不能以短横线开头或结尾
         const bucketName: string = ctx.checkBody('bucketName').exist().isStrictBucketName().value;
-        // const bucketType: number = ctx.checkBody('bucketType').optional().toInt().in([BucketTypeEnum.UserStorage, BucketTypeEnum.SystemStorage]).default(BucketTypeEnum.UserStorage).value;
         ctx.validateParams();
 
         // 系统级存储bucket不能通过API创建.由对应的业务来处理

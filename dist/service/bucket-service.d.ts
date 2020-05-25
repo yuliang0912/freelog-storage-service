@@ -41,7 +41,7 @@ export declare class BucketService implements IBucketService {
      */
     count(condition: object): Promise<number>;
     /**
-     * bucket空间使用数据统计
+     * bucket使用数据统计
      * @param {number} userId
      * @returns {Promise<any>}
      */
