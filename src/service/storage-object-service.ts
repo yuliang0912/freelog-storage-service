@@ -129,7 +129,7 @@ export class StorageObjectService implements IStorageObjectService {
     }
 
     async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<StorageObject[]> {
-        return this.storageObjectProvider.findPageList(condition, page, pageSize, projection.join(''), orderBy);
+        return this.storageObjectProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
     }
 
     async count(condition: object): Promise<number> {

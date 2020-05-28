@@ -3,7 +3,7 @@ import {parser} from 'stream-json';
 import {provide, inject, scope} from 'midway';
 import {streamObject} from 'stream-json/streamers/StreamObject';
 import {JsonObjectOperation} from '../../interface/common-interface';
-
+const sendToWormhole = require('stream-wormhole');
 @scope('Singleton')
 @provide('userNodeDataFileOperation')
 export class UserNodeDataFileOperation {
@@ -25,7 +25,20 @@ export class UserNodeDataFileOperation {
         if (!fields || !fields.length) {
             return readableStream;
         }
-        return readableStream.pipe(parser()).pipe(streamObject()).pipe(this.jsonObjectPickTransformStream(fields));
+        const streamToObject = streamObject();
+        const streamToJsonParse = parser();
+        const jsonObjectPick = this.jsonObjectPickTransformStream(fields);
+        [streamToObject, streamToJsonParse, jsonObjectPick].forEach(item => {
+            item.once('error', (error) => {
+                transform.emit('error', error);
+                sendToWormhole(streamToObject);
+                sendToWormhole(readableStream);
+                sendToWormhole(jsonObjectPick);
+                sendToWormhole(streamToJsonParse);
+            });
+        });
+        const transform = readableStream.pipe(streamToJsonParse).pipe(streamToObject).pipe(jsonObjectPick);
+        return transform;
     }
 
     /**

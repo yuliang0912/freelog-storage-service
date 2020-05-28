@@ -1,4 +1,3 @@
-// import {Transform} from 'stream';
 import {IApplicationContext, providerWrapper} from 'midway';
 
 const StreamBase = require('stream-json/streamers/StreamBase');

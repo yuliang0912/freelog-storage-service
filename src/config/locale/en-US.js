@@ -52,7 +52,9 @@ module.exports = {
 
     'bucket-create-count-limit-validate-failed': 'bucket超出创建限制数量(%s)',
 
-    'bucket-name-create-duplicate-error': 'bucket名称已经被使用,不能重复创建'
+    'bucket-name-create-duplicate-error': 'bucket名称已经被使用,不能重复创建',
+
+    'user-node-data-file-size limit error': '用户节点配置文件不能超过512KB',
 }
 
 

@@ -1,6 +1,6 @@
 import {NodeInfo} from './common-interface';
 import {FileStorageInfo} from './file-storage-info-interface';
-import {BucketInfo} from "./bucket-interface";
+import {BucketInfo} from './bucket-interface';
 
 export interface StorageObject {
     sha1: string;

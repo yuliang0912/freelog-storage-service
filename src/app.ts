@@ -10,6 +10,9 @@ export default class AppBootHook {
 
     async willReady() {
         this.decodeOssConfig();
+        process.on('uncaughtException', function (error) {
+            console.log('uncaughtException', error.message);
+        });
     }
 
     decodeOssConfig() {

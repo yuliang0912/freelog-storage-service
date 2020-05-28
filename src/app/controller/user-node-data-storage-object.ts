@@ -7,6 +7,8 @@ import {FileStorageInfo, IFileStorageService} from '../../interface/file-storage
 import {CreateUserNodeDataObjectOptions, IStorageObjectService} from '../../interface/storage-object-interface';
 import {JsonObjectOperation, JsonObjectOperationTypeEnum, NodeInfo} from '../../interface/common-interface';
 
+// import {finished} from 'stream';
+
 @provide()
 @priority(1)
 @controller('/v1/storages/buckets/.UserNodeData')
@@ -127,9 +129,8 @@ export class UserNodeDataObjectController {
     @get('/objects/:nodeId/customPick')
     async download(ctx) {
         const nodeId: number = ctx.checkParams('nodeId').exist().toInt().value;
-        const fields: string[] = ctx.checkQuery('fields').optional().toSplitArray().default([]).value;
+        const fields: string[] = ctx.checkQuery('fields').optional().len(1).toSplitArray().default([]).value;
         ctx.validateParams();
-
         const nodeInfo: NodeInfo = await ctx.curlIntranetApi(`${ctx.webApi.nodeInfo}/${nodeId}`);
         if (!nodeInfo) {
             throw new ArgumentError(ctx.gettext('node-entity-not-found'));
@@ -154,10 +155,13 @@ export class UserNodeDataObjectController {
             if (status < 200 || status > 299) {
                 throw new ApplicationError(ctx.gettext('文件流读取失败'), {httpStatus: status});
             }
-            ctx.status = status;
-            ctx.attachment(storageObject.objectName);
             return res;
         });
-        ctx.body = this.userNodeDataFileOperation.pick(fileStream, fields);
+        ctx.attachment(storageObject.objectName);
+        ctx.set('Transfer-Encoding', 'chunked');
+        const stream = ctx.body = this.userNodeDataFileOperation.pick(fileStream, fields);
+        stream.on('error', error => {
+            console.log('API-customPick error:' + error.toString());
+        });
     }
 }

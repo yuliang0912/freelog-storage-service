@@ -1,5 +1,6 @@
 import { FileStorageInfo, IFileStorageService } from '../interface/file-storage-info-interface';
 export declare class FileStorageService implements IFileStorageService {
+    ctx: any;
     ossClient: any;
     uploadConfig: any;
     fileStorageProvider: any;

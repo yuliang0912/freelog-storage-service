@@ -69,4 +69,4 @@ export function jsonObjectReplaceTransformStream(context: IApplicationContext) {
 providerWrapper([{
     id: 'jsonObjectReplaceTransformStream',
     provider: jsonObjectReplaceTransformStream,
-}])
+}]);

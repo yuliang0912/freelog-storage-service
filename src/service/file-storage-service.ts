@@ -10,6 +10,8 @@ const sendToWormhole = require('stream-wormhole');
 @provide('fileStorageService')
 export class FileStorageService implements IFileStorageService {
 
+    @inject()
+    ctx;
     @plugin()
     ossClient;
     @config('uploadConfig')
@@ -48,7 +50,11 @@ export class FileStorageService implements IFileStorageService {
         const fileStreamCheckTask = this.userNodeDataFileOperation.checkJsonObject(fileStream);
         const fileStreamUploadTask = this._uploadFile(fileStream);
 
-        const [fileStorageInfo] = await Promise.all([fileStreamUploadTask, fileStreamCheckTask]);
+        const [fileStorageInfo] = await Promise.all([fileStreamUploadTask, fileStreamCheckTask])
+
+        if (fileStorageInfo.fileSize > 524288) {
+            throw new ApplicationError(this.ctx.gettext('user-node-data-file-size limit error'));
+        }
 
         const existingFileStorageInfo = await this.findBySha1(fileStorageInfo.sha1);
         if (existingFileStorageInfo) {
@@ -71,6 +77,12 @@ export class FileStorageService implements IFileStorageService {
         }
         const temporaryObjectKey = `temporary_upload/${v4().replace(/-/g, '')}`.toLowerCase();
         const fileBaseInfoTransform = this.fileBaseInfoCalculateTransform('sha1', 'hex');
+        fileBaseInfoTransform.on('fileSize', (fileSize) => {
+            if (fileSize > 524288) {
+                // fileStream.destroy();
+                // throw new ApplicationError(this.ctx.gettext('user-node-data-file-size limit error'));
+            }
+        })
         await this.ossClient.putStream(temporaryObjectKey, fileStream.pipe(fileBaseInfoTransform));
         const objectKey = `user-file-storage/${fileBaseInfoTransform.hashAlgorithmValue}`;
         await this.copyFile(temporaryObjectKey, objectKey);
