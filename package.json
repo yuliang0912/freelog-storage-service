@@ -5,31 +5,32 @@
   "private": true,
   "dependencies": {
     "ali-oss": "^6.8.0",
-    "egg-freelog-base": "^1.2.38",
+    "egg-freelog-base": "^1.2.39",
     "egg-freelog-database": "^1.0.17",
     "egg-scripts": "^2.10.0",
     "image-size": "^0.8.3",
     "jsonschema": "^1.2.6",
-    "midway": "^1.19.1",
-    "mime": "^2.4.5",
-    "moment": "^2.25.3",
-    "mongoose": "^5.9.14",
+    "midway": "^1.20.0",
+    "mime": "^2.4.6",
+    "moment": "^2.26.0",
+    "mongoose": "^5.9.16",
+    "probe-image-size": "^5.0.0",
     "stream-json": "^1.5.0",
     "stream-wormhole": "^1.1.0",
     "uuid": "^7.0.3"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
-    "@types/node": "^10.5.5",
+    "@types/node": "^10.17.24",
     "cross-env": "^6.0.0",
     "egg-ci": "^1.8.0",
     "midway-bin": "1",
     "midway-mock": "1",
-    "ts-node": "^8.10.1",
+    "ts-node": "^8.10.2",
     "tslib": "^1.13.0",
     "tslint": "^5.11.0",
     "tslint-midway-contrib": "1",
-    "typescript": "^3.9.2"
+    "typescript": "^3.9.3"
   },
   "engines": {
     "node": ">=10.16.0"

@@ -15,7 +15,6 @@ export class BucketController {
     async index(ctx) {
         const bucketType: number = ctx.checkQuery('bucketType').optional().toInt().in([0, 1, 2]).default(0).value;
         ctx.validateParams();
-        
         const condition = {
             userId: ctx.request.userId
         };

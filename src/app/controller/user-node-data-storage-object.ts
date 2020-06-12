@@ -4,7 +4,7 @@ import {inject, controller, get, post, put, provide, priority} from 'midway';
 import {LoginUser, ApplicationError, ArgumentError} from 'egg-freelog-base/index';
 import {IBucketService, SystemBucketName} from '../../interface/bucket-interface';
 import {FileStorageInfo, IFileStorageService} from '../../interface/file-storage-info-interface';
-import {CreateUserNodeDataObjectOptions, IStorageObjectService} from '../../interface/storage-object-interface';
+import {CreateUserNodeDataObjectOptions, IObjectStorageService} from '../../interface/object-storage-interface';
 import {JsonObjectOperation, JsonObjectOperationTypeEnum, NodeInfo} from '../../interface/common-interface';
 
 // import {finished} from 'stream';
@@ -19,7 +19,7 @@ export class UserNodeDataObjectController {
     @inject()
     fileStorageService: IFileStorageService;
     @inject()
-    storageObjectService: IStorageObjectService;
+    objectStorageService: IObjectStorageService;
     @inject()
     userNodeDataFileOperation;
 
@@ -68,7 +68,7 @@ export class UserNodeDataObjectController {
                     storageInfo: fileStorageInfo.storageInfo
                 }
             };
-            await this.storageObjectService.createUserNodeObject(updateFileOptions).then(ctx.success);
+            await this.objectStorageService.createUserNodeObject(updateFileOptions).then(ctx.success);
         } catch (error) {
             if (fileStream) {
                 await sendToWormhole(fileStream);
@@ -96,7 +96,7 @@ export class UserNodeDataObjectController {
         if (!bucketInfo) {
             throw new ApplicationError(ctx.gettext('bucket-entity-not-found'));
         }
-        const storageObject = await this.storageObjectService.findOne({
+        const storageObject = await this.objectStorageService.findOne({
             bucketId: bucketInfo.bucketId,
             objectName: `${nodeInfo.nodeDomain}.ncfg`
         });
@@ -122,7 +122,7 @@ export class UserNodeDataObjectController {
 
         const newFileStorageInfo = await this.fileStorageService.uploadUserNodeDataFile(transformStream);
 
-        await this.storageObjectService.updateObject(storageObject, newFileStorageInfo).then(ctx.success);
+        await this.objectStorageService.updateObject(storageObject, newFileStorageInfo).then(ctx.success);
     }
 
     @visitorIdentity(LoginUser)
@@ -142,7 +142,7 @@ export class UserNodeDataObjectController {
         if (!bucketInfo) {
             return ctx.body = new Buffer('{}');
         }
-        const storageObject = await this.storageObjectService.findOne({
+        const storageObject = await this.objectStorageService.findOne({
             bucketId: bucketInfo.bucketId,
             objectName: `${nodeInfo.nodeDomain}.ncfg`
         });

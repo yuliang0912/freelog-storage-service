@@ -1,4 +1,4 @@
-import { StorageObject } from './storage-object-interface';
+import { ObjectStorageInfo } from './object-storage-interface';
 export declare enum BucketTypeEnum {
     UserStorage = 1,
     SystemStorage = 2
@@ -25,9 +25,9 @@ export interface IBucketService {
     createBucket(bucket: BucketInfo): Promise<BucketInfo>;
     createOrFindSystemBucket(bucket: BucketInfo): Promise<BucketInfo>;
     deleteBucket(bucketName: string): Promise<boolean>;
-    replaceStorageObjectEventHandle(newStorageObject: StorageObject, oldStorageObject: StorageObject): void;
-    addStorageObjectEventHandle(storageObject: StorageObject): void;
-    deleteStorageObjectEventHandle(storageObject: StorageObject): void;
+    replaceStorageObjectEventHandle(newObjectStorage: ObjectStorageInfo, oldObjectStorage: ObjectStorageInfo): void;
+    addStorageObjectEventHandle(objectStorageInfo: ObjectStorageInfo): void;
+    deleteStorageObjectEventHandle(objectStorageInfo: ObjectStorageInfo): void;
     findOne(condition: object): Promise<BucketInfo>;
     find(condition: object): Promise<BucketInfo[]>;
     count(condition: object): Promise<number>;

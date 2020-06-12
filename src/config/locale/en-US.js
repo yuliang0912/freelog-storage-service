@@ -54,7 +54,9 @@ module.exports = {
 
     'bucket-name-create-duplicate-error': 'bucket名称已经被使用,不能重复创建',
 
-    'user-node-data-file-size limit error': '用户节点配置文件不能超过512KB',
+    'user-node-data-file-size-limit-error': '用户节点配置文件不能超过512KB',
+
+    'image-file-analyze-failed': '文件分析失败,请重新选择正确格式的图片',
 }
 
 

@@ -60,7 +60,7 @@ let UserNodeDataObjectController = /** @class */ (() => {
                         storageInfo: fileStorageInfo.storageInfo
                     }
                 };
-                await this.storageObjectService.createUserNodeObject(updateFileOptions).then(ctx.success);
+                await this.objectStorageService.createUserNodeObject(updateFileOptions).then(ctx.success);
             }
             catch (error) {
                 if (fileStream) {
@@ -85,7 +85,7 @@ let UserNodeDataObjectController = /** @class */ (() => {
             if (!bucketInfo) {
                 throw new index_1.ApplicationError(ctx.gettext('bucket-entity-not-found'));
             }
-            const storageObject = await this.storageObjectService.findOne({
+            const storageObject = await this.objectStorageService.findOne({
                 bucketId: bucketInfo.bucketId,
                 objectName: `${nodeInfo.nodeDomain}.ncfg`
             });
@@ -108,7 +108,7 @@ let UserNodeDataObjectController = /** @class */ (() => {
             const transformStream = this.userNodeDataFileOperation.edit(fileStream, objectOperations);
             transformStream.filename = storageObject.objectName;
             const newFileStorageInfo = await this.fileStorageService.uploadUserNodeDataFile(transformStream);
-            await this.storageObjectService.updateObject(storageObject, newFileStorageInfo).then(ctx.success);
+            await this.objectStorageService.updateObject(storageObject, newFileStorageInfo).then(ctx.success);
         }
         async download(ctx) {
             const nodeId = ctx.checkParams('nodeId').exist().toInt().value;
@@ -125,7 +125,7 @@ let UserNodeDataObjectController = /** @class */ (() => {
             if (!bucketInfo) {
                 return ctx.body = new Buffer('{}');
             }
-            const storageObject = await this.storageObjectService.findOne({
+            const storageObject = await this.objectStorageService.findOne({
                 bucketId: bucketInfo.bucketId,
                 objectName: `${nodeInfo.nodeDomain}.ncfg`
             });
@@ -158,7 +158,7 @@ let UserNodeDataObjectController = /** @class */ (() => {
     __decorate([
         midway_1.inject(),
         __metadata("design:type", Object)
-    ], UserNodeDataObjectController.prototype, "storageObjectService", void 0);
+    ], UserNodeDataObjectController.prototype, "objectStorageService", void 0);
     __decorate([
         midway_1.inject(),
         __metadata("design:type", Object)
