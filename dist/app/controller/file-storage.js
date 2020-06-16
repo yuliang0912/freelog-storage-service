@@ -13,64 +13,80 @@ exports.FileStorageController = void 0;
 const midway_1 = require("midway");
 const egg_freelog_base_1 = require("egg-freelog-base");
 const vistorIdentityDecorator_1 = require("../../extend/vistorIdentityDecorator");
-let FileStorageController = /** @class */ (() => {
-    let FileStorageController = class FileStorageController {
-        async uploadFile(ctx) {
-            const fileStream = await ctx.getFileStream({ requireFile: false });
-            if (!fileStream || !fileStream.filename) {
-                throw new egg_freelog_base_1.ArgumentError(ctx.gettext('params-required-validate-failed', 'file'));
-            }
-            ctx.request.body = fileStream.fields;
-            const resourceType = ctx.checkBody('resourceType').optional().isResourceType().toLow().value;
-            ctx.validateParams();
-            const fileStorageInfo = await this.fileStorageService.upload(fileStream, resourceType).catch(error => {
-                return this.fileStorageService.fileStreamErrorHandler(fileStream).finally(() => {
-                    throw error;
-                });
+let FileStorageController = class FileStorageController {
+    async uploadFile(ctx) {
+        const fileStream = await ctx.getFileStream({ requireFile: false });
+        if (!fileStream || !fileStream.filename) {
+            throw new egg_freelog_base_1.ArgumentError(ctx.gettext('params-required-validate-failed', 'file'));
+        }
+        ctx.request.body = fileStream.fields;
+        const resourceType = ctx.checkBody('resourceType').optional().isResourceType().toLow().value;
+        ctx.validateParams();
+        const fileStorageInfo = await this.fileStorageService.upload(fileStream, resourceType).catch(error => {
+            return this.fileStorageService.fileStreamErrorHandler(fileStream).finally(() => {
+                throw error;
             });
-            ctx.success({ sha1: fileStorageInfo.sha1, fileSize: fileStorageInfo.fileSize, resourceType });
+        });
+        ctx.success({ sha1: fileStorageInfo.sha1, fileSize: fileStorageInfo.fileSize });
+    }
+    async uploadImage(ctx) {
+        const fileStream = await ctx.getFileStream({ requireFile: false });
+        if (!fileStream || !fileStream.filename) {
+            throw new egg_freelog_base_1.ArgumentError(ctx.gettext('params-required-validate-failed', 'file'));
         }
-        async fileIsExist(ctx) {
-            const sha1 = ctx.checkQuery('sha1').exist().isResourceId().toLowercase().value;
-            ctx.validateParams();
-            await this.fileStorageService.findBySha1(sha1).then(fileStorageInfo => ctx.success(Boolean(fileStorageInfo)));
-        }
-        async show(ctx) {
-            const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
-            ctx.validateParams();
-            await this.fileStorageService.findBySha1(sha1).then(ctx.success);
-        }
-    };
-    __decorate([
-        midway_1.inject(),
-        __metadata("design:type", Object)
-    ], FileStorageController.prototype, "fileStorageService", void 0);
-    __decorate([
-        vistorIdentityDecorator_1.visitorIdentity(egg_freelog_base_1.LoginUser | egg_freelog_base_1.InternalClient),
-        midway_1.post('/upload'),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object]),
-        __metadata("design:returntype", Promise)
-    ], FileStorageController.prototype, "uploadFile", null);
-    __decorate([
-        vistorIdentityDecorator_1.visitorIdentity(egg_freelog_base_1.LoginUser | egg_freelog_base_1.InternalClient),
-        midway_1.get('/fileIsExist'),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object]),
-        __metadata("design:returntype", Promise)
-    ], FileStorageController.prototype, "fileIsExist", null);
-    __decorate([
-        midway_1.get('/:sha1'),
-        vistorIdentityDecorator_1.visitorIdentity(egg_freelog_base_1.InternalClient),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object]),
-        __metadata("design:returntype", Promise)
-    ], FileStorageController.prototype, "show", null);
-    FileStorageController = __decorate([
-        midway_1.provide(),
-        midway_1.controller('/v1/storages/files')
-    ], FileStorageController);
-    return FileStorageController;
-})();
+        const fileStorageInfo = await this.fileStorageService.uploadImage(fileStream).catch(error => {
+            return this.fileStorageService.fileStreamErrorHandler(fileStream).finally(() => {
+                throw error;
+            });
+        });
+        ctx.success({ sha1: fileStorageInfo.sha1, fileSize: fileStorageInfo.fileSize });
+    }
+    async fileIsExist(ctx) {
+        const sha1 = ctx.checkQuery('sha1').exist().isResourceId().toLowercase().value;
+        ctx.validateParams();
+        await this.fileStorageService.findBySha1(sha1).then(fileStorageInfo => ctx.success(Boolean(fileStorageInfo)));
+    }
+    async show(ctx) {
+        const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
+        ctx.validateParams();
+        await this.fileStorageService.findBySha1(sha1).then(ctx.success);
+    }
+};
+__decorate([
+    midway_1.inject(),
+    __metadata("design:type", Object)
+], FileStorageController.prototype, "fileStorageService", void 0);
+__decorate([
+    vistorIdentityDecorator_1.visitorIdentity(egg_freelog_base_1.LoginUser | egg_freelog_base_1.InternalClient),
+    midway_1.post('/upload'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], FileStorageController.prototype, "uploadFile", null);
+__decorate([
+    vistorIdentityDecorator_1.visitorIdentity(egg_freelog_base_1.LoginUser | egg_freelog_base_1.InternalClient),
+    midway_1.get('/uploadImage'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], FileStorageController.prototype, "uploadImage", null);
+__decorate([
+    vistorIdentityDecorator_1.visitorIdentity(egg_freelog_base_1.LoginUser | egg_freelog_base_1.InternalClient),
+    midway_1.get('/fileIsExist'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], FileStorageController.prototype, "fileIsExist", null);
+__decorate([
+    midway_1.get('/:sha1'),
+    vistorIdentityDecorator_1.visitorIdentity(egg_freelog_base_1.InternalClient),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], FileStorageController.prototype, "show", null);
+FileStorageController = __decorate([
+    midway_1.provide(),
+    midway_1.controller('/v1/storages/files')
+], FileStorageController);
 exports.FileStorageController = FileStorageController;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZmlsZS1zdG9yYWdlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2FwcC9jb250cm9sbGVyL2ZpbGUtc3RvcmFnZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEQ7QUFDOUQsdURBQTBFO0FBQzFFLGtGQUFxRTtBQUtyRTtJQUFBLElBQWEscUJBQXFCLEdBQWxDLE1BQWEscUJBQXFCO1FBTzlCLEtBQUssQ0FBQyxVQUFVLENBQUMsR0FBRztZQUNoQixNQUFNLFVBQVUsR0FBRyxNQUFNLEdBQUcsQ0FBQyxhQUFhLENBQUMsRUFBQyxXQUFXLEVBQUUsS0FBSyxFQUFDLENBQUMsQ0FBQztZQUNqRSxJQUFJLENBQUMsVUFBVSxJQUFJLENBQUMsVUFBVSxDQUFDLFFBQVEsRUFBRTtnQkFDckMsTUFBTSxJQUFJLGdDQUFhLENBQUMsR0FBRyxDQUFDLE9BQU8sQ0FBQyxpQ0FBaUMsRUFBRSxNQUFNLENBQUMsQ0FBQyxDQUFDO2FBQ25GO1lBQ0QsR0FBRyxDQUFDLE9BQU8sQ0FBQyxJQUFJLEdBQUcsVUFBVSxDQUFDLE1BQU0sQ0FBQztZQUNyQyxNQUFNLFlBQVksR0FBVyxHQUFHLENBQUMsU0FBUyxDQUFDLGNBQWMsQ0FBQyxDQUFDLFFBQVEsRUFBRSxDQUFDLGNBQWMsRUFBRSxDQUFDLEtBQUssRUFBRSxDQUFDLEtBQUssQ0FBQztZQUNyRyxHQUFHLENBQUMsY0FBYyxFQUFFLENBQUM7WUFDckIsTUFBTSxlQUFlLEdBQUcsTUFBTSxJQUFJLENBQUMsa0JBQWtCLENBQUMsTUFBTSxDQUFDLFVBQVUsRUFBRSxZQUFZLENBQUMsQ0FBQyxLQUFLLENBQUMsS0FBSyxDQUFDLEVBQUU7Z0JBQ2pHLE9BQU8sSUFBSSxDQUFDLGtCQUFrQixDQUFDLHNCQUFzQixDQUFDLFVBQVUsQ0FBQyxDQUFDLE9BQU8sQ0FBQyxHQUFHLEVBQUU7b0JBQzNFLE1BQU0sS0FBSyxDQUFDO2dCQUNoQixDQUFDLENBQUMsQ0FBQztZQUNQLENBQUMsQ0FBQyxDQUFBO1lBQ0YsR0FBRyxDQUFDLE9BQU8sQ0FBQyxFQUFDLElBQUksRUFBRSxlQUFlLENBQUMsSUFBSSxFQUFFLFFBQVEsRUFBRSxlQUFlLENBQUMsUUFBUSxFQUFFLFlBQVksRUFBQyxDQUFDLENBQUM7UUFDaEcsQ0FBQztRQUlELEtBQUssQ0FBQyxXQUFXLENBQUMsR0FBRztZQUNqQixNQUFNLElBQUksR0FBVyxHQUFHLENBQUMsVUFBVSxDQUFDLE1BQU0sQ0FBQyxDQUFDLEtBQUssRUFBRSxDQUFDLFlBQVksRUFBRSxDQUFDLFdBQVcsRUFBRSxDQUFDLEtBQUssQ0FBQztZQUN2RixHQUFHLENBQUMsY0FBYyxFQUFFLENBQUM7WUFFckIsTUFBTSxJQUFJLENBQUMsa0JBQWtCLENBQUMsVUFBVSxDQUFDLElBQUksQ0FBQyxDQUFDLElBQUksQ0FBQyxlQUFlLENBQUMsRUFBRSxDQUFDLEdBQUcsQ0FBQyxPQUFPLENBQUMsT0FBTyxDQUFDLGVBQWUsQ0FBQyxDQUFDLENBQUMsQ0FBQztRQUNsSCxDQUFDO1FBSUQsS0FBSyxDQUFDLElBQUksQ0FBQyxHQUFHO1lBQ1YsTUFBTSxJQUFJLEdBQUcsR0FBRyxDQUFDLFdBQVcsQ0FBQyxNQUFNLENBQUMsQ0FBQyxLQUFLLEVBQUUsQ0FBQyxNQUFNLEVBQUUsQ0FBQyxLQUFLLENBQUM7WUFDNUQsR0FBRyxDQUFDLGNBQWMsRUFBRSxDQUFDO1lBQ3JCLE1BQU0sSUFBSSxDQUFDLGtCQUFrQixDQUFDLFVBQVUsQ0FBQyxJQUFJLENBQUMsQ0FBQyxJQUFJLENBQUMsR0FBRyxDQUFDLE9BQU8sQ0FBQyxDQUFDO1FBQ3JFLENBQUM7S0FDSixDQUFBO0lBcENHO1FBREMsZUFBTSxFQUFFOztxRUFDK0I7SUFJeEM7UUFGQyx5Q0FBZSxDQUFDLDRCQUFTLEdBQUcsaUNBQWMsQ0FBQztRQUMzQyxhQUFJLENBQUMsU0FBUyxDQUFDOzs7OzJEQWVmO0lBSUQ7UUFGQyx5Q0FBZSxDQUFDLDRCQUFTLEdBQUcsaUNBQWMsQ0FBQztRQUMzQyxZQUFHLENBQUMsY0FBYyxDQUFDOzs7OzREQU1uQjtJQUlEO1FBRkMsWUFBRyxDQUFDLFFBQVEsQ0FBQztRQUNiLHlDQUFlLENBQUMsaUNBQWMsQ0FBQzs7OztxREFLL0I7SUF0Q1EscUJBQXFCO1FBRmpDLGdCQUFPLEVBQUU7UUFDVCxtQkFBVSxDQUFDLG9CQUFvQixDQUFDO09BQ3BCLHFCQUFxQixDQXVDakM7SUFBRCw0QkFBQztLQUFBO0FBdkNZLHNEQUFxQiJ9
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZmlsZS1zdG9yYWdlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2FwcC9jb250cm9sbGVyL2ZpbGUtc3RvcmFnZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEQ7QUFDOUQsdURBQTBFO0FBQzFFLGtGQUFxRTtBQUtyRSxJQUFhLHFCQUFxQixHQUFsQyxNQUFhLHFCQUFxQjtJQU85QixLQUFLLENBQUMsVUFBVSxDQUFDLEdBQUc7UUFDaEIsTUFBTSxVQUFVLEdBQUcsTUFBTSxHQUFHLENBQUMsYUFBYSxDQUFDLEVBQUMsV0FBVyxFQUFFLEtBQUssRUFBQyxDQUFDLENBQUM7UUFDakUsSUFBSSxDQUFDLFVBQVUsSUFBSSxDQUFDLFVBQVUsQ0FBQyxRQUFRLEVBQUU7WUFDckMsTUFBTSxJQUFJLGdDQUFhLENBQUMsR0FBRyxDQUFDLE9BQU8sQ0FBQyxpQ0FBaUMsRUFBRSxNQUFNLENBQUMsQ0FBQyxDQUFDO1NBQ25GO1FBQ0QsR0FBRyxDQUFDLE9BQU8sQ0FBQyxJQUFJLEdBQUcsVUFBVSxDQUFDLE1BQU0sQ0FBQztRQUNyQyxNQUFNLFlBQVksR0FBVyxHQUFHLENBQUMsU0FBUyxDQUFDLGNBQWMsQ0FBQyxDQUFDLFFBQVEsRUFBRSxDQUFDLGNBQWMsRUFBRSxDQUFDLEtBQUssRUFBRSxDQUFDLEtBQUssQ0FBQztRQUNyRyxHQUFHLENBQUMsY0FBYyxFQUFFLENBQUM7UUFDckIsTUFBTSxlQUFlLEdBQUcsTUFBTSxJQUFJLENBQUMsa0JBQWtCLENBQUMsTUFBTSxDQUFDLFVBQVUsRUFBRSxZQUFZLENBQUMsQ0FBQyxLQUFLLENBQUMsS0FBSyxDQUFDLEVBQUU7WUFDakcsT0FBTyxJQUFJLENBQUMsa0JBQWtCLENBQUMsc0JBQXNCLENBQUMsVUFBVSxDQUFDLENBQUMsT0FBTyxDQUFDLEdBQUcsRUFBRTtnQkFDM0UsTUFBTSxLQUFLLENBQUM7WUFDaEIsQ0FBQyxDQUFDLENBQUM7UUFD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

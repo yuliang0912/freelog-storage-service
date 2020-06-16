@@ -10,5 +10,6 @@ export declare class ObjectController {
     createOrReplace(ctx: any): Promise<void>;
     download(ctx: any): Promise<void>;
     destroy(ctx: any): Promise<boolean>;
+    batchDestroy(ctx: any): Promise<void>;
     updateProperty(ctx: any): Promise<void>;
 }

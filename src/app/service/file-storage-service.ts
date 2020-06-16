@@ -1,8 +1,8 @@
 import {v4} from 'uuid';
-import {config, plugin, inject, provide} from 'midway';
+import {inject, provide} from 'midway';
 import {ApplicationError} from 'egg-freelog-base';
 import {
-    FileStorageInfo, IFileStorageService, ServiceProviderEnum, AliOssInfo, FilePropertyAnalyzeInfo
+    FileStorageInfo, IFileStorageService, ServiceProviderEnum, FilePropertyAnalyzeInfo
 } from '../../interface/file-storage-info-interface';
 import {isString} from 'lodash';
 
@@ -13,10 +13,6 @@ export class FileStorageService implements IFileStorageService {
 
     @inject()
     ctx;
-    @plugin()
-    ossClient;
-    @config('uploadConfig')
-    uploadConfig;
     @inject()
     filePropertyAnalyzeHandler;
     @inject()
@@ -27,6 +23,8 @@ export class FileStorageService implements IFileStorageService {
     userNodeDataFileOperation;
     @inject()
     fileBaseInfoCalculateTransform: (algorithm?: string, encoding?: string) => any;
+    @inject()
+    objectStorageServiceClient;
 
     /**
      * 上传文件,并分析文件属性
@@ -40,18 +38,7 @@ export class FileStorageService implements IFileStorageService {
         if (this.isCanAnalyzeFileProperty(resourceType)) {
             await this.analyzeFileProperty(fileStorageInfo, resourceType);
         }
-
-        const existingFileStorageInfo = await this.findBySha1(fileStorageInfo.sha1);
-        if (existingFileStorageInfo) {
-            return existingFileStorageInfo;
-        }
-
-        const temporaryObjectKey = fileStorageInfo.storageInfo.objectKey;
-        const objectKey = `user-file-storage/${fileStorageInfo.sha1}`;
-        await this.copyFile(temporaryObjectKey, objectKey);
-        fileStorageInfo.storageInfo.objectKey = objectKey;
-
-        return this.fileStorageProvider.create(fileStorageInfo);
+        return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'resource-file-storage');
     }
 
     /**
@@ -69,48 +56,27 @@ export class FileStorageService implements IFileStorageService {
         if (fileStorageInfo.fileSize > 524288) {
             throw new ApplicationError(this.ctx.gettext('user-node-data-file-size-limit-error'));
         }
-
-        const existingFileStorageInfo = await this.findBySha1(fileStorageInfo.sha1);
-        if (existingFileStorageInfo) {
-            return existingFileStorageInfo;
-        }
-
-        const temporaryObjectKey = fileStorageInfo.storageInfo.objectKey;
-        const objectKey = `user-file-storage/${fileStorageInfo.sha1}`;
-        await this.copyFile(temporaryObjectKey, objectKey);
-        fileStorageInfo.storageInfo.objectKey = objectKey;
-
-        return this.fileStorageProvider.create(fileStorageInfo);
+        return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'user-node-data');
     }
 
     /**
-     * 上传文件
+     * 上传图片
      * @param fileStream
-     * @returns {Promise<void>}
-     * @private
+     * @returns {Promise<FileStorageInfo>}
      */
-    async _uploadFileToTemporaryDirectory(fileStream): Promise<FileStorageInfo> {
+    async uploadImage(fileStream): Promise<FileStorageInfo> {
 
-        if (!fileStream.filename) {
-            throw new ApplicationError('upload file error,filename not existing');
+        const resourceType = 'image';
+        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(fileStream);
+        if (this.isCanAnalyzeFileProperty(resourceType)) {
+            await this.analyzeFileProperty(fileStorageInfo, resourceType);
         }
-        const temporaryObjectKey = `temporary_upload/${v4().replace(/-/g, '')}`.toLowerCase();
-        const fileBaseInfoTransform = this.fileBaseInfoCalculateTransform('sha1', 'hex');
-        await this.ossClient.putStream(temporaryObjectKey, fileStream.pipe(fileBaseInfoTransform));
+        // 不允许超过2M
+        if (fileStorageInfo.fileSize > 2097152) {
+            throw new ApplicationError(this.ctx.gettext('user-node-data-file-size-limit-error'));
+        }
 
-        const aliOssStorageInfo: AliOssInfo = {
-            region: this.uploadConfig.aliOss.region,
-            bucket: this.uploadConfig.aliOss.bucket,
-            objectKey: temporaryObjectKey
-        };
-
-        return {
-            sha1: fileBaseInfoTransform.hashAlgorithmValue,
-            fileSize: fileBaseInfoTransform.fileSize,
-            serviceProvider: ServiceProviderEnum.AliOss,
-            storageInfo: aliOssStorageInfo,
-            fileUrl: `http://${aliOssStorageInfo.bucket}.${aliOssStorageInfo.region}${this.uploadConfig.aliOss.internal ? '-internal' : ''}.aliyuncs.com/${aliOssStorageInfo.objectKey}`
-        };
+        return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'preview-image');
     }
 
     /**
@@ -126,22 +92,35 @@ export class FileStorageService implements IFileStorageService {
     }
 
     /**
-     * 复制文件
-     * @param oldObjectKey
-     * @param newObjectKey
-     * @returns {Promise<Promise<any>>}
-     */
-    async copyFile(oldObjectKey, newObjectKey) {
-        return this.ossClient.copyFile(newObjectKey, oldObjectKey);
-    }
-
-    /**
      * 根据sha1值获取文件
      * @param {string} sha1
      * @returns {Promise<FileStorageInfo>}
      */
     async findBySha1(sha1: string): Promise<FileStorageInfo> {
         return this.fileStorageProvider.findOne({sha1});
+    }
+
+    /**
+     * 获取签名的文件URL读取路径
+     * @param {FileStorageInfo} fileStorageInfo
+     * @returns {string}
+     */
+    getSignatureUrl(fileStorageInfo: FileStorageInfo): string {
+        const ossClient = this.objectStorageServiceClient.setProvider(fileStorageInfo.serviceProvider).setBucket(fileStorageInfo.storageInfo.bucket).build();
+        return ossClient.givenClient.client.signatureUrl(fileStorageInfo.storageInfo.objectKey, {
+            method: 'GET', expires: 180
+        });
+    }
+
+    /**
+     * 获取文件流
+     * @param {FileStorageInfo} fileStorageInfo
+     * @returns {any}
+     */
+    async getFileStream(fileStorageInfo: FileStorageInfo): Promise<any> {
+        const ossClient = this.objectStorageServiceClient.setProvider(fileStorageInfo.serviceProvider).setBucket(fileStorageInfo.storageInfo.bucket).build();
+        const {stream} = await ossClient.getStream(fileStorageInfo.storageInfo.objectKey);
+        return stream;
     }
 
     /**
@@ -170,7 +149,8 @@ export class FileStorageService implements IFileStorageService {
         } else if (cacheResult) {
             return cacheResult;
         }
-        const analyzeResult = await this.filePropertyAnalyzeHandler.analyzeFileProperty(fileStorageInfo.fileUrl, resourceType);
+        const signatureUrl = this.getSignatureUrl(fileStorageInfo);
+        const analyzeResult = await this.filePropertyAnalyzeHandler.analyzeFileProperty(signatureUrl, resourceType);
         cacheResult = await this.systemAnalysisRecordProvider.create({
             sha1: fileStorageInfo.sha1, resourceType, provider: analyzeResult.provider,
             systemProperty: analyzeResult.fileProperty,
@@ -181,5 +161,53 @@ export class FileStorageService implements IFileStorageService {
             return Promise.reject(analyzeResult.error);
         }
         return cacheResult;
+    }
+
+    /**
+     * 上传文件到临时目录
+     * @param fileStream
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _uploadFileToTemporaryDirectory(fileStream, bucketName = 'freelog-shenzhen'): Promise<FileStorageInfo> {
+        if (!fileStream.filename) {
+            throw new ApplicationError('upload file error,filename not existing');
+        }
+
+        const temporaryObjectKey = `temporary_upload/${v4().replace(/-/g, '')}`.toLowerCase();
+        const fileBaseInfoTransform = this.fileBaseInfoCalculateTransform('sha1', 'hex');
+        const ossClient = this.objectStorageServiceClient.setProvider('aliOss').setBucket(bucketName).build();
+        await ossClient.putStream(temporaryObjectKey, fileStream.pipe(fileBaseInfoTransform));
+        // 此处代码后期需要等egg-freelog-base优化
+        const {region, bucket} = ossClient.config;
+        return {
+            sha1: fileBaseInfoTransform.hashAlgorithmValue,
+            fileSize: fileBaseInfoTransform.fileSize,
+            serviceProvider: ServiceProviderEnum.AliOss,
+            storageInfo: {
+                region, bucket, objectKey: temporaryObjectKey
+            }
+        };
+    }
+
+    /**
+     * 复制文件(临时目录copy到正式目录),并且保存文件信息入库
+     * @param {FileStorageInfo} fileStorageInfo
+     * @param targetDirectory
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _copyFileAndSaveFileStorageInfo(fileStorageInfo: FileStorageInfo, targetDirectory, bucketName = 'freelog-shenzhen') {
+        const existingFileStorageInfo = await this.findBySha1(fileStorageInfo.sha1);
+        if (existingFileStorageInfo) {
+            return existingFileStorageInfo;
+        }
+        const temporaryObjectKey = fileStorageInfo.storageInfo.objectKey;
+        const objectKey = `image-file-storage/${fileStorageInfo.sha1}`;
+
+        const ossClient = this.objectStorageServiceClient.setProvider('aliOss').setBucket(bucketName).build();
+        await ossClient.copyFile(objectKey, temporaryObjectKey);
+        fileStorageInfo.storageInfo.objectKey = objectKey;
+        return this.fileStorageProvider.create(fileStorageInfo);
     }
 }

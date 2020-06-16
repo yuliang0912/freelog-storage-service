@@ -104,14 +104,8 @@ export class UserNodeDataObjectController {
             throw new ApplicationError(ctx.gettext('storage-object-not-found'));
         }
         const fileStorageInfo = await this.fileStorageService.findBySha1(storageObject.sha1);
-        const fileStream = await ctx.curl(fileStorageInfo['fileUrl'], {streaming: true}).then(({status, headers, res}) => {
-            if (status < 200 || status > 299) {
-                throw new ApplicationError(ctx.gettext('文件流读取失败'), {httpStatus: status});
-            }
-            ctx.status = status;
-            ctx.attachment(storageObject.objectName);
-            return res;
-        });
+        const fileStream = this.fileStorageService.getFileStream(fileStorageInfo);
+        ctx.attachment(storageObject.objectName);
         const objectOperations: JsonObjectOperation[] = Object.keys(appendOrReplaceObject).map(key => Object({
             key, value: appendOrReplaceObject[key], type: JsonObjectOperationTypeEnum.AppendOrReplace
         }));
@@ -126,12 +120,21 @@ export class UserNodeDataObjectController {
     }
 
     @visitorIdentity(LoginUser)
-    @get('/objects/:nodeId/customPick')
+    @get('/objects/:objectNameOrNodeId/customPick')
     async download(ctx) {
-        const nodeId: number = ctx.checkParams('nodeId').exist().toInt().value;
+        const objectNameOrNodeId = ctx.checkParams('objectNameOrNodeId').exist().type('string').value;
         const fields: string[] = ctx.checkQuery('fields').optional().len(1).toSplitArray().default([]).value;
         ctx.validateParams();
-        const nodeInfo: NodeInfo = await ctx.curlIntranetApi(`${ctx.webApi.nodeInfo}/${nodeId}`);
+
+        let getNodeInfoUrl = '';
+        if (objectNameOrNodeId.endsWith('.ncfg')) {
+            getNodeInfoUrl = `${ctx.webApi.nodeInfo}/detail?nodeDomain=${objectNameOrNodeId.replace('.ncfg', '')}`;
+        } else if (/^\d{8,10}$/.test(objectNameOrNodeId)) {
+            getNodeInfoUrl = `${ctx.webApi.nodeInfo}/${objectNameOrNodeId}`;
+        } else {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'objectNameOrNodeId'));
+        }
+        const nodeInfo: NodeInfo = await ctx.curlIntranetApi(getNodeInfoUrl);
         if (!nodeInfo) {
             throw new ArgumentError(ctx.gettext('node-entity-not-found'));
         }
@@ -150,18 +153,14 @@ export class UserNodeDataObjectController {
             return ctx.body = new Buffer('{}');
         }
         const fileStorageInfo = await this.fileStorageService.findBySha1(storageObject.sha1);
-
-        const fileStream = await ctx.curl(fileStorageInfo['fileUrl'], {streaming: true}).then(({status, headers, res}) => {
-            if (status < 200 || status > 299) {
-                throw new ApplicationError(ctx.gettext('文件流读取失败'), {httpStatus: status});
-            }
-            return res;
-        });
+        const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
+        if (fields.length) {
+            ctx.set('Connection', 'close');
+            ctx.set('Transfer-Encoding', 'chunked');
+        } else {
+            ctx.set('Content-length', storageObject.systemProperty.fileSize);
+        }
         ctx.attachment(storageObject.objectName);
-        ctx.set('Transfer-Encoding', 'chunked');
-        const stream = ctx.body = this.userNodeDataFileOperation.pick(fileStream, fields);
-        stream.on('error', error => {
-            console.log('API-customPick error:' + error.toString());
-        });
+        ctx.body = this.userNodeDataFileOperation.pick(fileStream, fields);
     }
 }

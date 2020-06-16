@@ -72,4 +72,5 @@ export declare class BucketService implements IBucketService {
      * @param {ObjectStorageInfo} objectStorageInfo
      */
     deleteStorageObjectEventHandle(objectStorageInfo: ObjectStorageInfo): void;
+    batchDeleteStorageObjectEventHandle(bucketInfo: BucketInfo, deletedFileQuantity: number, totalFileSize: number): void;
 }

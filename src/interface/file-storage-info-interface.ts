@@ -18,7 +18,6 @@ export declare interface FileStorageInfo {
     referencedQuantity?: number;
     serviceProvider: ServiceProviderEnum;
     storageInfo: AliOssInfo | AmazonS3Info;
-    fileUrl?: string;
 }
 
 export interface FilePropertyAnalyzeInfo {
@@ -35,11 +34,17 @@ export declare interface IFileStorageService {
 
     uploadUserNodeDataFile(fileStream): Promise<FileStorageInfo>;
 
+    uploadImage(fileStream): Promise<FileStorageInfo>;
+
     findBySha1(sha1: string): Promise<FileStorageInfo>;
 
     fileStreamErrorHandler(fileStream): Promise<any>;
 
     isCanAnalyzeFileProperty(resourceType: string): boolean;
+
+    getSignatureUrl(fileStorageInfo: FileStorageInfo): string;
+
+    getFileStream(fileStorageInfo: FileStorageInfo): Promise<any>;
 
     analyzeFileProperty(fileStorageInfo: FileStorageInfo, resourceType: string): Promise<FilePropertyAnalyzeInfo>;
 }

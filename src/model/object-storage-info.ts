@@ -1,4 +1,4 @@
-import {omit} from 'lodash';
+import {assign, omit} from 'lodash';
 import {scope, provide} from 'midway';
 import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
@@ -23,7 +23,7 @@ export class ObjectStorageInfo extends MongooseModelBase implements IMongooseMod
             toObject: ObjectStorageInfo.toObjectOptions
         });
 
-        objectScheme.virtual('storageObjectId').get(function (this: any) {
+        objectScheme.virtual('objectId').get(function (this: any) {
             return this.id;
         });
 
@@ -35,7 +35,7 @@ export class ObjectStorageInfo extends MongooseModelBase implements IMongooseMod
     static get toObjectOptions() {
         return {
             transform(doc, ret) {
-                return omit(ret, ['_id']);
+                return assign({objectId: doc.id}, omit(ret, ['_id']));
             }
         };
     }

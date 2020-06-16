@@ -14,22 +14,19 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MongooseModelBase = void 0;
 const midway_1 = require("midway");
-let MongooseModelBase = /** @class */ (() => {
-    let MongooseModelBase = class MongooseModelBase {
-        constructor(mongoose, uploadConfig) {
-            this.mongoose = mongoose;
-            this.uploadConfig = uploadConfig;
-            return this.buildMongooseModel();
-        }
-        buildMongooseModel(...args) {
-            throw new Error('not implemented');
-        }
-    };
-    MongooseModelBase = __decorate([
-        __param(0, midway_1.plugin('mongoose')), __param(1, midway_1.config('uploadConfig')),
-        __metadata("design:paramtypes", [Object, Object])
-    ], MongooseModelBase);
-    return MongooseModelBase;
-})();
+let MongooseModelBase = class MongooseModelBase {
+    constructor(mongoose, uploadConfig) {
+        this.mongoose = mongoose;
+        this.uploadConfig = uploadConfig;
+        return this.buildMongooseModel();
+    }
+    buildMongooseModel(...args) {
+        throw new Error('not implemented');
+    }
+};
+MongooseModelBase = __decorate([
+    __param(0, midway_1.plugin('mongoose')), __param(1, midway_1.config('uploadConfig')),
+    __metadata("design:paramtypes", [Object, Object])
+], MongooseModelBase);
 exports.MongooseModelBase = MongooseModelBase;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibW9uZ29vc2UtbW9kZWwtYmFzZS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9tb2RlbC9tb25nb29zZS1tb2RlbC1iYXNlLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7OztBQUFBLG1DQUFzQztBQUV0QztJQUFBLElBQWEsaUJBQWlCLEdBQTlCLE1BQWEsaUJBQWlCO1FBSzFCLFlBQWdDLFFBQVEsRUFBMEIsWUFBWTtZQUMxRSxJQUFJLENBQUMsUUFBUSxHQUFHLFFBQVEsQ0FBQztZQUN6QixJQUFJLENBQUMsWUFBWSxHQUFHLFlBQVksQ0FBQztZQUNqQyxPQUFPLElBQUksQ0FBQyxrQkFBa0IsRUFBRSxDQUFDO1FBQ3JDLENBQUM7UUFFRCxrQkFBa0IsQ0FBQyxHQUFHLElBQUk7WUFDdEIsTUFBTSxJQUFJLEtBQUssQ0FBQyxpQkFBaUIsQ0FBQyxDQUFDO1FBQ3ZDLENBQUM7S0FDSixDQUFBO0lBZFksaUJBQWlCO1FBS2IsV0FBQSxlQUFNLENBQUMsVUFBVSxDQUFDLENBQUEsRUFBWSxXQUFBLGVBQU0sQ0FBQyxjQUFjLENBQUMsQ0FBQTs7T0FMeEQsaUJBQWlCLENBYzdCO0lBQUQsd0JBQUM7S0FBQTtBQWRZLDhDQUFpQiJ9
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibW9uZ29vc2UtbW9kZWwtYmFzZS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9tb2RlbC9tb25nb29zZS1tb2RlbC1iYXNlLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7OztBQUFBLG1DQUFzQztBQUV0QyxJQUFhLGlCQUFpQixHQUE5QixNQUFhLGlCQUFpQjtJQUsxQixZQUFnQyxRQUFRLEVBQTBCLFlBQVk7UUFDMUUsSUFBSSxDQUFDLFFBQVEsR0FBRyxRQUFRLENBQUM7UUFDekIsSUFBSSxDQUFDLFlBQVksR0FBRyxZQUFZLENBQUM7UUFDakMsT0FBTyxJQUFJLENBQUMsa0JBQWtCLEVBQUUsQ0FBQztJQUNyQyxDQUFDO0lBRUQsa0JBQWtCLENBQUMsR0FBRyxJQUFJO1FBQ3RCLE1BQU0sSUFBSSxLQUFLLENBQUMsaUJBQWlCLENBQUMsQ0FBQztJQUN2QyxDQUFDO0NBQ0osQ0FBQTtBQWRZLGlCQUFpQjtJQUtiLFdBQUEsZUFBTSxDQUFDLFVBQVUsQ0FBQyxDQUFBLEVBQVksV0FBQSxlQUFNLENBQUMsY0FBYyxDQUFDLENBQUE7O0dBTHhELGlCQUFpQixDQWM3QjtBQWRZLDhDQUFpQiJ9

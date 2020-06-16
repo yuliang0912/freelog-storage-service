@@ -14,19 +14,16 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const midway_1 = require("midway");
 const MongoBaseOperation = require("egg-freelog-database/lib/database/mongo-base-operation");
-let BucketProvider = /** @class */ (() => {
-    let BucketProvider = class BucketProvider extends MongoBaseOperation {
-        constructor(model) {
-            super(model);
-        }
-    };
-    BucketProvider = __decorate([
-        midway_1.provide(),
-        midway_1.scope('Singleton'),
-        __param(0, midway_1.inject('model.bucket')),
-        __metadata("design:paramtypes", [Object])
-    ], BucketProvider);
-    return BucketProvider;
-})();
+let BucketProvider = class BucketProvider extends MongoBaseOperation {
+    constructor(model) {
+        super(model);
+    }
+};
+BucketProvider = __decorate([
+    midway_1.provide(),
+    midway_1.scope('Singleton'),
+    __param(0, midway_1.inject('model.bucket')),
+    __metadata("design:paramtypes", [Object])
+], BucketProvider);
 exports.default = BucketProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYnVja2V0LXByb3ZpZGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2FwcC9kYXRhLXByb3ZpZGVyL2J1Y2tldC1wcm92aWRlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7OztBQUFBLG1DQUE4QztBQUM5Qyw2RkFBNkY7QUFJN0Y7SUFBQSxJQUFxQixjQUFjLEdBQW5DLE1BQXFCLGNBQWUsU0FBUSxrQkFBa0I7UUFDMUQsWUFBb0MsS0FBSztZQUNyQyxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUM7UUFDakIsQ0FBQztLQUNKLENBQUE7SUFKb0IsY0FBYztRQUZsQyxnQkFBTyxFQUFFO1FBQ1QsY0FBSyxDQUFDLFdBQVcsQ0FBQztRQUVGLFdBQUEsZUFBTSxDQUFDLGNBQWMsQ0FBQyxDQUFBOztPQURsQixjQUFjLENBSWxDO0lBQUQscUJBQUM7S0FBQTtrQkFKb0IsY0FBYyJ9
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYnVja2V0LXByb3ZpZGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2FwcC9kYXRhLXByb3ZpZGVyL2J1Y2tldC1wcm92aWRlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7OztBQUFBLG1DQUE4QztBQUM5Qyw2RkFBNkY7QUFJN0YsSUFBcUIsY0FBYyxHQUFuQyxNQUFxQixjQUFlLFNBQVEsa0JBQWtCO0lBQzFELFlBQW9DLEtBQUs7UUFDckMsS0FBSyxDQUFDLEtBQUssQ0FBQyxDQUFDO0lBQ2pCLENBQUM7Q0FDSixDQUFBO0FBSm9CLGNBQWM7SUFGbEMsZ0JBQU8sRUFBRTtJQUNULGNBQUssQ0FBQyxXQUFXLENBQUM7SUFFRixXQUFBLGVBQU0sQ0FBQyxjQUFjLENBQUMsQ0FBQTs7R0FEbEIsY0FBYyxDQUlsQztrQkFKb0IsY0FBYyJ9

@@ -1,4 +1,4 @@
-import {pick, assign, isNull, isUndefined} from 'lodash';
+import {pick, assign, isNull, isUndefined, sumBy} from 'lodash';
 import {provide, config, plugin, inject} from 'midway';
 import {
     IObjectStorageService, ObjectStorageInfo, CreateObjectStorageOptions, CreateUserNodeDataObjectOptions
@@ -31,6 +31,8 @@ export class ObjectStorageService implements IObjectStorageService {
      * @returns {Promise<ObjectStorageInfo>}
      */
     async createObject(bucketInfo: BucketInfo, options: CreateObjectStorageOptions): Promise<ObjectStorageInfo> {
+
+        options.objectName = options.objectName.replace(/[\\|\/|:|\*|\?|"|<|>|\||\s|@|\$|#]/g, '_');
 
         const model: ObjectStorageInfo = {
             sha1: options.fileStorageInfo.sha1,
@@ -132,6 +134,22 @@ export class ObjectStorageService implements IObjectStorageService {
         }).then(data => {
             if (data.deletedCount) {
                 this.bucketService.deleteStorageObjectEventHandle(objectStorageInfo);
+            }
+            return Boolean(data.ok);
+        });
+    }
+
+    async batchDeleteObjects(bucketInfo: BucketInfo, objectIds: string[]): Promise<boolean> {
+        const condition = {
+            bucketId: bucketInfo.bucketId, _id: {$in: objectIds}
+        };
+        const objectInfos = await this.objectStorageProvider.find(condition, 'systemProperty.fileSize');
+        if (!objectInfos.length) {
+            return false;
+        }
+        return this.objectStorageProvider.deleteMany(condition).then(data => {
+            if (data.deletedCount) {
+                this.bucketService.batchDeleteStorageObjectEventHandle(bucketInfo, objectInfos.length, sumBy(objectInfos, 'systemProperty.fileSize'));
             }
             return Boolean(data.ok);
         });

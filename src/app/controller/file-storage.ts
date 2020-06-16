@@ -25,7 +25,24 @@ export class FileStorageController {
                 throw error;
             });
         })
-        ctx.success({sha1: fileStorageInfo.sha1, fileSize: fileStorageInfo.fileSize, resourceType});
+        ctx.success({sha1: fileStorageInfo.sha1, fileSize: fileStorageInfo.fileSize});
+    }
+
+    @visitorIdentity(LoginUser | InternalClient)
+    @get('/uploadImage')
+    async uploadImage(ctx) {
+        const fileStream = await ctx.getFileStream({requireFile: false});
+        if (!fileStream || !fileStream.filename) {
+            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'file'));
+        }
+
+        const fileStorageInfo = await this.fileStorageService.uploadImage(fileStream).catch(error => {
+            return this.fileStorageService.fileStreamErrorHandler(fileStream).finally(() => {
+                throw error;
+            });
+        });
+
+        ctx.success({sha1: fileStorageInfo.sha1, fileSize: fileStorageInfo.fileSize});
     }
 
     @visitorIdentity(LoginUser | InternalClient)

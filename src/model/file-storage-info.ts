@@ -8,7 +8,6 @@ import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 export class FileStorageInfoModel extends MongooseModelBase implements IMongooseModelBase {
 
     buildMongooseModel() {
-        const isInternal = this.uploadConfig.aliOss.internal;
         const objectScheme = new this.mongoose.Schema({
             sha1: {type: String, required: true},
             fileSize: {type: Number, required: true},
@@ -27,14 +26,6 @@ export class FileStorageInfoModel extends MongooseModelBase implements IMongoose
         });
 
         objectScheme.index({sha1: 1}, {unique: true});
-
-        objectScheme.virtual('fileUrl').get(function (this: any) {
-            const {serviceProvider, storageInfo} = this;
-            if (serviceProvider === 'amazonS3') {
-                throw new Error('not implements');
-            }
-            return `http://${storageInfo.bucket}.${storageInfo.region}${isInternal ? '-internal' : ''}.aliyuncs.com/${storageInfo.objectKey}`;
-        });
 
         return this.mongoose.model('file-storage-infos', objectScheme);
     }

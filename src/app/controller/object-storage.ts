@@ -100,17 +100,10 @@ export class ObjectController {
             throw new ApplicationError(ctx.gettext('storage-object-not-found'));
         }
         const fileStorageInfo = await this.fileStorageService.findBySha1(storageObject.sha1);
-        await ctx.curl(fileStorageInfo.fileUrl, {streaming: true}).then(({status, headers, res}) => {
-            if (status < 200 || status > 299) {
-                throw new ApplicationError(ctx.gettext('文件流读取失败'), {httpStatus: status});
-            }
-            ctx.status = status;
-            ctx.body = res;
-            ctx.set('content-type', headers['content-type']);
-            ctx.set('content-length', headers['content-length']);
-            ctx.attachment(storageObject.objectName);
-            return res;
-        });
+        const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
+        ctx.body = fileStream;
+        ctx.attachment(storageObject.objectName);
+        ctx.set('content-length', storageObject.systemProperty.fileSize);
     }
 
     @visitorIdentity(LoginUser)
@@ -129,6 +122,19 @@ export class ObjectController {
         }
 
         return this.objectStorageService.deleteObject(storageObject);
+    }
+
+    @visitorIdentity(LoginUser)
+    @post('/buckets/:bucketName/objects/batchDestroy')
+    async batchDestroy(ctx) {
+        const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
+        const objectIds: string[] = ctx.checkBody('objectIds').exist().isArray().len(1, 100).value;
+        ctx.validateParams();
+
+        const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.request.userId});
+        ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
+
+        await this.objectStorageService.batchDeleteObjects(bucketInfo, objectIds).then(ctx.success);
     }
 
     @visitorIdentity(LoginUser)

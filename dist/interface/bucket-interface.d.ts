@@ -28,6 +28,7 @@ export interface IBucketService {
     replaceStorageObjectEventHandle(newObjectStorage: ObjectStorageInfo, oldObjectStorage: ObjectStorageInfo): void;
     addStorageObjectEventHandle(objectStorageInfo: ObjectStorageInfo): void;
     deleteStorageObjectEventHandle(objectStorageInfo: ObjectStorageInfo): void;
+    batchDeleteStorageObjectEventHandle(bucketInfo: BucketInfo, deletedFileQuantity: number, totalFileSize: number): void;
     findOne(condition: object): Promise<BucketInfo>;
     find(condition: object): Promise<BucketInfo[]>;
     count(condition: object): Promise<number>;

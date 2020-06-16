@@ -14,19 +14,16 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const midway_1 = require("midway");
 const MongoBaseOperation = require("egg-freelog-database/lib/database/mongo-base-operation");
-let FileStorageProvider = /** @class */ (() => {
-    let FileStorageProvider = class FileStorageProvider extends MongoBaseOperation {
-        constructor(model) {
-            super(model);
-        }
-    };
-    FileStorageProvider = __decorate([
-        midway_1.provide(),
-        midway_1.scope('Singleton'),
-        __param(0, midway_1.inject('model.fileStorageInfo')),
-        __metadata("design:paramtypes", [Object])
-    ], FileStorageProvider);
-    return FileStorageProvider;
-})();
+let FileStorageProvider = class FileStorageProvider extends MongoBaseOperation {
+    constructor(model) {
+        super(model);
+    }
+};
+FileStorageProvider = __decorate([
+    midway_1.provide(),
+    midway_1.scope('Singleton'),
+    __param(0, midway_1.inject('model.fileStorageInfo')),
+    __metadata("design:paramtypes", [Object])
+], FileStorageProvider);
 exports.default = FileStorageProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZmlsZS1zdG9yYWdlLXByb3ZpZGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2FwcC9kYXRhLXByb3ZpZGVyL2ZpbGUtc3RvcmFnZS1wcm92aWRlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7OztBQUFBLG1DQUE4QztBQUM5Qyw2RkFBNkY7QUFJN0Y7SUFBQSxJQUFxQixtQkFBbUIsR0FBeEMsTUFBcUIsbUJBQW9CLFNBQVEsa0JBQWtCO1FBQy9ELFlBQTZDLEtBQUs7WUFDOUMsS0FBSyxDQUFDLEtBQUssQ0FBQyxDQUFDO1FBQ2pCLENBQUM7S0FDSixDQUFBO0lBSm9CLG1CQUFtQjtRQUZ2QyxnQkFBTyxFQUFFO1FBQ1QsY0FBSyxDQUFDLFdBQVcsQ0FBQztRQUVGLFdBQUEsZUFBTSxDQUFDLHVCQUF1QixDQUFDLENBQUE7O09BRDNCLG1CQUFtQixDQUl2QztJQUFELDBCQUFDO0tBQUE7a0JBSm9CLG1CQUFtQiJ9
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZmlsZS1zdG9yYWdlLXByb3ZpZGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL2FwcC9kYXRhLXByb3ZpZGVyL2ZpbGUtc3RvcmFnZS1wcm92aWRlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7OztBQUFBLG1DQUE4QztBQUM5Qyw2RkFBNkY7QUFJN0YsSUFBcUIsbUJBQW1CLEdBQXhDLE1BQXFCLG1CQUFvQixTQUFRLGtCQUFrQjtJQUMvRCxZQUE2QyxLQUFLO1FBQzlDLEtBQUssQ0FBQyxLQUFLLENBQUMsQ0FBQztJQUNqQixDQUFDO0NBQ0osQ0FBQTtBQUpvQixtQkFBbUI7SUFGdkMsZ0JBQU8sRUFBRTtJQUNULGNBQUssQ0FBQyxXQUFXLENBQUM7SUFFRixXQUFBLGVBQU0sQ0FBQyx1QkFBdUIsQ0FBQyxDQUFBOztHQUQzQixtQkFBbUIsQ0FJdkM7a0JBSm9CLG1CQUFtQiJ9

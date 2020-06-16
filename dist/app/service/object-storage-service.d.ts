@@ -30,6 +30,7 @@ export declare class ObjectStorageService implements IObjectStorageService {
      */
     updateObject(oldObjectStorageInfo: ObjectStorageInfo, newFileStorageInfo: FileStorageInfo): Promise<ObjectStorageInfo>;
     deleteObject(objectStorageInfo: ObjectStorageInfo): Promise<boolean>;
+    batchDeleteObjects(bucketInfo: BucketInfo, objectIds: string[]): Promise<boolean>;
     findOne(condition: object): Promise<ObjectStorageInfo>;
     find(condition: object): Promise<ObjectStorageInfo[]>;
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ObjectStorageInfo[]>;

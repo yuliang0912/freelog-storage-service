@@ -177,4 +177,10 @@ export class BucketService implements IBucketService {
             $inc: {totalFileQuantity: -1, totalFileSize: -objectStorageInfo.systemProperty.fileSize}
         });
     }
+
+    batchDeleteStorageObjectEventHandle(bucketInfo: BucketInfo, deletedFileQuantity: number, totalFileSize: number) {
+        this.bucketProvider.updateOne({_id: bucketInfo.bucketId}, {
+            $inc: {totalFileQuantity: -deletedFileQuantity, totalFileSize: -totalFileSize}
+        });
+    }
 }
