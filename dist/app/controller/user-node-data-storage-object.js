@@ -124,7 +124,7 @@ let UserNodeDataObjectController = class UserNodeDataObjectController {
         const objectNameOrNodeId = ctx.checkParams('objectNameOrNodeId').exist().type('string').value;
         const fields = ctx.checkQuery('fields').optional().len(1).toSplitArray().default([]).value;
         ctx.validateParams();
-        ctx.requets.userId = 50017;
+        ctx.request.userId = 50017;
         let getNodeInfoUrl = '';
         if (objectNameOrNodeId.endsWith('.ncfg')) {
             getNodeInfoUrl = `${ctx.webApi.nodeInfo}/detail?nodeDomain=${objectNameOrNodeId.replace('.ncfg', '')}`;
