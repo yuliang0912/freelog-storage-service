@@ -32,7 +32,7 @@ export interface FilePropertyAnalyzeInfo {
 export declare interface IFileStorageService {
     upload(fileStream, resourceType): Promise<FileStorageInfo>;
 
-    uploadUserNodeDataFile(fileStream): Promise<FileStorageInfo>;
+    uploadUserNodeDataFile(userNodeDate): Promise<FileStorageInfo>;
 
     uploadImage(fileStream): Promise<FileStorageInfo>;
 

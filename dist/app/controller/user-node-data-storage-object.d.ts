@@ -10,4 +10,5 @@ export declare class UserNodeDataObjectController {
     createOrReplace(ctx: any): Promise<void>;
     update(ctx: any): Promise<void>;
     download(ctx: any): Promise<Buffer>;
+    download1(ctx: any): Promise<Buffer>;
 }

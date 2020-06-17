@@ -19,7 +19,7 @@ export declare class FileStorageService implements IFileStorageService {
      * @param fileStream
      * @returns {Promise<FileStorageInfo>}
      */
-    uploadUserNodeDataFile(fileStream: any): Promise<FileStorageInfo>;
+    uploadUserNodeDataFile(userNodeData: object): Promise<FileStorageInfo>;
     /**
      * 上传图片
      * @param fileStream

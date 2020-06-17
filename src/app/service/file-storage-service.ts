@@ -5,6 +5,7 @@ import {
     FileStorageInfo, IFileStorageService, ServiceProviderEnum, FilePropertyAnalyzeInfo
 } from '../../interface/file-storage-info-interface';
 import {isString} from 'lodash';
+import {PassThrough} from 'stream';
 
 const sendToWormhole = require('stream-wormhole');
 
@@ -46,16 +47,16 @@ export class FileStorageService implements IFileStorageService {
      * @param fileStream
      * @returns {Promise<FileStorageInfo>}
      */
-    async uploadUserNodeDataFile(fileStream): Promise<FileStorageInfo> {
+    async uploadUserNodeDataFile(userNodeData: object): Promise<FileStorageInfo> {
 
-        const fileStreamCheckTask = this.userNodeDataFileOperation.checkJsonObject(fileStream);
-        const fileStreamUploadTask = this._uploadFileToTemporaryDirectory(fileStream);
+        const bufferStream = new PassThrough();
+        bufferStream.end(Buffer.from(JSON.stringify(userNodeData)));
+        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(bufferStream);
 
-        const [fileStorageInfo] = await Promise.all([fileStreamUploadTask, fileStreamCheckTask]);
-
-        if (fileStorageInfo.fileSize > 524288) {
+        if (fileStorageInfo.fileSize > 536870912) {
             throw new ApplicationError(this.ctx.gettext('user-node-data-file-size-limit-error'));
         }
+
         return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'user-node-data');
     }
 
@@ -170,10 +171,6 @@ export class FileStorageService implements IFileStorageService {
      * @private
      */
     async _uploadFileToTemporaryDirectory(fileStream, bucketName = 'freelog-shenzhen'): Promise<FileStorageInfo> {
-        if (!fileStream.filename) {
-            throw new ApplicationError('upload file error,filename not existing');
-        }
-
         const temporaryObjectKey = `temporary_upload/${v4().replace(/-/g, '')}`.toLowerCase();
         const fileBaseInfoTransform = this.fileBaseInfoCalculateTransform('sha1', 'hex');
         const ossClient = this.objectStorageServiceClient.setProvider('aliOss').setBucket(bucketName).build();

@@ -10,7 +10,7 @@ export class ObjectStorageServiceClient {
     uploadConfig: any;
     readonly __cacheMap__ = new Map();
 
-    public bucket;
+    public bucket = 'freelog-shenzhen';
     public provider = 'aliOss';
     public config: any;
 
