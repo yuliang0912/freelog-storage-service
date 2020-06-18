@@ -49,13 +49,13 @@ export class FileStorageService implements IFileStorageService {
      */
     async uploadUserNodeDataFile(userNodeData: object): Promise<FileStorageInfo> {
 
-        const bufferStream = new PassThrough();
-        bufferStream.end(Buffer.from(JSON.stringify(userNodeData)));
-        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(bufferStream);
-
-        if (fileStorageInfo.fileSize > 536870912) {
+        const userNodeDataJsonBuffer = Buffer.from(JSON.stringify(userNodeData));
+        if (userNodeDataJsonBuffer.length > 536870912) {
             throw new ApplicationError(this.ctx.gettext('user-node-data-file-size-limit-error'));
         }
+        const bufferStream = new PassThrough();
+        bufferStream.end(userNodeDataJsonBuffer);
+        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(bufferStream);
 
         return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'user-node-data');
     }
@@ -77,7 +77,7 @@ export class FileStorageService implements IFileStorageService {
             throw new ApplicationError(this.ctx.gettext('user-node-data-file-size-limit-error'));
         }
 
-        return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'preview-image');
+        return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'preview-image', 'freelog-image');
     }
 
     /**
@@ -200,7 +200,7 @@ export class FileStorageService implements IFileStorageService {
             return existingFileStorageInfo;
         }
         const temporaryObjectKey = fileStorageInfo.storageInfo.objectKey;
-        const objectKey = `image-file-storage/${fileStorageInfo.sha1}`;
+        const objectKey = `${targetDirectory}/${fileStorageInfo.sha1}`;
 
         const ossClient = this.objectStorageServiceClient.setProvider('aliOss').setBucket(bucketName).build();
         await ossClient.copyFile(objectKey, temporaryObjectKey);

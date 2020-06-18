@@ -11,7 +11,7 @@ export class BucketController {
     bucketService: IBucketService;
 
     @get('/')
-    @visitorIdentity(LoginUser | InternalClient)
+    @visitorIdentity(LoginUser)
     async index(ctx) {
         const bucketType: number = ctx.checkQuery('bucketType').optional().toInt().in([0, 1, 2]).default(0).value;
         ctx.validateParams();

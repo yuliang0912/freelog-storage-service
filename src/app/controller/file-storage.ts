@@ -10,7 +10,7 @@ export class FileStorageController {
     @inject()
     fileStorageService: IFileStorageService;
 
-    @visitorIdentity(LoginUser | InternalClient)
+    @visitorIdentity(LoginUser)
     @post('/upload')
     async uploadFile(ctx) {
         const fileStream = await ctx.getFileStream({requireFile: false});

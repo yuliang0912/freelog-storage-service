@@ -5,6 +5,7 @@ import {IBucketService, SystemBucketName} from '../../interface/bucket-interface
 import {IFileStorageService} from '../../interface/file-storage-info-interface';
 import {CreateUserNodeDataObjectOptions, IObjectStorageService} from '../../interface/object-storage-interface';
 import {JsonObjectOperation, JsonObjectOperationTypeEnum, NodeInfo} from '../../interface/common-interface';
+import {mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide()
 @priority(1)
@@ -92,93 +93,46 @@ export class UserNodeDataObjectController {
     }
 
     @visitorIdentity(LoginUser)
-    @get('/objects/:objectNameOrNodeId/customPick')
+    @get('/objects/:objectIdOrNodeId/customPick')
     async download(ctx) {
-        const objectNameOrNodeId = ctx.checkParams('objectNameOrNodeId').exist().type('string').value;
+        const objectIdOrNodeId = ctx.checkParams('objectIdOrNodeId').exist().type('string').value;
         const fields: string[] = ctx.checkQuery('fields').optional().len(1).toSplitArray().default([]).value;
         ctx.validateParams();
 
-        let getNodeInfoUrl = '';
-        if (objectNameOrNodeId.endsWith('.ncfg')) {
-            getNodeInfoUrl = `${ctx.webApi.nodeInfo}/detail?nodeDomain=${objectNameOrNodeId.replace('.ncfg', '')}`;
-        } else if (/^\d{8,10}$/.test(objectNameOrNodeId)) {
-            getNodeInfoUrl = `${ctx.webApi.nodeInfo}/${objectNameOrNodeId}`;
-        } else {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'objectNameOrNodeId'));
-        }
-        const nodeInfo: NodeInfo = await ctx.curlIntranetApi(getNodeInfoUrl);
-        if (!nodeInfo) {
-            throw new ArgumentError(ctx.gettext('node-entity-not-found'));
-        }
         const bucketInfo = await this.bucketService.findOne({
             userId: ctx.request.userId,
             bucketName: SystemBucketName.UserNodeData
         });
         if (!bucketInfo) {
-            return ctx.body = new Buffer('{}');
+            return ctx.body = Buffer.from('{}');
         }
-        const storageObject = await this.objectStorageService.findOne({
-            bucketId: bucketInfo.bucketId,
-            objectName: `${nodeInfo.nodeDomain}.ncfg`
-        });
+
+        const findCondition: any = {bucketId: bucketInfo.bucketId};
+        if (mongoObjectId.test(objectIdOrNodeId)) {
+            findCondition._id = objectIdOrNodeId;
+        } else if (/^\d{8,10}$/.test(objectIdOrNodeId)) {
+            const nodeInfo: NodeInfo = await ctx.curlIntranetApi(`${ctx.webApi.nodeInfo}/${objectIdOrNodeId}`);
+            if (!nodeInfo) {
+                throw new ArgumentError(ctx.gettext('node-entity-not-found'));
+            }
+            findCondition.objectName = `${nodeInfo.nodeDomain}.ncfg`;
+        } else {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'objectIdOrNodeId'));
+        }
+
+        const storageObject = await this.objectStorageService.findOne(findCondition);
         if (!storageObject) {
-            return ctx.body = new Buffer('{}');
+            return ctx.body = Buffer.from('{}');
         }
+
         const fileStorageInfo = await this.fileStorageService.findBySha1(storageObject.sha1);
         const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
         if (fields.length) {
             ctx.set('Connection', 'close');
             ctx.set('Transfer-Encoding', 'chunked');
         } else {
-            ctx.set('Content-length', storageObject.systemProperty.fileSize);
+            ctx.set('Content-length', fileStorageInfo.fileSize);
         }
-        ctx.set('Content-Type', 'application/json');
-        ctx.attachment(storageObject.objectName);
-        ctx.body = this.userNodeDataFileOperation.pick(fileStream, fields);
-    }
-
-    @get('/objects/:objectNameOrNodeId/customPick1')
-    async download1(ctx) {
-        const objectNameOrNodeId = ctx.checkParams('objectNameOrNodeId').exist().type('string').value;
-        const fields: string[] = ctx.checkQuery('fields').optional().len(1).toSplitArray().default([]).value;
-        ctx.validateParams();
-        ctx.request.userId = 50017;
-
-        let getNodeInfoUrl = '';
-        if (objectNameOrNodeId.endsWith('.ncfg')) {
-            getNodeInfoUrl = `${ctx.webApi.nodeInfo}/detail?nodeDomain=${objectNameOrNodeId.replace('.ncfg', '')}`;
-        } else if (/^\d{8,10}$/.test(objectNameOrNodeId)) {
-            getNodeInfoUrl = `${ctx.webApi.nodeInfo}/${objectNameOrNodeId}`;
-        } else {
-            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'objectNameOrNodeId'));
-        }
-        const nodeInfo: NodeInfo = await ctx.curlIntranetApi(getNodeInfoUrl);
-        if (!nodeInfo) {
-            throw new ArgumentError(ctx.gettext('node-entity-not-found'));
-        }
-        const bucketInfo = await this.bucketService.findOne({
-            userId: ctx.request.userId,
-            bucketName: SystemBucketName.UserNodeData
-        });
-        if (!bucketInfo) {
-            return ctx.body = new Buffer('{}');
-        }
-        const storageObject = await this.objectStorageService.findOne({
-            bucketId: bucketInfo.bucketId,
-            objectName: `${nodeInfo.nodeDomain}.ncfg`
-        });
-        if (!storageObject) {
-            return ctx.body = new Buffer('{}');
-        }
-        const fileStorageInfo = await this.fileStorageService.findBySha1(storageObject.sha1);
-        const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
-        if (fields.length) {
-            ctx.set('Connection', 'close');
-            ctx.set('Transfer-Encoding', 'chunked');
-        } else {
-            ctx.set('Content-length', storageObject.systemProperty.fileSize);
-        }
-        ctx.set('Content-Type', 'application/json');
         ctx.attachment(storageObject.objectName);
         ctx.body = this.userNodeDataFileOperation.pick(fileStream, fields);
     }

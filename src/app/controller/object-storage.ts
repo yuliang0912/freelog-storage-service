@@ -49,16 +49,16 @@ export class ObjectController {
     }
 
     @visitorIdentity(LoginUser)
-    @get('/buckets/:bucketName/objects/:objectName')
+    @get('/buckets/:bucketName/objects/:objectId')
     async show(ctx) {
         const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
-        const objectName: string = ctx.checkParams('objectName').exist().type('string').value;
+        const objectId: string = ctx.checkParams('objectId').exist().isMongoObjectId().value;
         ctx.validateParams();
 
         const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.request.userId});
         ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
 
-        await this.objectStorageService.findOne({bucketId: bucketInfo.bucketId, objectName}).then(ctx.success);
+        await this.objectStorageService.findOne({_id: objectId, bucketId: bucketInfo.bucketId}).then(ctx.success);
     }
 
     @visitorIdentity(LoginUser)
@@ -86,49 +86,32 @@ export class ObjectController {
     }
 
     @visitorIdentity(LoginUser)
-    @get('/buckets/:bucketName/objects/:objectName/file')
+    @get('/buckets/:bucketName/objects/:objectId/file')
     async download(ctx) {
         const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
-        const objectName: string = ctx.checkParams('objectName').exist().type('string').value;
+        const objectId: string = ctx.checkParams('objectId').exist().isMongoObjectId().value;
         ctx.validateParams();
 
         const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.request.userId});
         ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
 
-        const storageObject = await this.objectStorageService.findOne({bucketId: bucketInfo.bucketId, objectName});
+        const storageObject = await this.objectStorageService.findOne({_id: objectId, bucketId: bucketInfo.bucketId});
         if (!storageObject) {
             throw new ApplicationError(ctx.gettext('storage-object-not-found'));
         }
+
         const fileStorageInfo = await this.fileStorageService.findBySha1(storageObject.sha1);
         const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
         ctx.body = fileStream;
         ctx.attachment(storageObject.objectName);
-        ctx.set('content-length', storageObject.systemProperty.fileSize);
+        ctx.set('content-length', fileStorageInfo.fileSize);
     }
 
     @visitorIdentity(LoginUser)
-    @del('/buckets/:bucketName/objects/:objectName')
+    @del('/buckets/:bucketName/objects/:objectIds')
     async destroy(ctx) {
         const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
-        const objectName: string = ctx.checkParams('objectName').exist().type('string').value;
-        ctx.validateParams();
-
-        const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.request.userId});
-        ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
-
-        const storageObject = await this.objectStorageService.findOne({bucketId: bucketInfo.bucketId, objectName});
-        if (!storageObject) {
-            throw new ApplicationError(ctx.gettext('storage-object-not-found'));
-        }
-
-        return this.objectStorageService.deleteObject(storageObject);
-    }
-
-    @visitorIdentity(LoginUser)
-    @post('/buckets/:bucketName/objects/batchDestroy')
-    async batchDestroy(ctx) {
-        const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
-        const objectIds: string[] = ctx.checkBody('objectIds').exist().isArray().len(1, 100).value;
+        const objectIds: string[] = ctx.checkParams('objectIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         ctx.validateParams();
 
         const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.request.userId});
@@ -138,15 +121,15 @@ export class ObjectController {
     }
 
     @visitorIdentity(LoginUser)
-    @put('/buckets/:bucketName/objects/:objectName')
+    @put('/buckets/:bucketName/objects/:objectId')
     async updateProperty(ctx) {
         const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
-        const objectName: string = ctx.checkParams('objectName').exist().type('string').value;
+        const objectId: string = ctx.checkParams('objectId').exist().isMongoObjectId().value;
         const customProperty: object = ctx.checkBody('customProperty').optional().isObject().value;
         const resourceType: string = ctx.checkBody('resourceType').optional().isResourceType().toLow().value;
         const newObjectName: string = ctx.checkBody('objectName').optional().type('string').value;
         ctx.validateParams();
 
-        ctx.success({bucketName, objectName, customProperty, resourceType, newObjectName});
+        ctx.success({bucketName, objectId, customProperty, resourceType, newObjectName});
     }
 }
