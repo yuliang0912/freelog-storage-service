@@ -63,21 +63,31 @@ export class FileStorageService implements IFileStorageService {
     /**
      * 上传图片
      * @param fileStream
-     * @returns {Promise<FileStorageInfo>}
+     * @returns {Promise<string>}
      */
-    async uploadImage(fileStream): Promise<FileStorageInfo> {
-
+    async uploadImage(fileStream): Promise<string> {
+        let mime = {};
         const resourceType = 'image';
         const fileStorageInfo = await this._uploadFileToTemporaryDirectory(fileStream);
         if (this.isCanAnalyzeFileProperty(resourceType)) {
-            await this.analyzeFileProperty(fileStorageInfo, resourceType);
+            const analyzeResult = await this.analyzeFileProperty(fileStorageInfo, resourceType);
+            mime = analyzeResult.systemProperty['mime'];
         }
         // 不允许超过2M
         if (fileStorageInfo.fileSize > 2097152) {
             throw new ApplicationError(this.ctx.gettext('user-node-data-file-size-limit-error'));
         }
 
-        return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'preview-image', 'freelog-image');
+        const objectKey = `preview-image/${fileStorageInfo.sha1}`;
+
+        const temporaryFileStream = await this.getFileStream(fileStorageInfo);
+
+        await this.objectStorageServiceClient
+            .setProvider('aliOss')
+            .setBucket('freelog-image').build()
+            .putStream(objectKey, temporaryFileStream, {headers: {'Content-Type': mime}});
+
+        return `https://image.freelog.com/${objectKey}`;
     }
 
     /**
@@ -152,6 +162,9 @@ export class FileStorageService implements IFileStorageService {
         }
         const signatureUrl = this.getSignatureUrl(fileStorageInfo);
         const analyzeResult = await this.filePropertyAnalyzeHandler.analyzeFileProperty(signatureUrl, resourceType);
+        if (analyzeResult.analyzeStatus === 3) {
+            return analyzeResult;
+        }
         cacheResult = await this.systemAnalysisRecordProvider.create({
             sha1: fileStorageInfo.sha1, resourceType, provider: analyzeResult.provider,
             systemProperty: analyzeResult.fileProperty,
@@ -170,11 +183,11 @@ export class FileStorageService implements IFileStorageService {
      * @returns {Promise<void>}
      * @private
      */
-    async _uploadFileToTemporaryDirectory(fileStream, bucketName = 'freelog-shenzhen'): Promise<FileStorageInfo> {
+    async _uploadFileToTemporaryDirectory(fileStream, meta = null): Promise<FileStorageInfo> {
         const temporaryObjectKey = `temporary_upload/${v4().replace(/-/g, '')}`.toLowerCase();
         const fileBaseInfoTransform = this.fileBaseInfoCalculateTransform('sha1', 'hex');
-        const ossClient = this.objectStorageServiceClient.setProvider('aliOss').setBucket(bucketName).build();
-        await ossClient.putStream(temporaryObjectKey, fileStream.pipe(fileBaseInfoTransform));
+        const ossClient = this.objectStorageServiceClient.setProvider('aliOss').setBucket('freelog-shenzhen').build();
+        await ossClient.putStream(temporaryObjectKey, fileStream.pipe(fileBaseInfoTransform), meta);
         // 此处代码后期需要等egg-freelog-base优化
         const {region, bucket} = ossClient.config;
         return {

@@ -23,9 +23,9 @@ export declare class FileStorageService implements IFileStorageService {
     /**
      * 上传图片
      * @param fileStream
-     * @returns {Promise<FileStorageInfo>}
+     * @returns {Promise<string>}
      */
-    uploadImage(fileStream: any): Promise<FileStorageInfo>;
+    uploadImage(fileStream: any): Promise<string>;
     /**
      * 文件流排空
      * @param fileStream
@@ -70,7 +70,7 @@ export declare class FileStorageService implements IFileStorageService {
      * @returns {Promise<void>}
      * @private
      */
-    _uploadFileToTemporaryDirectory(fileStream: any, bucketName?: string): Promise<FileStorageInfo>;
+    _uploadFileToTemporaryDirectory(fileStream: any, meta?: any): Promise<FileStorageInfo>;
     /**
      * 复制文件(临时目录copy到正式目录),并且保存文件信息入库
      * @param {FileStorageInfo} fileStorageInfo

@@ -34,7 +34,7 @@ export declare interface IFileStorageService {
 
     uploadUserNodeDataFile(userNodeDate): Promise<FileStorageInfo>;
 
-    uploadImage(fileStream): Promise<FileStorageInfo>;
+    uploadImage(fileStream): Promise<string>;
 
     findBySha1(sha1: string): Promise<FileStorageInfo>;
 

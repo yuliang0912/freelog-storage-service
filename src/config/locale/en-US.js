@@ -46,6 +46,8 @@ module.exports = {
 
     'user-invalid': '未找到有效用户信息',
 
+    'file-storage-entity-not-found': '未找到文件存储信息',
+
     'jwt-signature-validate-failed': 'JWT签名校验失败',
 
     'jwt-format-validate-failed': 'JWT数据格式校验失败',

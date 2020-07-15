@@ -5,4 +5,5 @@ export declare class FileStorageController {
     uploadImage(ctx: any): Promise<void>;
     fileIsExist(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
+    fileProperty(ctx: any): Promise<any>;
 }

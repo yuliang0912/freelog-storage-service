@@ -1,5 +1,5 @@
 import {inject, controller, get, post, provide} from 'midway';
-import {LoginUser, ArgumentError, InternalClient} from 'egg-freelog-base';
+import {LoginUser, ArgumentError, ApplicationError, InternalClient} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {IFileStorageService} from '../../interface/file-storage-info-interface';
 
@@ -29,20 +29,20 @@ export class FileStorageController {
     }
 
     @visitorIdentity(LoginUser | InternalClient)
-    @get('/uploadImage')
+    @post('/uploadImage')
     async uploadImage(ctx) {
         const fileStream = await ctx.getFileStream({requireFile: false});
         if (!fileStream || !fileStream.filename) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'file'));
         }
 
-        const fileStorageInfo = await this.fileStorageService.uploadImage(fileStream).catch(error => {
+        const imageUrl = await this.fileStorageService.uploadImage(fileStream).catch(error => {
             return this.fileStorageService.fileStreamErrorHandler(fileStream).finally(() => {
                 throw error;
             });
         });
 
-        ctx.success({sha1: fileStorageInfo.sha1, fileSize: fileStorageInfo.fileSize});
+        ctx.success({url: imageUrl});
     }
 
     @visitorIdentity(LoginUser | InternalClient)
@@ -60,5 +60,26 @@ export class FileStorageController {
         const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
         ctx.validateParams();
         await this.fileStorageService.findBySha1(sha1).then(ctx.success);
+    }
+
+    @get('/:sha1/property')
+    // @visitorIdentity(InternalClient)
+    async fileProperty(ctx) {
+        const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
+        const resourceType = ctx.checkQuery('resourceType').exist().isResourceType().toLow().value;
+        ctx.validateParams();
+
+        const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
+        ctx.entityNullObjectCheck(fileStorageInfo, ctx.gettext('file-storage-entity-not-found'));
+
+        const analyzeResult = await this.fileStorageService.analyzeFileProperty(fileStorageInfo, resourceType);
+
+        if (analyzeResult.status === 1) {
+            return ctx.success(Object.assign({fileSize: fileStorageInfo.fileSize}, analyzeResult.systemProperty));
+        }
+        if (analyzeResult.status === 2) {
+            return ctx.error(new ApplicationError(analyzeResult.error));
+        }
+        ctx.success({fileSize: fileStorageInfo.fileSize});
     }
 }

@@ -30,7 +30,7 @@ export interface FilePropertyAnalyzeInfo {
 export declare interface IFileStorageService {
     upload(fileStream: any, resourceType: any): Promise<FileStorageInfo>;
     uploadUserNodeDataFile(userNodeDate: any): Promise<FileStorageInfo>;
-    uploadImage(fileStream: any): Promise<FileStorageInfo>;
+    uploadImage(fileStream: any): Promise<string>;
     findBySha1(sha1: string): Promise<FileStorageInfo>;
     fileStreamErrorHandler(fileStream: any): Promise<any>;
     isCanAnalyzeFileProperty(resourceType: string): boolean;
