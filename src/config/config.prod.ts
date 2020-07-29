@@ -10,7 +10,7 @@ export default () => {
             internal: true,
         },
         amzS3: {}
-    }
+    };
 
     return config;
 };
