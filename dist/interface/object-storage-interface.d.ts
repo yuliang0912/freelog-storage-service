@@ -58,4 +58,5 @@ export interface IObjectStorageService {
     batchDeleteObjects(bucketInfo: BucketInfo, objectIds: string[]): Promise<boolean>;
     count(condition: object): Promise<number>;
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ObjectStorageInfo[]>;
+    findAll(condition: object, page: number, pageSize: number): any;
 }

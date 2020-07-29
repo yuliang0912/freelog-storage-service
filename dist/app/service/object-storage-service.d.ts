@@ -35,4 +35,10 @@ export declare class ObjectStorageService implements IObjectStorageService {
     find(condition: object): Promise<ObjectStorageInfo[]>;
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ObjectStorageInfo[]>;
     count(condition: object): Promise<number>;
+    findAll(condition: object, page: number, pageSize: number): Promise<{
+        page: number;
+        pageSize: number;
+        totalItem: any;
+        dataList: any[];
+    }>;
 }

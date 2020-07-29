@@ -17,6 +17,42 @@ export class ObjectController {
     objectStorageService: IObjectStorageService;
 
     @visitorIdentity(LoginUser)
+    @get('/buckets/objects/my')
+    async index1(ctx) {
+        const page: number = ctx.checkQuery('page').optional().default(1).gt(0).toInt().value;
+        const pageSize: number = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
+        const resourceType: string = ctx.checkQuery('resourceType').optional().isResourceType().toLow().value;
+        const keywords: string = ctx.checkQuery('keywords').optional().decodeURIComponent().value;
+        const isLoadingTypeless = ctx.checkQuery('isLoadingTypeless').optional().in([0, 1]).default(1).value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        ctx.validateParams();
+
+        const condition: any = {};
+        if (resourceType && isLoadingTypeless) {
+            condition.resourceType = {$in: [resourceType, '']};
+        } else if (resourceType) {
+            condition.resourceType = resourceType;
+        } else if (!isLoadingTypeless) {
+            condition.resourceType = {$ne: ''};
+        }
+        if (keywords) {
+            const regex: object = {$regex: keywords, $options: 'i'};
+            condition.$or = [{objectName: regex}, {bucketName: regex}];
+        }
+
+        const buckets = await this.bucketService.find({userId: ctx.userId, bucketType: 1});
+        condition.bucketId = {$in: buckets.map(x => x.bucketId)};
+
+        let dataList = [];
+        const totalItem = await this.objectStorageService.count(condition);
+        if (buckets.length && totalItem > (page - 1) * pageSize) {
+            dataList = await this.objectStorageService.findPageList(condition, page, pageSize, projection, {createDate: -1});
+        }
+
+        ctx.success({page, pageSize, totalItem, dataList});
+    }
+
+    @visitorIdentity(LoginUser)
     @get('/buckets/:bucketName/objects')
     async index(ctx) {
         const page: number = ctx.checkQuery('page').optional().default(1).gt(0).toInt().value;

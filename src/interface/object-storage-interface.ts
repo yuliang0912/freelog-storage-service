@@ -73,4 +73,5 @@ export interface IObjectStorageService {
 
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ObjectStorageInfo[]>;
 
+    findAll(condition: object, page: number, pageSize: number);
 }

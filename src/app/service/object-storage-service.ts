@@ -170,4 +170,45 @@ export class ObjectStorageService implements IObjectStorageService {
     async count(condition: object): Promise<number> {
         return this.objectStorageProvider.count(condition);
     }
+
+    async findAll(condition: object, page: number, pageSize: number) {
+
+        const pipeline: any = [
+            {
+                $match: condition
+            },
+            {
+                $addFields: {bucket_id: {$toObjectId: '$bucketId'}}
+            }, {
+                $lookup: {
+                    from: 'buckets',
+                    localField: 'resource_id',
+                    foreignField: '_id',
+                    as: 'buckets'
+                }
+            },
+            {
+                $match: {
+                    'buckets.bucketType': 1,
+                    'buckets.userId': this.ctx.userId,
+                }
+            }
+        ];
+
+        const countAggregates = pipeline.concat([{$count: 'totalItem'}]);
+        const pageAggregates = pipeline.concat([{
+            $skip: (page - 1) * pageSize
+        }, {
+            $limit: pageSize
+        }]);
+        const [totalItemInfo] = await this.objectStorageProvider.aggregate(countAggregates);
+        console.log(JSON.stringify(countAggregates));
+        const {totalItem = 0} = totalItemInfo || {};
+        const result = {page, pageSize, totalItem, dataList: []};
+        if (totalItem <= (page - 1) * pageSize) {
+            return result;
+        }
+        result.dataList = await this.objectStorageProvider.aggregate(pageAggregates);
+        return result;
+    }
 }
