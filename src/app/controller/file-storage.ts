@@ -24,7 +24,7 @@ export class FileStorageController {
             return this.fileStorageService.fileStreamErrorHandler(fileStream).finally(() => {
                 throw error;
             });
-        })
+        });
         ctx.success({sha1: fileStorageInfo.sha1, fileSize: fileStorageInfo.fileSize});
     }
 
@@ -36,19 +36,17 @@ export class FileStorageController {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'file'));
         }
 
-        const imageUrl = await this.fileStorageService.uploadImage(fileStream).catch(error => {
+        await this.fileStorageService.uploadImage(fileStream).then(url => ctx.success({url})).catch(error => {
             return this.fileStorageService.fileStreamErrorHandler(fileStream).finally(() => {
                 throw error;
             });
         });
-
-        ctx.success({url: imageUrl});
     }
 
     @visitorIdentity(LoginUser | InternalClient)
     @get('/fileIsExist')
     async fileIsExist(ctx) {
-        const sha1: string = ctx.checkQuery('sha1').exist().isResourceId().toLowercase().value;
+        const sha1: string = ctx.checkQuery('sha1').exist().isSha1().toLowercase().value;
         ctx.validateParams();
 
         await this.fileStorageService.findBySha1(sha1).then(fileStorageInfo => ctx.success(Boolean(fileStorageInfo)));

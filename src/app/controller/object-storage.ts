@@ -66,7 +66,7 @@ export class ObjectController {
     async createOrReplace(ctx) {
         const bucketName: string = ctx.checkParams('bucketName').exist().isStrictBucketName().value;
         const objectName: string = ctx.checkBody('objectName').exist().value;
-        const sha1: string = ctx.checkBody('sha1').exist().isResourceId().toLowercase().value;
+        const sha1: string = ctx.checkBody('sha1').exist().isSha1().toLowercase().value;
         const resourceType: string = ctx.checkBody('resourceType').optional().isResourceType().toLowercase().value;
         ctx.validateParams();
 
