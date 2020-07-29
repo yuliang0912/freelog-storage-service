@@ -24,6 +24,7 @@ export class ObjectController {
         const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
         const resourceType: string = ctx.checkQuery('resourceType').optional().isResourceType().toLow().value;
         const keywords: string = ctx.checkQuery('keywords').optional().decodeURIComponent().value;
+        const isLoadingTypeless = ctx.checkQuery('isLoadingTypeless').optional().in([0, 1]).default(1).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -31,8 +32,12 @@ export class ObjectController {
         ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
 
         const condition: any = {bucketId: bucketInfo.bucketId};
-        if (resourceType) {
+        if (resourceType && isLoadingTypeless) {
+            condition.resourceType = {$in: [resourceType, '']};
+        } else if (resourceType) {
             condition.resourceType = resourceType;
+        } else if (!isLoadingTypeless) {
+            condition.resourceType = {$ne: ''};
         }
         if (keywords) {
             const regex: object = {$regex: keywords, $options: 'i'};
