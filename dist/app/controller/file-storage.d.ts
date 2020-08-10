@@ -6,4 +6,5 @@ export declare class FileStorageController {
     fileIsExist(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
     fileProperty(ctx: any): Promise<any>;
+    download(ctx: any): Promise<void>;
 }

@@ -17,8 +17,8 @@ export class ObjectController {
     objectStorageService: IObjectStorageService;
 
     @visitorIdentity(LoginUser)
-    @get('/buckets/objects/my')
-    async index1(ctx) {
+    @get('/buckets/_all/objects')
+    async myObjects(ctx) {
         const page: number = ctx.checkQuery('page').optional().default(1).gt(0).toInt().value;
         const pageSize: number = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
         const resourceType: string = ctx.checkQuery('resourceType').optional().isResourceType().toLow().value;

@@ -5,7 +5,7 @@ export declare class ObjectController {
     bucketService: IBucketService;
     fileStorageService: IFileStorageService;
     objectStorageService: IObjectStorageService;
-    index1(ctx: any): Promise<void>;
+    myObjects(ctx: any): Promise<void>;
     index(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;
     createOrReplace(ctx: any): Promise<void>;

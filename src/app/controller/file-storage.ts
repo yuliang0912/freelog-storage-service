@@ -2,6 +2,7 @@ import {inject, controller, get, post, provide} from 'midway';
 import {LoginUser, ArgumentError, ApplicationError, InternalClient} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {IFileStorageService} from '../../interface/file-storage-info-interface';
+import {isString} from 'lodash';
 
 @provide()
 @controller('/v1/storages/files')
@@ -28,8 +29,8 @@ export class FileStorageController {
         ctx.success({sha1: fileStorageInfo.sha1, fileSize: fileStorageInfo.fileSize});
     }
 
-    @visitorIdentity(LoginUser | InternalClient)
     @post('/uploadImage')
+    @visitorIdentity(LoginUser)
     async uploadImage(ctx) {
         const fileStream = await ctx.getFileStream({requireFile: false});
         if (!fileStream || !fileStream.filename) {
@@ -79,5 +80,24 @@ export class FileStorageController {
             return ctx.error(new ApplicationError(analyzeResult.error));
         }
         ctx.success({fileSize: fileStorageInfo.fileSize});
+    }
+
+    @get('/:sha1/download')
+    // @visitorIdentity(InternalClient)
+    async download(ctx) {
+
+        const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
+        const attachmentName = ctx.checkQuery('attachmentName').optional().type('string').value;
+        ctx.validateParams();
+
+        const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
+        ctx.entityNullObjectCheck(fileStorageInfo, ctx.gettext('file-storage-entity-not-found'));
+
+        const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
+        ctx.body = fileStream;
+        if (isString(attachmentName) && attachmentName.length) {
+            ctx.attachment(attachmentName);
+        }
+        ctx.set('content-length', fileStorageInfo.fileSize);
     }
 }
