@@ -1,14 +1,19 @@
-import {pick, assign, isNull, isUndefined, sumBy} from 'lodash';
+import {satisfies} from 'semver';
 import {provide, config, plugin, inject} from 'midway';
+import {ApplicationError, ArgumentError} from 'egg-freelog-base';
+import {assign, isEmpty, uniqWith, isObject, isArray, sumBy, isString, first, chain} from 'lodash';
 import {
-    IObjectStorageService, ObjectStorageInfo, CreateObjectStorageOptions, CreateUserNodeDataObjectOptions
+    IObjectStorageService, ObjectStorageInfo, CreateObjectStorageOptions,
+    CreateUserNodeDataObjectOptions, ObjectDependencyInfo, UpdateObjectStorageOptions, CommonObjectDependencyTreeInfo
 } from '../../interface/object-storage-interface';
 import {IBucketService, BucketInfo, BucketTypeEnum, SystemBucketName} from '../../interface/bucket-interface';
 import {FileStorageInfo, IFileStorageService} from '../../interface/file-storage-info-interface';
-import {ApplicationError} from 'egg-freelog-base';
+import {IOutsideApiService, ResourceDependencyTreeInfo, ResourceInfo} from '../../interface/common-interface';
+import {strictBucketName, mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide('objectStorageService')
 export class ObjectStorageService implements IObjectStorageService {
+
     @inject()
     ctx;
     @plugin()
@@ -16,16 +21,20 @@ export class ObjectStorageService implements IObjectStorageService {
     @config('uploadConfig')
     uploadConfig;
     @inject()
-    bucketService: IBucketService;
+    storageCommonGenerator;
     @inject()
     objectStorageProvider;
     @inject()
     systemAnalysisRecordProvider;
     @inject()
+    bucketService: IBucketService;
+    @inject()
     fileStorageService: IFileStorageService;
+    @inject()
+    outsideApiService: IOutsideApiService;
 
     /**
-     * 创建文件对象
+     * 创建存储对象(存在时,则替换)
      * @param {BucketInfo} bucketInfo
      * @param {CreateObjectStorageInfoOptions} options
      * @returns {Promise<ObjectStorageInfo>}
@@ -39,33 +48,33 @@ export class ObjectStorageService implements IObjectStorageService {
             objectName: options.objectName,
             bucketId: bucketInfo.bucketId,
             bucketName: bucketInfo.bucketName,
-            resourceType: isNull(options.resourceType) || isUndefined(options.resourceType) ? '' : options.resourceType
+            userId: bucketInfo.userId,
+            resourceType: options.resourceType ?? '',
+            uniqueKey: this.storageCommonGenerator.generateObjectUniqueKey(bucketInfo.bucketName, options.objectName)
         };
-        const findCondition = pick(model, ['bucketId', 'objectName']);
-        const oldObjectStorageInfo = await this.objectStorageProvider.findOne(findCondition);
-        const isUpdateResourceType = !oldObjectStorageInfo || oldObjectStorageInfo.resourceType !== model.resourceType;
 
-        if (isUpdateResourceType) {
-            model.systemProperty = {fileSize: options.fileStorageInfo.fileSize};
-        }
-        if (isUpdateResourceType && this.fileStorageService.isCanAnalyzeFileProperty(model.resourceType)) {
-            const cacheAnalyzeResult = await this.fileStorageService.analyzeFileProperty(options.fileStorageInfo, model.resourceType);
-            if (cacheAnalyzeResult.status === 1) {
-                model.systemProperty = assign(model.systemProperty, cacheAnalyzeResult.systemProperty);
-            }
-            if (cacheAnalyzeResult.status === 2) {
-                throw new ApplicationError(cacheAnalyzeResult.error);
-            }
-        }
+        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, options.resourceType);
 
-        if (oldObjectStorageInfo) {
-            return this.objectStorageProvider.findOneAndUpdate(findCondition, model, {new: true}).then((object) => {
-                this.bucketService.replaceStorageObjectEventHandle(object, oldObjectStorageInfo);
-                return object;
+        const oldObjectStorageInfo = await this.findOneByName(bucketInfo.bucketName, options.objectName);
+        if (!oldObjectStorageInfo) {
+            return this.objectStorageProvider.create(model).tap(() => {
+                this.bucketService.addStorageObjectEventHandle(model);
             });
         }
-        return this.objectStorageProvider.create(model).tap(() => {
-            this.bucketService.addStorageObjectEventHandle(model);
+
+        // 替换对象时,只保留依赖和自定义属性,其他属性目前不保留
+        model.dependencies = oldObjectStorageInfo.dependencies ?? [];
+        model.customProperty = oldObjectStorageInfo.customProperty ?? {};
+
+        const cycleDependCheckResult = await this._cycleDependCheck(`${model.bucketName}/${model.objectName}`, model.dependencies, 1);
+        if (cycleDependCheckResult.ret) {
+            throw new ApplicationError(this.ctx.gettext('object-circular-dependency-error'), {
+                objectName: model.objectName, deep: cycleDependCheckResult.deep
+            });
+        }
+        return this.objectStorageProvider.findOneAndUpdate({_id: oldObjectStorageInfo.objectId}, model, {new: true}).then((newObjectStorage) => {
+            this.bucketService.replaceStorageObjectEventHandle(newObjectStorage, oldObjectStorageInfo);
+            return newObjectStorage;
         });
     }
 
@@ -74,36 +83,38 @@ export class ObjectStorageService implements IObjectStorageService {
      * @param {CreateUserNodeDataObjectOptions} options
      * @returns {Promise<ObjectStorageInfo>}
      */
-    async createUserNodeObject(options: CreateUserNodeDataObjectOptions): Promise<ObjectStorageInfo> {
-
-        const bucket: BucketInfo = {
-            bucketName: SystemBucketName.UserNodeData,
-            bucketType: BucketTypeEnum.SystemStorage,
-            userId: options.userId
-        };
-
-        const bucketInfo = await this.bucketService.createOrFindSystemBucket(bucket);
+    async createOrUpdateUserNodeObject(objectStorageInfo: ObjectStorageInfo, options: CreateUserNodeDataObjectOptions): Promise<ObjectStorageInfo> {
 
         const model: ObjectStorageInfo = {
             sha1: options.fileStorageInfo.sha1,
             objectName: `${options.nodeInfo.nodeDomain}.ncfg`,
-            bucketId: bucketInfo.bucketId,
-            bucketName: bucketInfo.bucketName,
-            resourceType: 'node-config',
-            systemProperty: {
-                fileSize: options.fileStorageInfo.fileSize
-            }
+            bucketId: objectStorageInfo?.bucketId,
+            bucketName: objectStorageInfo?.bucketName,
+            userId: options.userId,
+            resourceType: 'node-config'
         };
 
-        const findCondition = pick(model, ['bucketId', 'objectName']);
-        const oldObjectStorageInfo = await this.objectStorageProvider.findOneAndUpdate(findCondition, model, {new: false});
+        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, model.resourceType);
 
-        if (oldObjectStorageInfo) {
-            this.bucketService.replaceStorageObjectEventHandle(model, oldObjectStorageInfo);
-            return this.objectStorageProvider.findOne(findCondition);
+        if (!objectStorageInfo) {
+            const bucketInfo = await this.bucketService.createOrFindSystemBucket({
+                bucketName: SystemBucketName.UserNodeData,
+                bucketType: BucketTypeEnum.SystemStorage,
+                userId: options.userId
+            });
+            model.bucketId = bucketInfo.bucketId;
+            model.bucketName = bucketInfo.bucketName;
+            model.uniqueKey = this.storageCommonGenerator.generateObjectUniqueKey(bucketInfo.bucketName, model.objectName);
+
+            return this.objectStorageProvider.create(model).tap((object) => {
+                this.bucketService.addStorageObjectEventHandle(object);
+            });
         }
-        return this.objectStorageProvider.create(model).tap((object) => {
-            this.bucketService.addStorageObjectEventHandle(object);
+
+        model.uniqueKey = this.storageCommonGenerator.generateObjectUniqueKey(objectStorageInfo.bucketName, model.objectName);
+        return this.objectStorageProvider.findOneAndUpdate({_id: objectStorageInfo.objectId}, model, {new: true}).then(newObjectStorageInfo => {
+            this.bucketService.replaceStorageObjectEventHandle(newObjectStorageInfo, objectStorageInfo);
+            return newObjectStorageInfo;
         });
     }
 
@@ -113,20 +124,73 @@ export class ObjectStorageService implements IObjectStorageService {
      * @param {FileStorageInfo} newFileStorageInfo - 新的文件存储信息
      * @returns {Promise<ObjectStorageInfo>}
      */
-    async updateObject(oldObjectStorageInfo: ObjectStorageInfo, newFileStorageInfo: FileStorageInfo): Promise<ObjectStorageInfo> {
+    async updateObject(oldObjectStorageInfo: ObjectStorageInfo, options: UpdateObjectStorageOptions): Promise<ObjectStorageInfo> {
 
-        const updateInfo = {
-            sha1: newFileStorageInfo.sha1,
-            systemProperties: {
-                fileSize: newFileStorageInfo.fileSize
+        const updateInfo: any = {};
+        if (isObject(options.customProperty)) {
+            updateInfo.customProperty = options.customProperty;
+        }
+        if (isString(options.resourceType) && options.resourceType !== oldObjectStorageInfo.resourceType) {
+            updateInfo.resourceType = options.resourceType;
+            if (this.fileStorageService.isCanAnalyzeFileProperty(options.resourceType)) {
+                const fileStorageInfo = await this.fileStorageService.findBySha1(oldObjectStorageInfo.sha1);
+                updateInfo.systemProperty = this._buildObjectSystemProperty(fileStorageInfo, options.resourceType);
             }
-        };
-        const findCondition = pick(oldObjectStorageInfo, ['bucketId', 'objectName']);
-        const newObjectStorageInfo = await this.objectStorageProvider.findOneAndUpdate(findCondition, updateInfo, {new: true});
-        this.bucketService.replaceStorageObjectEventHandle(newObjectStorageInfo, oldObjectStorageInfo);
-        return this.objectStorageProvider.findOne(findCondition);
+        }
+        if (isString(options.objectName)) {
+            updateInfo.objectName = options.objectName;
+            updateInfo.uniqueKey = this.storageCommonGenerator.generateObjectUniqueKey(oldObjectStorageInfo.bucketName, options.objectName);
+        }
+        if (isArray(options.dependencies)) {
+            await this._checkDependencyInfo(options.dependencies);
+            updateInfo.dependencies = options.dependencies;
+        }
+        if (isString(options.objectName) || isArray(options.dependencies)) {
+            const objectFullName = `${oldObjectStorageInfo.bucketName}/${updateInfo.objectName ?? oldObjectStorageInfo.objectName}`;
+            const cycleDependCheckResult = await this._cycleDependCheck(objectFullName, updateInfo.dependencies ?? oldObjectStorageInfo.dependencies, 1);
+            if (cycleDependCheckResult.ret) {
+                throw new ApplicationError(this.ctx.gettext('object-circular-dependency-error'), {
+                    objectName: objectFullName,
+                    deep: cycleDependCheckResult.deep
+                });
+            }
+        }
+        if (isEmpty(Object.keys(updateInfo))) {
+            throw new ArgumentError('please check args');
+        }
+
+        return this.objectStorageProvider.findOneAndUpdate({_id: oldObjectStorageInfo.objectId}, updateInfo, {new: true});
     }
 
+    /**
+     * 根据名称获取bucket
+     * @param objectFullNames
+     * @param args
+     */
+    async getObjectListByFullNames(objectFullNames: string[], ...args): Promise<ObjectStorageInfo[]> {
+
+        if (isEmpty(objectFullNames)) {
+            return [];
+        }
+        const condition = {$or: []};
+        objectFullNames.forEach(fullObjectName => {
+            const [bucketName, objectName] = fullObjectName.split('/');
+            if (!isString(bucketName) || !isString(objectName)) {
+                throw new ArgumentError('objectFullName format error');
+            }
+            if (!strictBucketName.test(bucketName)) {
+                throw new ArgumentError('bucket format error');
+            }
+            condition.$or.push({bucketName, objectName});
+        });
+
+        return this.find(condition, ...args);
+    }
+
+    /**
+     * 删除存储对象
+     * @param objectStorageInfo
+     */
     async deleteObject(objectStorageInfo: ObjectStorageInfo): Promise<boolean> {
         return this.objectStorageProvider.deleteOne({
             bucketId: objectStorageInfo.bucketId,
@@ -139,6 +203,11 @@ export class ObjectStorageService implements IObjectStorageService {
         });
     }
 
+    /**
+     * 批量删除存储对象
+     * @param bucketInfo
+     * @param objectIds
+     */
     async batchDeleteObjects(bucketInfo: BucketInfo, objectIds: string[]): Promise<boolean> {
         const condition = {
             bucketId: bucketInfo.bucketId, _id: {$in: objectIds}
@@ -155,12 +224,39 @@ export class ObjectStorageService implements IObjectStorageService {
         });
     }
 
-    async findOne(condition: object): Promise<ObjectStorageInfo> {
-        return this.objectStorageProvider.findOne(condition);
+    /**
+     * 根据bucketName和objectName查询
+     * @param bucketName
+     * @param objectName
+     * @param args
+     */
+    async findOneByName(bucketName: string, objectName: string, ...args): Promise<ObjectStorageInfo> {
+        const uniqueKey = this.storageCommonGenerator.generateObjectUniqueKey(bucketName, objectName);
+        return this.findOne({uniqueKey}, ...args);
     }
 
-    async find(condition: object): Promise<ObjectStorageInfo[]> {
-        return this.objectStorageProvider.find(condition);
+    /**
+     * 通过ID或者名称查找对象
+     * @param objectIdOrFullName
+     * @param args
+     */
+    async findOneByObjectIdOrName(objectIdOrFullName: string, ...args): Promise<ObjectStorageInfo> {
+        if (mongoObjectId.test(objectIdOrFullName)) {
+            return this.findOne({_id: objectIdOrFullName}, ...args);
+        } else if (objectIdOrFullName.includes('/')) {
+            const [bucketName, objectName] = objectIdOrFullName.split('/');
+            return this.findOneByName(bucketName, objectName, ...args);
+        } else {
+            throw new ArgumentError(this.ctx.gettext('params-format-validate-failed', 'objectIdOrName'));
+        }
+    }
+
+    async findOne(condition: object, ...args): Promise<ObjectStorageInfo> {
+        return this.objectStorageProvider.findOne(condition, ...args);
+    }
+
+    async find(condition: object, ...args): Promise<ObjectStorageInfo[]> {
+        return this.objectStorageProvider.find(condition, ...args);
     }
 
     async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ObjectStorageInfo[]> {
@@ -210,5 +306,150 @@ export class ObjectStorageService implements IObjectStorageService {
         }
         result.dataList = await this.objectStorageProvider.aggregate(pageAggregates);
         return result;
+    }
+
+    /**
+     * 生成存储对象的系统属性
+     * @param fileStorageInfo
+     * @param resourceType
+     * @private
+     */
+    async _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, resourceType: string): Promise<object> {
+
+        let systemProperty = {fileSize: fileStorageInfo.fileSize, mime: 'application/octet-stream'};
+        if (resourceType === 'node-config') {
+            systemProperty.mime = 'application/json';
+        }
+        if (this.fileStorageService.isCanAnalyzeFileProperty(resourceType)) {
+            const cacheAnalyzeResult = await this.fileStorageService.analyzeFileProperty(fileStorageInfo, resourceType);
+            if (cacheAnalyzeResult.status === 1) {
+                systemProperty = assign(systemProperty, cacheAnalyzeResult.systemProperty);
+            }
+            if (cacheAnalyzeResult.status === 2) {
+                throw new ApplicationError(cacheAnalyzeResult.error);
+            }
+        }
+        return systemProperty;
+    }
+
+    /**
+     * 构建存储对象依赖树
+     * @param dependencies
+     * @private
+     */
+    async buildObjectDependencyTree(dependencies: ObjectDependencyInfo[]): Promise<CommonObjectDependencyTreeInfo[]> {
+
+        const objectDependencyTrees: CommonObjectDependencyTreeInfo[] = [];
+        const dependObjects = dependencies.filter(x => x.type === 'object');
+        const dependResources = dependencies.filter(x => x.type === 'resource');
+
+        const resourceDependencyTask = dependResources.map(item => this.outsideApiService.getResourceDependencyTree(item.name, {
+            isContainRootNode: true,
+            versionRange: item.versionRange ?? '*'
+        }));
+
+        const objects = await this.getObjectListByFullNames(dependObjects.map(x => x.name));
+        for (const objectInfo of objects) {
+            objectDependencyTrees.push({
+                type: 'object',
+                id: objectInfo.objectId,
+                name: objectInfo.objectName,
+                resourceType: objectInfo.resourceType,
+                dependencies: await this.buildObjectDependencyTree(objectInfo.dependencies ?? [])
+            });
+        }
+
+        function autoMappingResourceDependency(resourceDependency: ResourceDependencyTreeInfo): CommonObjectDependencyTreeInfo {
+            return {
+                type: 'resource',
+                id: resourceDependency.resourceId,
+                name: resourceDependency.resourceName,
+                resourceType: resourceDependency.resourceType,
+                version: resourceDependency.version,
+                versions: resourceDependency.versions,
+                versionId: resourceDependency.versionId,
+                dependencies: resourceDependency.dependencies.map(x => autoMappingResourceDependency(x))
+            };
+        }
+
+        const results = await Promise.all(resourceDependencyTask);
+        for (const dependencyTree of results) {
+            objectDependencyTrees.push(autoMappingResourceDependency(first(dependencyTree)));
+        }
+
+        return objectDependencyTrees;
+    }
+
+    /**
+     * 检查依赖信息
+     * @param dependencyInfo
+     * @returns {Promise<{releases: Array, mocks: Array}>}
+     * @private
+     */
+    async _checkDependencyInfo(dependencies: ObjectDependencyInfo[]) {
+
+        if (isEmpty(dependencies)) {
+            return;
+        }
+
+        const dependObjects = dependencies.filter(x => x.type === 'object');
+        const dependResources = dependencies.filter(x => x.type === 'resource');
+
+        // 不允许重复依赖
+        if (uniqWith(dependencies, (x, y) => x.name === y.name && x.type === y.type).length !== dependencies.length) {
+            throw new ApplicationError(this.ctx.gettext('resource-depend-release-invalid'), dependResources);
+        }
+
+        const resourceMap: Map<string, ResourceInfo> = new Map();
+        if (!isEmpty(dependResources)) {
+            await this.outsideApiService.getResourceListByNames(dependResources.map(x => x.name), {projection: 'resourceVersions resourceName'}).then(list => {
+                list.forEach(item => resourceMap.set(item.resourceName.toLowerCase(), item));
+            });
+        }
+        const invalidDependResources = dependResources.filter(x => !resourceMap.has(x.name));
+        if (!isEmpty(invalidDependResources)) {
+            throw new ApplicationError(this.ctx.gettext('resource-depend-release-invalid'), {invalidDependResources});
+        }
+        const invalidResourceVersionRanges = dependResources.filter(x => !resourceMap.get(x.name).resourceVersions.some(m => satisfies(m.version, x.versionRange ?? '*')));
+        if (!isEmpty(invalidResourceVersionRanges)) {
+            throw new ApplicationError(this.ctx.gettext('resource-depend-release-versionRange-invalid'), {invalidResourceVersionRanges});
+        }
+
+        const objectNameAndUserIdMap: Map<string, number> = new Map();
+        if (!isEmpty(dependObjects)) {
+            await this.getObjectListByFullNames(dependObjects.map(x => x.name)).then(list => {
+                list.forEach(item => objectNameAndUserIdMap.set(`${item.bucketName}/${item.objectName}`, item.userId));
+            });
+        }
+        const invalidDependObjects = dependObjects.filter(x => !objectNameAndUserIdMap.has(x.name) || objectNameAndUserIdMap.get(x.name) !== this.ctx.userId);
+        if (invalidDependObjects.length) {
+            throw new ApplicationError(this.ctx.gettext('resource-depend-mock-invalid'), {invalidDependObjects});
+        }
+    }
+
+    /**
+     * 检查循环依赖(新建或者更新名称时,都需要做检查)
+     * @param objectName
+     * @param dependencies
+     * @param deep
+     * @private
+     */
+    async _cycleDependCheck(objectName: string, dependencies: ObjectDependencyInfo[], deep: number): Promise<{ ret: boolean, deep?: number }> {
+
+        dependencies = dependencies.filter(x => x.type === 'object');
+        if (deep > 20) {
+            throw new ApplicationError('资源嵌套层级超过系统限制');
+        }
+        if (isEmpty(dependencies)) {
+            return {ret: false};
+        }
+        if (dependencies.some(x => x.name === objectName)) {
+            return {ret: true, deep};
+        }
+
+        const dependObjects = await this.getObjectListByFullNames(dependencies.map(x => x.name), 'dependencies');
+        const dependSubObjects = chain(dependObjects).map(m => m.dependencies ?? []).flattenDeep().value();
+
+        return this._cycleDependCheck(objectName, dependSubObjects, deep + 1);
     }
 }

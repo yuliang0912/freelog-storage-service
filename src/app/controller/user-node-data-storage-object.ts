@@ -4,7 +4,11 @@ import {LoginUser, ApplicationError, ArgumentError} from 'egg-freelog-base/index
 import {IBucketService, SystemBucketName} from '../../interface/bucket-interface';
 import {IFileStorageService} from '../../interface/file-storage-info-interface';
 import {CreateUserNodeDataObjectOptions, IObjectStorageService} from '../../interface/object-storage-interface';
-import {JsonObjectOperation, JsonObjectOperationTypeEnum, NodeInfo} from '../../interface/common-interface';
+import {
+    IOutsideApiService,
+    JsonObjectOperation,
+    JsonObjectOperationTypeEnum
+} from '../../interface/common-interface';
 import {mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide()
@@ -19,26 +23,28 @@ export class UserNodeDataObjectController {
     @inject()
     objectStorageService: IObjectStorageService;
     @inject()
+    outsideApiService: IOutsideApiService;
+    @inject()
     userNodeDataFileOperation;
 
     @visitorIdentity(LoginUser)
     @post('/objects')
     async createOrReplace(ctx) {
 
-        const nodeId: number = ctx.checkBody('nodeId').optional().toInt().value;
-        const nodeDomain: string = ctx.checkBody('nodeDomain').optional().isNodeDomain().value;
+        const nodeId = ctx.checkBody('nodeId').optional().toInt().value;
+        const nodeDomain = ctx.checkBody('nodeDomain').optional().isNodeDomain().value;
         const userNodeData = ctx.checkBody('userNodeData').exist().isObject().value;
         ctx.validateParams();
 
         if (!nodeId && !nodeDomain) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'nodeId or nodeDomain'));
         }
-        const nodeInfo = await ctx.curlIntranetApi(`${ctx.webApi.nodeInfo}/${nodeId ? nodeId : `detail?nodeDomain=${nodeDomain}`}`);
+        const nodeInfo = await this.outsideApiService[nodeId ? 'getNodeInfoById' : 'getNodeInfoByDomain'].call(this.outsideApiService, nodeId || nodeDomain);
         if (!nodeInfo) {
             throw new ArgumentError(ctx.gettext('node-entity-not-found'));
         }
         const fileStorageInfo = await this.fileStorageService.uploadUserNodeDataFile(userNodeData);
-        const updateFileOptions: CreateUserNodeDataObjectOptions = {
+        const createUserNodeDataObjectOptions: CreateUserNodeDataObjectOptions = {
             userId: ctx.request.userId, nodeInfo,
             fileStorageInfo: {
                 sha1: fileStorageInfo.sha1,
@@ -47,49 +53,54 @@ export class UserNodeDataObjectController {
                 storageInfo: fileStorageInfo.storageInfo
             }
         };
-        await this.objectStorageService.createUserNodeObject(updateFileOptions).then(ctx.success);
+
+        const objectInfo = await this.objectStorageService.findOne({
+            userId: ctx.userId,
+            bucketName: SystemBucketName.UserNodeData,
+            objectName: `${nodeInfo.nodeDomain}.ncfg`
+        });
+
+        await this.objectStorageService.createOrUpdateUserNodeObject(objectInfo, createUserNodeDataObjectOptions).then(ctx.success);
     }
 
     @visitorIdentity(LoginUser)
     @put('/objects/:nodeId')
     async update(ctx) {
+
         const nodeId: number = ctx.checkParams('nodeId').exist().toInt().value;
         const removeFields: string[] = ctx.checkBody('removeFields').optional().isArray().default([]).value;
         const appendOrReplaceObject: object = ctx.checkBody('appendOrReplaceObject').optional().isObject().value;
         ctx.validateParams();
 
-        const nodeInfo: NodeInfo = await ctx.curlIntranetApi(`${ctx.webApi.nodeInfo}/${nodeId}`);
+        const nodeInfo = await this.outsideApiService.getNodeInfoById(nodeId);
         if (!nodeInfo) {
             throw new ArgumentError(ctx.gettext('node-entity-not-found'));
         }
-        const bucketInfo = await this.bucketService.findOne({
-            userId: ctx.request.userId,
-            bucketName: SystemBucketName.UserNodeData
-        });
-        if (!bucketInfo) {
-            throw new ApplicationError(ctx.gettext('bucket-entity-not-found'));
-        }
-        const storageObject = await this.objectStorageService.findOne({
-            bucketId: bucketInfo.bucketId,
+        const objectInfo = await this.objectStorageService.findOne({
+            userId: ctx.userId,
+            bucketName: SystemBucketName.UserNodeData,
             objectName: `${nodeInfo.nodeDomain}.ncfg`
         });
-        if (!storageObject) {
+        if (!objectInfo) {
             throw new ApplicationError(ctx.gettext('storage-object-not-found'));
         }
-        const fileStorageInfo = await this.fileStorageService.findBySha1(storageObject.sha1);
+        const fileStorageInfo = await this.fileStorageService.findBySha1(objectInfo.sha1);
         const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
-        ctx.attachment(storageObject.objectName);
+
         const objectOperations: JsonObjectOperation[] = Object.keys(appendOrReplaceObject).map(key => Object({
             key, value: appendOrReplaceObject[key], type: JsonObjectOperationTypeEnum.AppendOrReplace
         }));
         removeFields.forEach(item => objectOperations.push({key: item, type: JsonObjectOperationTypeEnum.Remove}));
 
         const transformStream = this.userNodeDataFileOperation.edit(fileStream, objectOperations);
-        transformStream.filename = storageObject.objectName;
+        transformStream.filename = objectInfo.objectName;
 
         const newFileStorageInfo = await this.fileStorageService.uploadUserNodeDataFile(transformStream);
 
-        await this.objectStorageService.updateObject(storageObject, newFileStorageInfo).then(ctx.success);
+        await this.objectStorageService.createOrUpdateUserNodeObject(objectInfo, {
+            userId: objectInfo.userId, nodeInfo,
+            fileStorageInfo: newFileStorageInfo
+        }).then(ctx.success);
     }
 
     @visitorIdentity(LoginUser)
@@ -111,7 +122,7 @@ export class UserNodeDataObjectController {
         if (mongoObjectId.test(objectIdOrNodeId)) {
             findCondition._id = objectIdOrNodeId;
         } else if (/^\d{8,10}$/.test(objectIdOrNodeId)) {
-            const nodeInfo: NodeInfo = await ctx.curlIntranetApi(`${ctx.webApi.nodeInfo}/${objectIdOrNodeId}`);
+            const nodeInfo = await this.outsideApiService.getNodeInfoById(objectIdOrNodeId);
             if (!nodeInfo) {
                 throw new ArgumentError(ctx.gettext('node-entity-not-found'));
             }

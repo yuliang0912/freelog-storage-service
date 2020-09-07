@@ -5,7 +5,7 @@
   "private": true,
   "dependencies": {
     "ali-oss": "^6.10.0",
-    "egg-freelog-base": "^2.0.5",
+    "egg-freelog-base": "^2.0.13",
     "egg-scripts": "^2.10.0",
     "image-size": "^0.8.3",
     "jsonschema": "^1.2.6",
@@ -14,6 +14,7 @@
     "moment": "^2.27.0",
     "mongoose": "^5.9.24",
     "probe-image-size": "^5.0.0",
+    "semver": "^7.3.2",
     "stream-json": "^1.7.0",
     "stream-wormhole": "^1.1.0",
     "uuid": "^7.0.3"

@@ -2,10 +2,12 @@
 import { IBucketService } from '../../interface/bucket-interface';
 import { IFileStorageService } from '../../interface/file-storage-info-interface';
 import { IObjectStorageService } from '../../interface/object-storage-interface';
+import { IOutsideApiService } from '../../interface/common-interface';
 export declare class UserNodeDataObjectController {
     bucketService: IBucketService;
     fileStorageService: IFileStorageService;
     objectStorageService: IObjectStorageService;
+    outsideApiService: IOutsideApiService;
     userNodeDataFileOperation: any;
     createOrReplace(ctx: any): Promise<void>;
     update(ctx: any): Promise<void>;

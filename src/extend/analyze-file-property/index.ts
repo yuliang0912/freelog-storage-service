@@ -34,7 +34,7 @@ export class FilePropertyAnalyzerHandler {
         }).catch(err => {
             result.analyzeStatus = 2;
             result.error = err;
-        })
+        });
         result.provider = `${resourceType}-analyze-com`;
         return result;
     }

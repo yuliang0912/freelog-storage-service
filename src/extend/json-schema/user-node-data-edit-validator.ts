@@ -28,7 +28,7 @@ export class UserNodeDataEditValidator extends freelogCommonJsonSchema implement
             uniqueItems: true,
             maxItems: 50,
             items: {$ref: '/keyValuePairSchema'}
-        })
+        });
 
         super.addSchema({
             id: '/keyValuePairSchema',
