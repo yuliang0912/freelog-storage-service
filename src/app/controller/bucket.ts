@@ -55,7 +55,7 @@ export class BucketController {
     @visitorIdentity(LoginUser)
     async destroy(ctx) {
 
-        const bucketName: string = ctx.checkBody('bucketName').exist().isStrictBucketName().value;
+        const bucketName: string = ctx.checkParams('bucketName').exist().isStrictBucketName().value;
         ctx.validateParams();
 
         await this.bucketService.deleteBucket(bucketName).then(ctx.success);

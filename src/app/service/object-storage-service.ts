@@ -9,7 +9,7 @@ import {
 import {IBucketService, BucketInfo, BucketTypeEnum, SystemBucketName} from '../../interface/bucket-interface';
 import {FileStorageInfo, IFileStorageService} from '../../interface/file-storage-info-interface';
 import {IOutsideApiService, ResourceDependencyTreeInfo, ResourceInfo} from '../../interface/common-interface';
-import {strictBucketName, mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
+import {mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide('objectStorageService')
 export class ObjectStorageService implements IObjectStorageService {
@@ -175,13 +175,8 @@ export class ObjectStorageService implements IObjectStorageService {
         const condition = {$or: []};
         objectFullNames.forEach(fullObjectName => {
             const [bucketName, objectName] = fullObjectName.split('/');
-            if (!isString(bucketName) || !isString(objectName)) {
-                throw new ArgumentError('objectFullName format error');
-            }
-            if (!strictBucketName.test(bucketName)) {
-                throw new ArgumentError('bucket format error');
-            }
-            condition.$or.push({bucketName, objectName});
+            const uniqueKey = this.storageCommonGenerator.generateObjectUniqueKey(bucketName, objectName);
+            condition.$or.push({uniqueKey});
         });
 
         return this.find(condition, ...args);
@@ -309,6 +304,24 @@ export class ObjectStorageService implements IObjectStorageService {
     }
 
     /**
+     * 获取对象依赖树
+     * @param objectStorageInfo
+     * @param isContainRootNode
+     */
+    async getDependencyTree(objectStorageInfo: ObjectStorageInfo, isContainRootNode: boolean): Promise<CommonObjectDependencyTreeInfo[]> {
+        if (!isContainRootNode) {
+            return this._buildObjectDependencyTree(objectStorageInfo.dependencies);
+        }
+        return [{
+            type: 'object',
+            id: objectStorageInfo.objectId,
+            name: `${objectStorageInfo.bucketName}/${objectStorageInfo.objectName}`,
+            resourceType: objectStorageInfo.resourceType,
+            dependencies: await this._buildObjectDependencyTree(objectStorageInfo.dependencies ?? [])
+        }];
+    }
+
+    /**
      * 生成存储对象的系统属性
      * @param fileStorageInfo
      * @param resourceType
@@ -337,7 +350,7 @@ export class ObjectStorageService implements IObjectStorageService {
      * @param dependencies
      * @private
      */
-    async buildObjectDependencyTree(dependencies: ObjectDependencyInfo[]): Promise<CommonObjectDependencyTreeInfo[]> {
+    async _buildObjectDependencyTree(dependencies: ObjectDependencyInfo[]): Promise<CommonObjectDependencyTreeInfo[]> {
 
         const objectDependencyTrees: CommonObjectDependencyTreeInfo[] = [];
         const dependObjects = dependencies.filter(x => x.type === 'object');
@@ -353,9 +366,9 @@ export class ObjectStorageService implements IObjectStorageService {
             objectDependencyTrees.push({
                 type: 'object',
                 id: objectInfo.objectId,
-                name: objectInfo.objectName,
+                name: `${objectInfo.bucketName}/${objectInfo.objectName}`,
                 resourceType: objectInfo.resourceType,
-                dependencies: await this.buildObjectDependencyTree(objectInfo.dependencies ?? [])
+                dependencies: await this._buildObjectDependencyTree(objectInfo.dependencies ?? [])
             });
         }
 
@@ -368,6 +381,7 @@ export class ObjectStorageService implements IObjectStorageService {
                 version: resourceDependency.version,
                 versions: resourceDependency.versions,
                 versionId: resourceDependency.versionId,
+                versionRange: resourceDependency.versionRange,
                 dependencies: resourceDependency.dependencies.map(x => autoMappingResourceDependency(x))
             };
         }

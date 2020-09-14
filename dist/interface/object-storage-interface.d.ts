@@ -88,5 +88,5 @@ export interface IObjectStorageService {
     count(condition: object): Promise<number>;
     findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ObjectStorageInfo[]>;
     findAll(condition: object, page: number, pageSize: number): any;
-    buildObjectDependencyTree(dependencies: ObjectDependencyInfo[]): Promise<CommonObjectDependencyTreeInfo[]>;
+    getDependencyTree(objectStorageInfo: ObjectStorageInfo, isContainRootNode: boolean): Promise<CommonObjectDependencyTreeInfo[]>;
 }

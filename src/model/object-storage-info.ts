@@ -48,7 +48,7 @@ export class ObjectStorageInfo extends MongooseModelBase implements IMongooseMod
     static get toObjectOptions() {
         return {
             transform(doc, ret) {
-                return assign({objectId: doc.id}, omit(ret, ['_id']));
+                return assign({objectId: doc.id}, omit(ret, ['_id', 'uniqueKey']));
             }
         };
     }

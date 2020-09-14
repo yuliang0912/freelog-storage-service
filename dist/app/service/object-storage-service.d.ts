@@ -73,6 +73,12 @@ export declare class ObjectStorageService implements IObjectStorageService {
         dataList: any[];
     }>;
     /**
+     * 获取对象依赖树
+     * @param objectStorageInfo
+     * @param isContainRootNode
+     */
+    getDependencyTree(objectStorageInfo: ObjectStorageInfo, isContainRootNode: boolean): Promise<CommonObjectDependencyTreeInfo[]>;
+    /**
      * 生成存储对象的系统属性
      * @param fileStorageInfo
      * @param resourceType
@@ -84,7 +90,7 @@ export declare class ObjectStorageService implements IObjectStorageService {
      * @param dependencies
      * @private
      */
-    buildObjectDependencyTree(dependencies: ObjectDependencyInfo[]): Promise<CommonObjectDependencyTreeInfo[]>;
+    _buildObjectDependencyTree(dependencies: ObjectDependencyInfo[]): Promise<CommonObjectDependencyTreeInfo[]>;
     /**
      * 检查依赖信息
      * @param dependencyInfo

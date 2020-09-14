@@ -109,5 +109,5 @@ export interface IObjectStorageService {
 
     findAll(condition: object, page: number, pageSize: number);
 
-    buildObjectDependencyTree(dependencies: ObjectDependencyInfo[]): Promise<CommonObjectDependencyTreeInfo[]>;
+    getDependencyTree(objectStorageInfo: ObjectStorageInfo, isContainRootNode: boolean): Promise<CommonObjectDependencyTreeInfo[]>;
 }

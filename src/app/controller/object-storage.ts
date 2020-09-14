@@ -240,12 +240,13 @@ export class ObjectController {
     @get('/objects/:objectIdOrName/dependencyTree')
     async dependencyTree(ctx) {
         const objectIdOrName = ctx.checkParams('objectIdOrName').exist().decodeURIComponent().value;
+        const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(false).toBoolean().value;
         ctx.validateParams();
 
-        const objectStorageInfo = await this.objectStorageService.findOneByObjectIdOrName(objectIdOrName, 'dependencies');
+        const objectStorageInfo = await this.objectStorageService.findOneByObjectIdOrName(objectIdOrName);
         if (!objectStorageInfo) {
             throw new ApplicationError(ctx.gettext('storage-object-not-found'));
         }
-        await this.objectStorageService.buildObjectDependencyTree(objectStorageInfo.dependencies).then(ctx.success);
+        await this.objectStorageService.getDependencyTree(objectStorageInfo, isContainRootNode).then(ctx.success);
     }
 }
