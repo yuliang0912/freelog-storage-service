@@ -46,7 +46,6 @@ export interface SystemPropertyInfo {
 
 export interface CreateObjectStorageOptions {
     objectName: string;
-    resourceType?: string;
     fileStorageInfo: FileStorageInfo;
 }
 

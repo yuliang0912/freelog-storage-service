@@ -1,4 +1,5 @@
 import { FileStorageInfo, IFileStorageService, FilePropertyAnalyzeInfo } from '../../interface/file-storage-info-interface';
+import { IBucketService } from '../../interface/bucket-interface';
 export declare class FileStorageService implements IFileStorageService {
     ctx: any;
     filePropertyAnalyzeHandler: any;
@@ -7,6 +8,7 @@ export declare class FileStorageService implements IFileStorageService {
     userNodeDataFileOperation: any;
     fileBaseInfoCalculateTransform: (algorithm?: string, encoding?: string) => any;
     objectStorageServiceClient: any;
+    bucketService: IBucketService;
     /**
      * 上传文件,并分析文件属性
      * @param fileStream
@@ -37,7 +39,13 @@ export declare class FileStorageService implements IFileStorageService {
      * @param {string} sha1
      * @returns {Promise<FileStorageInfo>}
      */
-    findBySha1(sha1: string): Promise<FileStorageInfo>;
+    findBySha1(sha1: string, ...args: any[]): Promise<FileStorageInfo>;
+    /**
+     * 批量查找
+     * @param condition
+     * @param args
+     */
+    find(condition: object, ...args: any[]): Promise<FileStorageInfo[]>;
     /**
      * 获取签名的文件URL读取路径
      * @param {FileStorageInfo} fileStorageInfo
@@ -70,7 +78,7 @@ export declare class FileStorageService implements IFileStorageService {
      * @returns {Promise<void>}
      * @private
      */
-    _uploadFileToTemporaryDirectory(fileStream: any, meta?: any): Promise<FileStorageInfo>;
+    _uploadFileToTemporaryDirectory(fileStream: any, isCheckSpace: boolean, meta?: any): Promise<FileStorageInfo>;
     /**
      * 复制文件(临时目录copy到正式目录),并且保存文件信息入库
      * @param {FileStorageInfo} fileStorageInfo

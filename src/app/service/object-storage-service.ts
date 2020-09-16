@@ -49,22 +49,25 @@ export class ObjectStorageService implements IObjectStorageService {
             bucketId: bucketInfo.bucketId,
             bucketName: bucketInfo.bucketName,
             userId: bucketInfo.userId,
-            resourceType: options.resourceType ?? '',
+            resourceType: '',
             uniqueKey: this.storageCommonGenerator.generateObjectUniqueKey(bucketInfo.bucketName, options.objectName)
         };
-
-        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, options.resourceType);
-
         const oldObjectStorageInfo = await this.findOneByName(bucketInfo.bucketName, options.objectName);
         if (!oldObjectStorageInfo) {
+            model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, '');
             return this.objectStorageProvider.create(model).tap(() => {
                 this.bucketService.addStorageObjectEventHandle(model);
             });
         }
 
-        // 替换对象时,只保留依赖和自定义属性,其他属性目前不保留
+        // 替换对象时,如果没有资源类型,或者新资源检测通过,则保留依赖和自定义属性,否则就清空自定义属性以及依赖信息和资源类型
         model.dependencies = oldObjectStorageInfo.dependencies ?? [];
         model.customProperty = oldObjectStorageInfo.customProperty ?? {};
+        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, oldObjectStorageInfo.resourceType, function (error) {
+            model.resourceType = '';
+            model.dependencies = [];
+            model.customProperty = {};
+        });
 
         const cycleDependCheckResult = await this._cycleDependCheck(`${model.bucketName}/${model.objectName}`, model.dependencies, 1);
         if (cycleDependCheckResult.ret) {
@@ -130,11 +133,11 @@ export class ObjectStorageService implements IObjectStorageService {
         if (isObject(options.customProperty)) {
             updateInfo.customProperty = options.customProperty;
         }
-        if (isString(options.resourceType) && options.resourceType !== oldObjectStorageInfo.resourceType) {
+        if (isString(options.resourceType)) {
             updateInfo.resourceType = options.resourceType;
-            if (this.fileStorageService.isCanAnalyzeFileProperty(options.resourceType)) {
+            if (options.resourceType !== oldObjectStorageInfo.resourceType && this.fileStorageService.isCanAnalyzeFileProperty(options.resourceType)) {
                 const fileStorageInfo = await this.fileStorageService.findBySha1(oldObjectStorageInfo.sha1);
-                updateInfo.systemProperty = this._buildObjectSystemProperty(fileStorageInfo, options.resourceType);
+                updateInfo.systemProperty = await this._buildObjectSystemProperty(fileStorageInfo, options.resourceType);
             }
         }
         if (isString(options.objectName)) {
@@ -158,7 +161,7 @@ export class ObjectStorageService implements IObjectStorageService {
         if (isEmpty(Object.keys(updateInfo))) {
             throw new ArgumentError('please check args');
         }
-
+        console.log(updateInfo);
         return this.objectStorageProvider.findOneAndUpdate({_id: oldObjectStorageInfo.objectId}, updateInfo, {new: true});
     }
 
@@ -327,18 +330,23 @@ export class ObjectStorageService implements IObjectStorageService {
      * @param resourceType
      * @private
      */
-    async _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, resourceType: string): Promise<object> {
+    async _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, resourceType: string, analyzeFileErrorHandle?: (error) => void): Promise<object> {
 
         let systemProperty = {fileSize: fileStorageInfo.fileSize, mime: 'application/octet-stream'};
         if (resourceType === 'node-config') {
             systemProperty.mime = 'application/json';
         }
-        if (this.fileStorageService.isCanAnalyzeFileProperty(resourceType)) {
-            const cacheAnalyzeResult = await this.fileStorageService.analyzeFileProperty(fileStorageInfo, resourceType);
-            if (cacheAnalyzeResult.status === 1) {
-                systemProperty = assign(systemProperty, cacheAnalyzeResult.systemProperty);
-            }
-            if (cacheAnalyzeResult.status === 2) {
+        if (!this.fileStorageService.isCanAnalyzeFileProperty(resourceType)) {
+            return systemProperty;
+        }
+        const cacheAnalyzeResult = await this.fileStorageService.analyzeFileProperty(fileStorageInfo, resourceType);
+        if (cacheAnalyzeResult.status === 1) {
+            systemProperty = assign(systemProperty, cacheAnalyzeResult.systemProperty);
+        }
+        if (cacheAnalyzeResult.status === 2) {
+            if (analyzeFileErrorHandle) {
+                analyzeFileErrorHandle(cacheAnalyzeResult.error);
+            } else {
                 throw new ApplicationError(cacheAnalyzeResult.error);
             }
         }

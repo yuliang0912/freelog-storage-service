@@ -6,6 +6,7 @@ import {
 } from '../../interface/file-storage-info-interface';
 import {isString} from 'lodash';
 import {PassThrough} from 'stream';
+import {IBucketService} from '../../interface/bucket-interface';
 
 const sendToWormhole = require('stream-wormhole');
 
@@ -26,6 +27,8 @@ export class FileStorageService implements IFileStorageService {
     fileBaseInfoCalculateTransform: (algorithm?: string, encoding?: string) => any;
     @inject()
     objectStorageServiceClient;
+    @inject()
+    bucketService: IBucketService;
 
     /**
      * 上传文件,并分析文件属性
@@ -35,9 +38,13 @@ export class FileStorageService implements IFileStorageService {
      */
     async upload(fileStream, resourceType): Promise<FileStorageInfo> {
 
-        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(fileStream);
+        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(fileStream, true);
         if (this.isCanAnalyzeFileProperty(resourceType)) {
-            await this.analyzeFileProperty(fileStorageInfo, resourceType);
+            await this.analyzeFileProperty(fileStorageInfo, resourceType).then(analyzeResult => {
+                if (analyzeResult.status === 2) {
+                    throw new ApplicationError(analyzeResult.error);
+                }
+            });
         }
         return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'resource-file-storage');
     }
@@ -55,7 +62,7 @@ export class FileStorageService implements IFileStorageService {
         }
         const bufferStream = new PassThrough();
         bufferStream.end(userNodeDataJsonBuffer);
-        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(bufferStream);
+        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(bufferStream, false);
 
         return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'user-node-data');
     }
@@ -68,9 +75,12 @@ export class FileStorageService implements IFileStorageService {
     async uploadImage(fileStream): Promise<string> {
         let mime = {};
         const resourceType = 'image';
-        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(fileStream);
+        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(fileStream, false);
         if (this.isCanAnalyzeFileProperty(resourceType)) {
             const analyzeResult = await this.analyzeFileProperty(fileStorageInfo, resourceType);
+            if (analyzeResult.status === 2) {
+                throw new ApplicationError(analyzeResult.error);
+            }
             mime = analyzeResult.systemProperty['mime'];
         }
         // 不允许超过2M
@@ -107,8 +117,17 @@ export class FileStorageService implements IFileStorageService {
      * @param {string} sha1
      * @returns {Promise<FileStorageInfo>}
      */
-    async findBySha1(sha1: string): Promise<FileStorageInfo> {
-        return this.fileStorageProvider.findOne({sha1});
+    async findBySha1(sha1: string, ...args): Promise<FileStorageInfo> {
+        return this.fileStorageProvider.findOne({sha1}, ...args);
+    }
+
+    /**
+     * 批量查找
+     * @param condition
+     * @param args
+     */
+    async find(condition: object, ...args): Promise<FileStorageInfo[]> {
+        return this.fileStorageProvider.find(condition, ...args);
     }
 
     /**
@@ -155,9 +174,7 @@ export class FileStorageService implements IFileStorageService {
      */
     async analyzeFileProperty(fileStorageInfo: FileStorageInfo, resourceType: string): Promise<FilePropertyAnalyzeInfo> {
         let cacheResult = await this.systemAnalysisRecordProvider.findOne({sha1: fileStorageInfo.sha1, resourceType});
-        if (cacheResult && cacheResult.status === 2) {
-            return Promise.reject(cacheResult.error);
-        } else if (cacheResult) {
+        if (cacheResult) {
             return cacheResult;
         }
         const signatureUrl = this.getSignatureUrl(fileStorageInfo);
@@ -171,9 +188,6 @@ export class FileStorageService implements IFileStorageService {
             error: analyzeResult.error ? analyzeResult.error.message : '',
             status: analyzeResult.analyzeStatus
         });
-        if (analyzeResult.analyzeStatus === 2) {
-            return Promise.reject(analyzeResult.error);
-        }
         return cacheResult;
     }
 
@@ -183,11 +197,19 @@ export class FileStorageService implements IFileStorageService {
      * @returns {Promise<void>}
      * @private
      */
-    async _uploadFileToTemporaryDirectory(fileStream, meta = null): Promise<FileStorageInfo> {
+    async _uploadFileToTemporaryDirectory(fileStream, isCheckSpace: boolean, meta = null): Promise<FileStorageInfo> {
         const temporaryObjectKey = `temporary_upload/${v4().replace(/-/g, '')}`.toLowerCase();
         const fileBaseInfoTransform = this.fileBaseInfoCalculateTransform('sha1', 'hex');
         const ossClient = this.objectStorageServiceClient.setProvider('aliOss').setBucket('freelog-shenzhen').build();
         await ossClient.putStream(temporaryObjectKey, fileStream.pipe(fileBaseInfoTransform), meta);
+
+        if (isCheckSpace) {
+            const spaceStatisticInfo = await this.bucketService.spaceStatistics(this.ctx.userId);
+            if (spaceStatisticInfo.storageLimit - spaceStatisticInfo.totalFileSize < fileBaseInfoTransform.fileSize) {
+                throw new ApplicationError(this.ctx.gettext('storage_full'));
+            }
+        }
+
         // 此处代码后期需要等egg-freelog-base优化
         const {region, bucket} = ossClient.config;
         return {

@@ -84,7 +84,7 @@ export declare class ObjectStorageService implements IObjectStorageService {
      * @param resourceType
      * @private
      */
-    _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, resourceType: string): Promise<object>;
+    _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, resourceType: string, analyzeFileErrorHandle?: (error: any) => void): Promise<object>;
     /**
      * 构建存储对象依赖树
      * @param dependencies

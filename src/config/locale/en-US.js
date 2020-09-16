@@ -59,6 +59,8 @@ module.exports = {
     'user-node-data-file-size-limit-error': '用户节点配置文件不能超过512KB',
 
     'image-file-analyze-failed': '文件分析失败,请重新选择正确格式的图片',
+
+    'storage_full': '存储空间剩余容量不足'
 }
 
 

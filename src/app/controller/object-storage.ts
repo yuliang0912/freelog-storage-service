@@ -157,7 +157,7 @@ export class ObjectController {
         const bucketName = ctx.checkParams('bucketName').exist().isStrictBucketName().value;
         const objectName = ctx.checkBody('objectName').exist().value;
         const sha1 = ctx.checkBody('sha1').exist().isSha1().toLowercase().value;
-        const resourceType = ctx.checkBody('resourceType').optional().isResourceType().toLowercase().value;
+        // const resourceType = ctx.checkBody('resourceType').optional().isResourceType().toLowercase().value;
         ctx.validateParams();
 
         const bucketInfo = await this.bucketService.findOne({
@@ -169,9 +169,7 @@ export class ObjectController {
         const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
         ctx.entityNullObjectCheck(fileStorageInfo, ctx.gettext('params-validate-failed', 'sha1'));
 
-        const createOrUpdateFileOptions = {
-            resourceType, objectName, fileStorageInfo
-        };
+        const createOrUpdateFileOptions = {objectName, fileStorageInfo};
         await this.objectStorageService.createObject(bucketInfo, createOrUpdateFileOptions).then(ctx.success);
     }
 

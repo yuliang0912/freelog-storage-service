@@ -36,6 +36,8 @@ export declare interface IFileStorageService {
 
     uploadImage(fileStream): Promise<string>;
 
+    find(condition: object, ...args): Promise<FileStorageInfo[]>;
+
     findBySha1(sha1: string): Promise<FileStorageInfo>;
 
     fileStreamErrorHandler(fileStream): Promise<any>;

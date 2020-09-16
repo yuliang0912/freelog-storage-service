@@ -33,6 +33,7 @@ export interface IBucketService {
     find(condition: object): Promise<BucketInfo[]>;
     count(condition: object): Promise<number>;
     spaceStatistics(userId: number): Promise<{
+        storageLimit: number;
         bucketCount: number;
         totalFileSize: number;
     }>;

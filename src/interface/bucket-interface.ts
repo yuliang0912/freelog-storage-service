@@ -43,5 +43,5 @@ export interface IBucketService {
 
     count(condition: object): Promise<number>;
 
-    spaceStatistics(userId: number): Promise<{ bucketCount: number, totalFileSize: number }>;
+    spaceStatistics(userId: number): Promise<{ storageLimit: number, bucketCount: number, totalFileSize: number }>;
 }

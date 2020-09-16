@@ -47,10 +47,16 @@ export class FileStorageController {
     @visitorIdentity(LoginUser | InternalClient)
     @get('/fileIsExist')
     async fileIsExist(ctx) {
-        const sha1: string = ctx.checkQuery('sha1').exist().isSha1().toLowercase().value;
+        const sha1s: string[] = ctx.checkQuery('sha1').exist().toLowercase().isSplitSha1().toSplitArray().len(1, 100).value;
         ctx.validateParams();
 
-        await this.fileStorageService.findBySha1(sha1).then(fileStorageInfo => ctx.success(Boolean(fileStorageInfo)));
+        const sha1Map = await this.fileStorageService.find({sha1: {$in: sha1s}}, 'sha1').then(list => {
+            return new Map(list.map(x => [x.sha1, true]));
+        });
+        const result = sha1s.map(sha1 => Object({
+            sha1, isExisting: sha1Map.has(sha1)
+        }));
+        ctx.success(result);
     }
 
     @get('/:sha1')
