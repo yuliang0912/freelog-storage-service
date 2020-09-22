@@ -12,7 +12,7 @@ export class ObjectStorageInfo extends MongooseModelBase implements IMongooseMod
             name: {type: String, required: true},
             type: {type: String, required: true},
             versionRange: {type: String, required: true},
-            versionRangeType: {type: Number, enum: [1, 2], required: true},
+            // versionRangeType: {type: Number, enum: [1, 2], required: true},
         }, {_id: false});
 
         const objectScheme = new this.mongoose.Schema({
