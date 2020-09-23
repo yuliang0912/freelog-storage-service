@@ -19,6 +19,7 @@ export class OutsideApiService implements IOutsideApiService {
         }
         resourceNames = resourceNames.map(x => encodeURIComponent(x));
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
+        console.log(`${this.ctx.webApi.resourceInfoV2}/list?resourceNames=${resourceNames.toString()}&${optionParams.join('&')}`);
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/list?resourceNames=${resourceNames.toString()}&${optionParams.join('&')}`);
     }
 
