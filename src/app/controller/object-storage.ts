@@ -113,13 +113,14 @@ export class ObjectController {
     @get('/objects/list')
     async list(ctx) {
         // 需要调用方对URL做编码.然后多个obejctName使用.分隔(几个操作系统的文件名都不能包含".",所以不存在分隔冲突).
-        const fullObjectNames = ctx.checkQuery('fullObjectNames').optional().decodeURIComponent().toSplitArray(null, '.').len(1, 200).default([]).value;
-        const objectIds = ctx.checkQuery('objectIds').optional().isSplitMongoObjectId().toSplitArray(null, '.').len(1, 200).default([]).value;
+        const fullObjectNames = ctx.checkQuery('fullObjectNames').optional().toSplitArray().len(1, 200).default([]).value;
+        const objectIds = ctx.checkQuery('objectIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 200).default([]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
         const condition = {$or: objectIds.map(objectId => Object({_id: objectId}))};
         fullObjectNames.forEach(fullObjectName => {
+            fullObjectName = decodeURIComponent(fullObjectName);
             const [bucketName, objectName] = fullObjectName.split('/');
             if (!isString(bucketName) || !isString(objectName)) {
                 throw new ArgumentError(ctx.gettext('params-validate-failed', 'fullObjectName'));
