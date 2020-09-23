@@ -370,7 +370,7 @@ let ObjectStorageService = class ObjectStorageService {
         }
         const resourceMap = new Map();
         if (!lodash_1.isEmpty(dependResources)) {
-            await this.outsideApiService.getResourceListByNames(dependResources.map(x => x.name), { projection: 'resourceVersions resourceName' }).then(list => {
+            await this.outsideApiService.getResourceListByNames(dependResources.map(x => x.name), { projection: 'resourceVersions,resourceName' }).then(list => {
                 list.forEach(item => resourceMap.set(item.resourceName.toLowerCase(), item));
             });
         }
