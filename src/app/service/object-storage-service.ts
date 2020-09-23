@@ -161,7 +161,6 @@ export class ObjectStorageService implements IObjectStorageService {
         if (isEmpty(Object.keys(updateInfo))) {
             throw new ArgumentError('please check args');
         }
-        console.log(updateInfo);
         return this.objectStorageProvider.findOneAndUpdate({_id: oldObjectStorageInfo.objectId}, updateInfo, {new: true});
     }
 
@@ -296,7 +295,6 @@ export class ObjectStorageService implements IObjectStorageService {
             $limit: pageSize
         }]);
         const [totalItemInfo] = await this.objectStorageProvider.aggregate(countAggregates);
-        console.log(JSON.stringify(countAggregates));
         const {totalItem = 0} = totalItemInfo || {};
         const result = {page, pageSize, totalItem, dataList: []};
         if (totalItem <= (page - 1) * pageSize) {
