@@ -21,6 +21,8 @@ export class ObjectController {
     @inject()
     objectDependencyValidator: IJsonSchemaValidate;
     @inject()
+    objectCustomPropertyValidator: IJsonSchemaValidate;
+    @inject()
     storageCommonGenerator;
 
     @visitorIdentity(LoginUser)
@@ -31,7 +33,7 @@ export class ObjectController {
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().toLow().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().value;
         const isLoadingTypeless = ctx.checkQuery('isLoadingTypeless').optional().in([0, 1]).default(1).value;
-        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
         const condition: any = {};
@@ -43,20 +45,14 @@ export class ObjectController {
             condition.resourceType = {$ne: ''};
         }
         if (keywords) {
-            const regex: object = {$regex: keywords, $options: 'i'};
+            const regex = {$regex: keywords, $options: 'i'};
             condition.$or = [{objectName: regex}, {bucketName: regex}];
         }
 
         const buckets = await this.bucketService.find({userId: ctx.userId, bucketType: 1});
         condition.bucketId = {$in: buckets.map(x => x.bucketId)};
 
-        let dataList = [];
-        const totalItem = await this.objectStorageService.count(condition);
-        if (buckets.length && totalItem > (page - 1) * pageSize) {
-            dataList = await this.objectStorageService.findPageList(condition, page, pageSize, projection, {createDate: -1});
-        }
-
-        ctx.success({page, pageSize, totalItem, dataList});
+        await this.objectStorageService.findPageList(condition, page, pageSize, projection).then(ctx.success);
     }
 
     @visitorIdentity(LoginUser)
@@ -71,7 +67,7 @@ export class ObjectController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.request.userId});
+        const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.userId});
         ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
 
         const condition: any = {bucketId: bucketInfo.bucketId};
@@ -87,18 +83,13 @@ export class ObjectController {
             condition.$or = [{objectName: regex}, {bucketName: regex}];
         }
 
-        let dataList = [];
-        const totalItem = await this.objectStorageService.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.objectStorageService.findPageList(condition, page, pageSize, projection, {createDate: -1});
-        }
-
-        ctx.success({page, pageSize, totalItem, dataList});
+        await this.objectStorageService.findPageList(condition, page, pageSize, projection).then(ctx.success);
     }
 
     @visitorIdentity(LoginUser)
     @get('/buckets/:bucketName/objects/:objectId')
     async show(ctx) {
+
         const bucketName = ctx.checkParams('bucketName').exist().isBucketName().value;
         const objectId = ctx.checkParams('objectId').exist().isMongoObjectId().value;
         ctx.validateParams();
@@ -112,7 +103,7 @@ export class ObjectController {
     @visitorIdentity(LoginUser)
     @get('/objects/list')
     async list(ctx) {
-        // 需要调用方对URL做编码.然后多个obejctName使用.分隔(几个操作系统的文件名都不能包含".",所以不存在分隔冲突).
+        // 需要调用方对每个objectName单独做编码.然后多个之间使用逗号分隔
         const fullObjectNames = ctx.checkQuery('fullObjectNames').optional().toSplitArray().len(1, 200).default([]).value;
         const objectIds = ctx.checkQuery('objectIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 200).default([]).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -141,6 +132,7 @@ export class ObjectController {
     @visitorIdentity(LoginUser)
     @get('/objects/:objectIdOrName')
     async detail(ctx) {
+
         const objectIdOrName = ctx.checkParams('objectIdOrName').exist().decodeURIComponent().value;
         ctx.validateParams();
 
@@ -155,6 +147,7 @@ export class ObjectController {
     @visitorIdentity(LoginUser)
     @post('/buckets/:bucketName/objects')
     async createOrReplace(ctx) {
+
         const bucketName = ctx.checkParams('bucketName').exist().isStrictBucketName().value;
         const objectName = ctx.checkBody('objectName').exist().value;
         const sha1 = ctx.checkBody('sha1').exist().isSha1().toLowercase().value;
@@ -177,6 +170,7 @@ export class ObjectController {
     @visitorIdentity(LoginUser)
     @del('/buckets/:bucketName/objects/:objectIds')
     async destroy(ctx) {
+
         const bucketName = ctx.checkParams('bucketName').exist().isBucketName().value;
         const objectIds: string[] = ctx.checkParams('objectIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         ctx.validateParams();
@@ -190,6 +184,7 @@ export class ObjectController {
     @visitorIdentity(LoginUser)
     @get('/objects/:objectIdOrName/file')
     async download(ctx) {
+
         const objectIdOrName = ctx.checkParams('objectIdOrName').exist().decodeURIComponent().value;
         ctx.validateParams();
 
@@ -199,6 +194,10 @@ export class ObjectController {
         });
 
         const fileStorageInfo = await this.fileStorageService.findBySha1(objectStorageInfo.sha1);
+        if (!fileStorageInfo) {
+            throw new ApplicationError('file storage data is miss');
+        }
+
         const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
         ctx.body = fileStream;
         ctx.attachment(objectStorageInfo.objectName);
@@ -211,11 +210,12 @@ export class ObjectController {
     @visitorIdentity(LoginUser)
     @put('/objects/:objectIdOrName')
     async updateProperty(ctx) {
+
         const objectIdOrName = ctx.checkParams('objectIdOrName').exist().decodeURIComponent().value;
-        const customProperty = ctx.checkBody('customProperty').optional().isObject().value;
+        const customPropertyDescriptors = ctx.checkBody('customPropertyDescriptors').optional().isArray().value;
         const dependencies = ctx.checkBody('dependencies').optional().isArray().value;
         const resourceType = ctx.checkBody('resourceType').optional().isResourceType().toLow().value;
-        const objectName = ctx.checkBody('objectName').optional().type('string').value;
+        const objectName = ctx.checkBody('objectName').optional().type('string').len(1, 100).value;
         ctx.validateParams();
 
         const objectDependencyValidateResult = this.objectDependencyValidator.validate(dependencies);
@@ -224,20 +224,34 @@ export class ObjectController {
                 errors: objectDependencyValidateResult.errors
             });
         }
+        const customPropertyDescriptorValidateResult = await this.objectCustomPropertyValidator.validate(customPropertyDescriptors);
+        if (!isEmpty(customPropertyDescriptors) && !isEmpty(customPropertyDescriptorValidateResult.errors)) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'customPropertyDescriptors'), {
+                errors: customPropertyDescriptorValidateResult.errors
+            });
+        }
 
         const objectStorageInfo = await this.objectStorageService.findOneByObjectIdOrName(objectIdOrName);
         ctx.entityNullValueAndUserAuthorizationCheck(objectStorageInfo, {
             msg: ctx.gettext('params-validate-failed', 'objectId')
         });
 
+        if (isString(objectName)) {
+            const existingObject = await this.objectStorageService.findOneByName(objectStorageInfo.bucketName, objectName);
+            if (existingObject) {
+                throw new ApplicationError('objectName has already existing');
+            }
+        }
+
         await this.objectStorageService.updateObject(objectStorageInfo, {
-            customProperty, dependencies, resourceType, objectName
+            customPropertyDescriptors, dependencies, resourceType, objectName
         }).then(ctx.success);
     }
 
     @visitorIdentity(LoginUser)
     @get('/objects/:objectIdOrName/dependencyTree')
     async dependencyTree(ctx) {
+
         const objectIdOrName = ctx.checkParams('objectIdOrName').exist().decodeURIComponent().value;
         const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(false).toBoolean().value;
         ctx.validateParams();

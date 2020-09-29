@@ -41,7 +41,6 @@ export class ObjectDependencyValidator extends freelogCommonJsonSchema implement
                     name: {type: 'string', required: true},
                     type: {type: 'string', required: true, enum: ['resource', 'object']},
                     versionRange: {type: 'string', required: false, format: 'versionRange'},
-                    // versionRangeType: {type: 'integer', required: false, enum: [1, 2]}  // 1:选择 2:自定义
                 }
             }
         });

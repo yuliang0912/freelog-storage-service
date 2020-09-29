@@ -1,7 +1,7 @@
 import { IObjectStorageService, ObjectStorageInfo, CreateObjectStorageOptions, CreateUserNodeDataObjectOptions, ObjectDependencyInfo, UpdateObjectStorageOptions, CommonObjectDependencyTreeInfo } from '../../interface/object-storage-interface';
 import { IBucketService, BucketInfo } from '../../interface/bucket-interface';
 import { FileStorageInfo, IFileStorageService } from '../../interface/file-storage-info-interface';
-import { IOutsideApiService } from '../../interface/common-interface';
+import { IOutsideApiService, PageResult } from '../../interface/common-interface';
 export declare class ObjectStorageService implements IObjectStorageService {
     ctx: any;
     ossClient: any;
@@ -64,7 +64,7 @@ export declare class ObjectStorageService implements IObjectStorageService {
     findOneByObjectIdOrName(objectIdOrFullName: string, ...args: any[]): Promise<ObjectStorageInfo>;
     findOne(condition: object, ...args: any[]): Promise<ObjectStorageInfo>;
     find(condition: object, ...args: any[]): Promise<ObjectStorageInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ObjectStorageInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ObjectStorageInfo>>;
     count(condition: object): Promise<number>;
     findAll(condition: object, page: number, pageSize: number): Promise<{
         page: number;
@@ -84,7 +84,7 @@ export declare class ObjectStorageService implements IObjectStorageService {
      * @param resourceType
      * @private
      */
-    _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, resourceType: string, analyzeFileErrorHandle?: (error: any) => void): Promise<object>;
+    _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, objectName: string, resourceType: string, analyzeFileErrorHandle?: (error: any) => void): Promise<object>;
     /**
      * 构建存储对象依赖树
      * @param dependencies

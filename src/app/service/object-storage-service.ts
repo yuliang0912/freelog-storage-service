@@ -1,14 +1,19 @@
 import {satisfies} from 'semver';
 import {provide, config, plugin, inject} from 'midway';
 import {ApplicationError, ArgumentError} from 'egg-freelog-base';
-import {assign, isEmpty, uniqWith, isObject, isArray, sumBy, isString, first, chain} from 'lodash';
+import {assign, isEmpty, uniqWith, isArray, sumBy, isString, first, chain} from 'lodash';
 import {
     IObjectStorageService, ObjectStorageInfo, CreateObjectStorageOptions,
     CreateUserNodeDataObjectOptions, ObjectDependencyInfo, UpdateObjectStorageOptions, CommonObjectDependencyTreeInfo
 } from '../../interface/object-storage-interface';
 import {IBucketService, BucketInfo, BucketTypeEnum, SystemBucketName} from '../../interface/bucket-interface';
 import {FileStorageInfo, IFileStorageService} from '../../interface/file-storage-info-interface';
-import {IOutsideApiService, ResourceDependencyTreeInfo, ResourceInfo} from '../../interface/common-interface';
+import {
+    IOutsideApiService,
+    PageResult,
+    ResourceDependencyTreeInfo,
+    ResourceInfo
+} from '../../interface/common-interface';
 import {mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide('objectStorageService')
@@ -54,7 +59,7 @@ export class ObjectStorageService implements IObjectStorageService {
         };
         const oldObjectStorageInfo = await this.findOneByName(bucketInfo.bucketName, options.objectName);
         if (!oldObjectStorageInfo) {
-            model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, '');
+            model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, options.objectName, model.resourceType);
             return this.objectStorageProvider.create(model).tap(() => {
                 this.bucketService.addStorageObjectEventHandle(model);
             });
@@ -62,11 +67,11 @@ export class ObjectStorageService implements IObjectStorageService {
 
         // 替换对象时,如果没有资源类型,或者新资源检测通过,则保留依赖和自定义属性,否则就清空自定义属性以及依赖信息和资源类型
         model.dependencies = oldObjectStorageInfo.dependencies ?? [];
-        model.customProperty = oldObjectStorageInfo.customProperty ?? {};
-        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, oldObjectStorageInfo.resourceType, function (error) {
+        model.customPropertyDescriptors = oldObjectStorageInfo.customPropertyDescriptors ?? [];
+        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, options.objectName, oldObjectStorageInfo.resourceType, function (error) {
             model.resourceType = '';
             model.dependencies = [];
-            model.customProperty = {};
+            model.customPropertyDescriptors = [];
         });
 
         const cycleDependCheckResult = await this._cycleDependCheck(`${model.bucketName}/${model.objectName}`, model.dependencies, 1);
@@ -97,7 +102,7 @@ export class ObjectStorageService implements IObjectStorageService {
             resourceType: 'node-config'
         };
 
-        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, model.resourceType);
+        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, model.objectName, model.resourceType);
 
         if (!objectStorageInfo) {
             const bucketInfo = await this.bucketService.createOrFindSystemBucket({
@@ -130,14 +135,14 @@ export class ObjectStorageService implements IObjectStorageService {
     async updateObject(oldObjectStorageInfo: ObjectStorageInfo, options: UpdateObjectStorageOptions): Promise<ObjectStorageInfo> {
 
         const updateInfo: any = {};
-        if (isObject(options.customProperty)) {
-            updateInfo.customProperty = options.customProperty;
+        if (isArray(options.customPropertyDescriptors)) {
+            updateInfo.customPropertyDescriptors = options.customPropertyDescriptors;
         }
         if (isString(options.resourceType)) {
             updateInfo.resourceType = options.resourceType;
             if (options.resourceType !== oldObjectStorageInfo.resourceType && this.fileStorageService.isCanAnalyzeFileProperty(options.resourceType)) {
                 const fileStorageInfo = await this.fileStorageService.findBySha1(oldObjectStorageInfo.sha1);
-                updateInfo.systemProperty = await this._buildObjectSystemProperty(fileStorageInfo, options.resourceType);
+                updateInfo.systemProperty = await this._buildObjectSystemProperty(fileStorageInfo, options.objectName ?? oldObjectStorageInfo.objectName, options.resourceType);
             }
         }
         if (isString(options.objectName)) {
@@ -157,6 +162,10 @@ export class ObjectStorageService implements IObjectStorageService {
                     deep: cycleDependCheckResult.deep
                 });
             }
+        }
+        if (isString(options.objectName) && !updateInfo.systemProperty) {
+            updateInfo.systemProperty = oldObjectStorageInfo.systemProperty;
+            updateInfo.systemProperty.mime = this.storageCommonGenerator.generateMimeType(options.objectName);
         }
         if (isEmpty(Object.keys(updateInfo))) {
             throw new ArgumentError('please check args');
@@ -256,8 +265,13 @@ export class ObjectStorageService implements IObjectStorageService {
         return this.objectStorageProvider.find(condition, ...args);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ObjectStorageInfo[]> {
-        return this.objectStorageProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
+    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ObjectStorageInfo>> {
+        let dataList = [];
+        const totalItem = await this.count(condition);
+        if (totalItem > (page - 1) * pageSize) {
+            dataList = await this.objectStorageProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy ?? {createDate: -1});
+        }
+        return {page, pageSize, totalItem, dataList};
     }
 
     async count(condition: object): Promise<number> {
@@ -318,6 +332,7 @@ export class ObjectStorageService implements IObjectStorageService {
             id: objectStorageInfo.objectId,
             name: `${objectStorageInfo.bucketName}/${objectStorageInfo.objectName}`,
             resourceType: objectStorageInfo.resourceType,
+            fileSha1: objectStorageInfo.sha1,
             dependencies: await this._buildObjectDependencyTree(objectStorageInfo.dependencies ?? [])
         }];
     }
@@ -328,12 +343,12 @@ export class ObjectStorageService implements IObjectStorageService {
      * @param resourceType
      * @private
      */
-    async _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, resourceType: string, analyzeFileErrorHandle?: (error) => void): Promise<object> {
+    async _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, objectName: string, resourceType: string, analyzeFileErrorHandle?: (error) => void): Promise<object> {
 
-        let systemProperty = {fileSize: fileStorageInfo.fileSize, mime: 'application/octet-stream'};
-        if (resourceType === 'node-config') {
-            systemProperty.mime = 'application/json';
-        }
+        let systemProperty = {
+            fileSize: fileStorageInfo.fileSize,
+            mime: this.storageCommonGenerator.generateMimeType(objectName)
+        };
         if (!this.fileStorageService.isCanAnalyzeFileProperty(resourceType)) {
             return systemProperty;
         }
@@ -374,6 +389,7 @@ export class ObjectStorageService implements IObjectStorageService {
                 id: objectInfo.objectId,
                 name: `${objectInfo.bucketName}/${objectInfo.objectName}`,
                 resourceType: objectInfo.resourceType,
+                fileSha1: objectInfo.sha1,
                 dependencies: await this._buildObjectDependencyTree(objectInfo.dependencies ?? [])
             });
         }
@@ -387,6 +403,7 @@ export class ObjectStorageService implements IObjectStorageService {
                 version: resourceDependency.version,
                 versions: resourceDependency.versions,
                 versionId: resourceDependency.versionId,
+                fileSha1: resourceDependency.fileSha1,
                 versionRange: resourceDependency.versionRange,
                 dependencies: resourceDependency.dependencies.map(x => autoMappingResourceDependency(x))
             };

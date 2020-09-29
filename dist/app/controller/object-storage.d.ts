@@ -7,6 +7,7 @@ export declare class ObjectController {
     fileStorageService: IFileStorageService;
     objectStorageService: IObjectStorageService;
     objectDependencyValidator: IJsonSchemaValidate;
+    objectCustomPropertyValidator: IJsonSchemaValidate;
     storageCommonGenerator: any;
     myObjects(ctx: any): Promise<void>;
     index(ctx: any): Promise<void>;

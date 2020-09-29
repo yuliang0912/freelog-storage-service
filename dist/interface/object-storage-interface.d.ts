@@ -1,10 +1,9 @@
-import { NodeInfo } from './common-interface';
+import { NodeInfo, PageResult } from './common-interface';
 import { FileStorageInfo } from './file-storage-info-interface';
 import { BucketInfo } from './bucket-interface';
 export interface ObjectDependencyInfo {
     name: string;
     versionRange?: string;
-    versionRangeType?: 1 | 2;
     type: 'object' | 'resource';
 }
 export interface CommonObjectDependencyTreeInfo {
@@ -13,6 +12,7 @@ export interface CommonObjectDependencyTreeInfo {
     version?: string;
     versionId?: string;
     versionRange?: string;
+    fileSha1: string;
     versions?: string[];
     type: 'object' | 'resource';
     resourceType: string;
@@ -27,7 +27,7 @@ export interface ObjectStorageInfo {
     resourceType: string;
     bucketId?: string;
     systemProperty?: SystemPropertyInfo;
-    customProperty?: object;
+    customPropertyDescriptors?: object[];
     dependencies?: ObjectDependencyInfo[];
     uniqueKey?: string;
 }
@@ -49,7 +49,7 @@ export interface CreateUserNodeDataObjectOptions {
     fileStorageInfo: FileStorageInfo;
 }
 export interface UpdateObjectStorageOptions {
-    customProperty?: object;
+    customPropertyDescriptors?: object[];
     dependencies?: ObjectDependencyInfo;
     resourceType?: string;
     objectName?: string;
@@ -85,7 +85,7 @@ export interface IObjectStorageService {
     deleteObject(storageObject: ObjectStorageInfo): Promise<boolean>;
     batchDeleteObjects(bucketInfo: BucketInfo, objectIds: string[]): Promise<boolean>;
     count(condition: object): Promise<number>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ObjectStorageInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult<ObjectStorageInfo>>;
     findAll(condition: object, page: number, pageSize: number): any;
     getDependencyTree(objectStorageInfo: ObjectStorageInfo, isContainRootNode: boolean): Promise<CommonObjectDependencyTreeInfo[]>;
 }

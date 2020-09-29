@@ -39,13 +39,14 @@ export class UserNodeDataObjectController {
         if (!nodeId && !nodeDomain) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'nodeId or nodeDomain'));
         }
-        const nodeInfo = await this.outsideApiService[nodeId ? 'getNodeInfoById' : 'getNodeInfoByDomain'].call(this.outsideApiService, nodeId || nodeDomain);
+        const apiFunName = nodeId ? 'getNodeInfoById' : 'getNodeInfoByDomain';
+        const nodeInfo = await this.outsideApiService[apiFunName].call(this.outsideApiService, nodeId ?? nodeDomain);
         if (!nodeInfo) {
             throw new ArgumentError(ctx.gettext('node-entity-not-found'));
         }
         const fileStorageInfo = await this.fileStorageService.uploadUserNodeDataFile(userNodeData);
         const createUserNodeDataObjectOptions: CreateUserNodeDataObjectOptions = {
-            userId: ctx.request.userId, nodeInfo,
+            userId: ctx.userId, nodeInfo,
             fileStorageInfo: {
                 sha1: fileStorageInfo.sha1,
                 fileSize: fileStorageInfo.fileSize,

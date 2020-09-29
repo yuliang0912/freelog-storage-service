@@ -1,4 +1,10 @@
 import { ValidatorResult } from 'jsonschema';
+export interface PageResult<T> {
+    page: number;
+    pageSize: number;
+    totalItem: number;
+    dataList: T[];
+}
 export interface NodeInfo {
     nodeId: number;
     nodeName: string;

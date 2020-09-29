@@ -1,11 +1,10 @@
-import {NodeInfo} from './common-interface';
+import {NodeInfo, PageResult} from './common-interface';
 import {FileStorageInfo} from './file-storage-info-interface';
 import {BucketInfo} from './bucket-interface';
 
 export interface ObjectDependencyInfo {
     name: string;
     versionRange?: string;
-    versionRangeType?: 1 | 2;
     type: 'object' | 'resource';
 }
 
@@ -15,6 +14,7 @@ export interface CommonObjectDependencyTreeInfo {
     version?: string;
     versionId?: string;
     versionRange?: string;
+    fileSha1: string;
     versions?: string[];
     type: 'object' | 'resource';
     resourceType: string;
@@ -30,7 +30,7 @@ export interface ObjectStorageInfo {
     resourceType: string;
     bucketId?: string;
     systemProperty?: SystemPropertyInfo;
-    customProperty?: object;
+    customPropertyDescriptors?: object[];
     dependencies?: ObjectDependencyInfo[];
     uniqueKey?: string;
 }
@@ -56,7 +56,7 @@ export interface CreateUserNodeDataObjectOptions {
 }
 
 export interface UpdateObjectStorageOptions {
-    customProperty?: object;
+    customPropertyDescriptors?: object[];
     dependencies?: ObjectDependencyInfo;
     resourceType?: string;
     objectName?: string;
@@ -104,7 +104,7 @@ export interface IObjectStorageService {
 
     count(condition: object): Promise<number>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ObjectStorageInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult<ObjectStorageInfo>>;
 
     findAll(condition: object, page: number, pageSize: number);
 
