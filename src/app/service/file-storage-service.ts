@@ -88,8 +88,7 @@ export class FileStorageService implements IFileStorageService {
             throw new ApplicationError(this.ctx.gettext('user-node-data-file-size-limit-error'));
         }
 
-        const objectKey = `preview-image/${fileStorageInfo.sha1}`;
-
+        const objectKey = `preview-image/${fileStorageInfo.sha1}${fileStream.filename.includes('.') ? fileStream.filename.substr(fileStream.filename.lastIndexOf('.')) : ''}`;
         const temporaryFileStream = await this.getFileStream(fileStorageInfo);
 
         await this.objectStorageServiceClient
@@ -240,6 +239,8 @@ export class FileStorageService implements IFileStorageService {
         const ossClient = this.objectStorageServiceClient.setProvider('aliOss').setBucket(bucketName).build();
         await ossClient.copyFile(objectKey, temporaryObjectKey);
         fileStorageInfo.storageInfo.objectKey = objectKey;
-        return this.fileStorageProvider.create(fileStorageInfo);
+        return this.fileStorageProvider.findOneAndUpdate({sha1: fileStorageInfo.sha1}, fileStorageInfo, {new: true}).then(data => {
+            return data ?? this.fileStorageProvider.create(fileStorageInfo);
+        });
     }
 }
