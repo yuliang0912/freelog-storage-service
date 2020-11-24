@@ -24,6 +24,7 @@ export class StorageCommonGenerator {
         if (!isString(bucketName) || !isString(objectName) || !bucketName.length || !objectName.length) {
             throw new Error('please check args');
         }
+        objectName = objectName.replace(/[\\|\/|:|\*|\?|"|<|>|\||\s|@|\$|#]/g, '_');
         return md5(`${bucketName}/${objectName}`);
     }
 

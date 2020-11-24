@@ -85,7 +85,7 @@ export interface IObjectStorageService {
     deleteObject(storageObject: ObjectStorageInfo): Promise<boolean>;
     batchDeleteObjects(bucketInfo: BucketInfo, objectIds: string[]): Promise<boolean>;
     count(condition: object): Promise<number>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult<ObjectStorageInfo>>;
+    findIntervalList(condition: object, skip: number, limit: number, projection: string[], sort?: object): Promise<PageResult<ObjectStorageInfo>>;
     findAll(condition: object, page: number, pageSize: number): any;
     getDependencyTree(objectStorageInfo: ObjectStorageInfo, isContainRootNode: boolean): Promise<CommonObjectDependencyTreeInfo[]>;
 }

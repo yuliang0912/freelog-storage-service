@@ -28,8 +28,9 @@ export class ObjectController {
     @visitorIdentity(LoginUser)
     @get('/buckets/_all/objects')
     async myObjects(ctx) {
-        const page = ctx.checkQuery('page').optional().default(1).gt(0).toInt().value;
-        const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').optional().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().toLow().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().value;
         const isLoadingTypeless = ctx.checkQuery('isLoadingTypeless').optional().in([0, 1]).default(1).value;
@@ -52,14 +53,15 @@ export class ObjectController {
         const buckets = await this.bucketService.find({userId: ctx.userId, bucketType: 1});
         condition.bucketId = {$in: buckets.map(x => x.bucketId)};
 
-        await this.objectStorageService.findPageList(condition, page, pageSize, projection).then(ctx.success);
+        await this.objectStorageService.findIntervalList(condition, skip, limit, projection, sort).then(ctx.success);
     }
 
     @visitorIdentity(LoginUser)
     @get('/buckets/:bucketName/objects')
     async index(ctx) {
-        const page = ctx.checkQuery('page').optional().default(1).gt(0).toInt().value;
-        const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').optional().value;
         const bucketName = ctx.checkParams('bucketName').exist().isBucketName().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().toLow().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().value;
@@ -83,7 +85,7 @@ export class ObjectController {
             condition.$or = [{objectName: regex}, {bucketName: regex}];
         }
 
-        await this.objectStorageService.findPageList(condition, page, pageSize, projection).then(ctx.success);
+        await this.objectStorageService.findIntervalList(condition, skip, limit, projection, sort).then(ctx.success);
     }
 
     @visitorIdentity(LoginUser)

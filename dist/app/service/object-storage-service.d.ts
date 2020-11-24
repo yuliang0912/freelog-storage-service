@@ -64,7 +64,7 @@ export declare class ObjectStorageService implements IObjectStorageService {
     findOneByObjectIdOrName(objectIdOrFullName: string, ...args: any[]): Promise<ObjectStorageInfo>;
     findOne(condition: object, ...args: any[]): Promise<ObjectStorageInfo>;
     find(condition: object, ...args: any[]): Promise<ObjectStorageInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ObjectStorageInfo>>;
+    findIntervalList(condition: object, skip: number, limit: number, projection: string[], sort?: object): Promise<PageResult<ObjectStorageInfo>>;
     count(condition: object): Promise<number>;
     findAll(condition: object, page: number, pageSize: number): Promise<{
         page: number;

@@ -265,13 +265,15 @@ export class ObjectStorageService implements IObjectStorageService {
         return this.objectStorageProvider.find(condition, ...args);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ObjectStorageInfo>> {
+    async findIntervalList(condition: object, skip: number, limit: number, projection: string[], sort?: object): Promise<PageResult<ObjectStorageInfo>> {
         let dataList = [];
         const totalItem = await this.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.objectStorageProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy ?? {createDate: -1});
+        if (totalItem > skip) {
+            dataList = await this.find(condition, projection.join(' '), {
+                limit, skip: skip ?? 0, sort: sort ?? {createDate: -1},
+            });
         }
-        return {page, pageSize, totalItem, dataList};
+        return {skip, limit, totalItem, dataList};
     }
 
     async count(condition: object): Promise<number> {

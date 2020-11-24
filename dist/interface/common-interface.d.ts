@@ -1,8 +1,20 @@
 import { ValidatorResult } from 'jsonschema';
 export interface PageResult<T> {
-    page: number;
-    pageSize: number;
+    /**
+     * 数据查询起点条数,类似于(page-1)*pageSize
+     */
+    skip: number;
+    /**
+     * 获取的数据数量,类似于pageSize
+     */
+    limit: number;
+    /**
+     * 总数量
+     */
     totalItem: number;
+    /**
+     * 当前分页的数据集
+     */
     dataList: T[];
 }
 export interface NodeInfo {
