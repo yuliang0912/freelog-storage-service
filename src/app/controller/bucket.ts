@@ -1,23 +1,23 @@
 import {inject, controller, get, post, del, provide} from 'midway';
 import {IBucketService, BucketInfo, BucketTypeEnum} from '../../interface/bucket-interface';
-import {LoginUser, InternalClient} from 'egg-freelog-base';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
+import {IdentityTypeEnum, visitorIdentityValidator, FreelogContext} from 'egg-freelog-base';
 
 @provide()
 @controller('/v1/storages/buckets')
 export class BucketController {
 
     @inject()
+    ctx: FreelogContext;
+    @inject()
     bucketService: IBucketService;
 
     @get('/')
-    @visitorIdentity(LoginUser)
-    async index(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async index() {
+        const {ctx} = this;
         const bucketType: number = ctx.checkQuery('bucketType').optional().toInt().in([0, 1, 2]).default(0).value;
         ctx.validateParams();
-        const condition = {
-            userId: ctx.request.userId
-        };
+        const condition = {userId: ctx.userId};
         if (bucketType) {
             condition['bucketType'] = bucketType;
         }
@@ -25,19 +25,21 @@ export class BucketController {
     }
 
     @get('/Count') // 需要首字母大写,避免和bucketName冲突
-    @visitorIdentity(LoginUser)
-    async createdCount(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async createdCount() {
+        const {ctx} = this;
         const condition = {
-            userId: ctx.request.userId,
+            userId: ctx.userId,
             bucketType: BucketTypeEnum.UserStorage
         };
         await this.bucketService.count(condition).then(ctx.success);
     }
 
     @post('/')
-    @visitorIdentity(LoginUser)
-    async create(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async create() {
 
+        const {ctx} = this;
         // 只允许小写字母、数字、中划线（-），且不能以短横线开头或结尾
         const bucketName: string = ctx.checkBody('bucketName').exist().isStrictBucketName().value;
         ctx.validateParams();
@@ -45,16 +47,17 @@ export class BucketController {
         // 系统级存储bucket不能通过API创建.由对应的业务来处理
         const bucketInfo: BucketInfo = {
             bucketName, bucketType: BucketTypeEnum.UserStorage,
-            userId: ctx.request.userId
+            userId: ctx.userId
         };
 
         await this.bucketService.createBucket(bucketInfo).then(ctx.success);
     }
 
     @del('/:bucketName')
-    @visitorIdentity(LoginUser)
-    async destroy(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async destroy() {
 
+        const {ctx} = this;
         const bucketName: string = ctx.checkParams('bucketName').exist().isStrictBucketName().value;
         ctx.validateParams();
 
@@ -62,8 +65,9 @@ export class BucketController {
     }
 
     @get('/:bucketName/isExist')
-    @visitorIdentity(LoginUser | InternalClient)
-    async isExistBucketName(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async isExistBucketName() {
+        const {ctx} = this;
 
         const bucketName = ctx.checkParams('bucketName').exist().isStrictBucketName().value;
         ctx.validateParams();
@@ -72,20 +76,22 @@ export class BucketController {
     }
 
     @get('/spaceStatistics')
-    @visitorIdentity(LoginUser)
-    async spaceStatistics(ctx) {
-        await this.bucketService.spaceStatistics(ctx.request.userId).then(ctx.success);
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async spaceStatistics() {
+        const {ctx} = this;
+        await this.bucketService.spaceStatistics(ctx.userId).then(ctx.success);
     }
 
     @get('/:bucketName')
-    @visitorIdentity(LoginUser)
-    async show(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async show() {
+        const {ctx} = this;
 
         const bucketName: string = ctx.checkParams('bucketName').exist().isBucketName().value;
         ctx.validateParams();
 
         const condition = {
-            userId: ctx.request.userId, bucketName
+            userId: ctx.userId, bucketName
         };
         await this.bucketService.findOne(condition).then(ctx.success);
     }

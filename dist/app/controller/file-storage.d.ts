@@ -1,10 +1,12 @@
 import { IFileStorageService } from '../../interface/file-storage-info-interface';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class FileStorageController {
+    ctx: FreelogContext;
     fileStorageService: IFileStorageService;
-    uploadFile(ctx: any): Promise<void>;
-    uploadImage(ctx: any): Promise<void>;
-    fileIsExist(ctx: any): Promise<void>;
-    show(ctx: any): Promise<void>;
-    fileProperty(ctx: any): Promise<any>;
-    download(ctx: any): Promise<void>;
+    uploadFile(): Promise<void>;
+    uploadImage(): Promise<void>;
+    fileIsExist(): Promise<void>;
+    show(): Promise<void>;
+    fileProperty(): Promise<void | FreelogContext>;
+    download(): Promise<void>;
 }

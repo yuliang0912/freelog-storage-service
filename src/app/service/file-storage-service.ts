@@ -1,6 +1,6 @@
 import {v4} from 'uuid';
 import {inject, provide} from 'midway';
-import {ApplicationError} from 'egg-freelog-base';
+import {ApplicationError, FreelogContext, IMongodbOperation} from 'egg-freelog-base';
 import {
     FileStorageInfo, IFileStorageService, ServiceProviderEnum, FilePropertyAnalyzeInfo
 } from '../../interface/file-storage-info-interface';
@@ -14,21 +14,21 @@ const sendToWormhole = require('stream-wormhole');
 export class FileStorageService implements IFileStorageService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     filePropertyAnalyzeHandler;
     @inject()
-    fileStorageProvider;
-    @inject()
-    systemAnalysisRecordProvider;
-    @inject()
     userNodeDataFileOperation;
-    @inject()
-    fileBaseInfoCalculateTransform: (algorithm?: string, encoding?: string) => any;
     @inject()
     objectStorageServiceClient;
     @inject()
     bucketService: IBucketService;
+    @inject()
+    systemAnalysisRecordProvider: IMongodbOperation<any>;
+    @inject()
+    fileBaseInfoCalculateTransform: (algorithm?: string, encoding?: string) => any;
+    @inject()
+    fileStorageProvider: IMongodbOperation<FileStorageInfo>;
 
     /**
      * 上传文件,并分析文件属性
@@ -51,8 +51,7 @@ export class FileStorageService implements IFileStorageService {
 
     /**
      * 上传用户节点数据文件
-     * @param fileStream
-     * @returns {Promise<FileStorageInfo>}
+     * @param userNodeData
      */
     async uploadUserNodeDataFile(userNodeData: object): Promise<FileStorageInfo> {
 
@@ -91,9 +90,7 @@ export class FileStorageService implements IFileStorageService {
         const objectKey = `preview-image/${fileStorageInfo.sha1}${fileStream.filename.includes('.') ? fileStream.filename.substr(fileStream.filename.lastIndexOf('.')) : ''}`;
         const temporaryFileStream = await this.getFileStream(fileStorageInfo);
 
-        await this.objectStorageServiceClient
-            .setProvider('aliOss')
-            .setBucket('freelog-image').build()
+        await this.objectStorageServiceClient.setBucket('freelog-image').build()
             .putStream(objectKey, temporaryFileStream, {headers: {'Content-Type': mime}});
 
         return `https://image.freelog.com/${objectKey}`;
@@ -113,8 +110,8 @@ export class FileStorageService implements IFileStorageService {
 
     /**
      * 根据sha1值获取文件
-     * @param {string} sha1
-     * @returns {Promise<FileStorageInfo>}
+     * @param sha1
+     * @param args
      */
     async findBySha1(sha1: string, ...args): Promise<FileStorageInfo> {
         return this.fileStorageProvider.findOne({sha1}, ...args);
@@ -135,8 +132,8 @@ export class FileStorageService implements IFileStorageService {
      * @returns {string}
      */
     getSignatureUrl(fileStorageInfo: FileStorageInfo): string {
-        const ossClient = this.objectStorageServiceClient.setProvider(fileStorageInfo.serviceProvider).setBucket(fileStorageInfo.storageInfo.bucket).build();
-        return ossClient.givenClient.client.signatureUrl(fileStorageInfo.storageInfo.objectKey, {
+        const ossClient = this.objectStorageServiceClient.setBucket(fileStorageInfo.storageInfo.bucket).build();
+        return ossClient.client.signatureUrl(fileStorageInfo.storageInfo.objectKey, {
             method: 'GET', expires: 180
         });
     }
@@ -147,9 +144,8 @@ export class FileStorageService implements IFileStorageService {
      * @returns {any}
      */
     async getFileStream(fileStorageInfo: FileStorageInfo): Promise<any> {
-        const ossClient = this.objectStorageServiceClient.setProvider(fileStorageInfo.serviceProvider).setBucket(fileStorageInfo.storageInfo.bucket).build();
-        const {stream} = await ossClient.getStream(fileStorageInfo.storageInfo.objectKey);
-        return stream;
+        const ossClient = this.objectStorageServiceClient.setBucket(fileStorageInfo.storageInfo.bucket).build();
+        return ossClient.getStream(fileStorageInfo.storageInfo.objectKey).then(res => res.stream);
     }
 
     /**
@@ -193,13 +189,13 @@ export class FileStorageService implements IFileStorageService {
     /**
      * 上传文件到临时目录
      * @param fileStream
-     * @returns {Promise<void>}
-     * @private
+     * @param isCheckSpace
+     * @param meta
      */
     async _uploadFileToTemporaryDirectory(fileStream, isCheckSpace: boolean, meta = null): Promise<FileStorageInfo> {
         const temporaryObjectKey = `temporary_upload/${v4().replace(/-/g, '')}`.toLowerCase();
         const fileBaseInfoTransform = this.fileBaseInfoCalculateTransform('sha1', 'hex');
-        const ossClient = this.objectStorageServiceClient.setProvider('aliOss').setBucket('freelog-shenzhen').build();
+        const ossClient = this.objectStorageServiceClient.setBucket('freelog-shenzhen').build();
         await ossClient.putStream(temporaryObjectKey, fileStream.pipe(fileBaseInfoTransform), meta);
 
         if (isCheckSpace) {
@@ -223,10 +219,9 @@ export class FileStorageService implements IFileStorageService {
 
     /**
      * 复制文件(临时目录copy到正式目录),并且保存文件信息入库
-     * @param {FileStorageInfo} fileStorageInfo
+     * @param fileStorageInfo
      * @param targetDirectory
-     * @returns {Promise<any>}
-     * @private
+     * @param bucketName
      */
     async _copyFileAndSaveFileStorageInfo(fileStorageInfo: FileStorageInfo, targetDirectory, bucketName = 'freelog-shenzhen') {
         const existingFileStorageInfo = await this.findBySha1(fileStorageInfo.sha1);
@@ -236,7 +231,7 @@ export class FileStorageService implements IFileStorageService {
         const temporaryObjectKey = fileStorageInfo.storageInfo.objectKey;
         const objectKey = `${targetDirectory}/${fileStorageInfo.sha1}`;
 
-        const ossClient = this.objectStorageServiceClient.setProvider('aliOss').setBucket(bucketName).build();
+        const ossClient = this.objectStorageServiceClient.setBucket(bucketName).build();
         await ossClient.copyFile(objectKey, temporaryObjectKey);
         fileStorageInfo.storageInfo.objectKey = objectKey;
         return this.fileStorageProvider.findOneAndUpdate({sha1: fileStorageInfo.sha1}, fileStorageInfo, {new: true}).then(data => {

@@ -1,4 +1,4 @@
-import {base64Decode} from 'egg-freelog-base/app/extend/helper/crypto_helper';
+import {CryptoHelper} from 'egg-freelog-base';
 
 export default class AppBootHook {
     private readonly app;
@@ -18,8 +18,8 @@ export default class AppBootHook {
     decodeOssConfig() {
         const aliOss = this.app.config.uploadConfig.aliOss;
         if (aliOss.isCryptographic) {
-            aliOss.accessKeyId = base64Decode(aliOss.accessKeyId);
-            aliOss.accessKeySecret = base64Decode(aliOss.accessKeySecret);
+            aliOss.accessKeyId = CryptoHelper.base64Decode(aliOss.accessKeyId);
+            aliOss.accessKeySecret = CryptoHelper.base64Decode(aliOss.accessKeySecret);
         }
     }
 }

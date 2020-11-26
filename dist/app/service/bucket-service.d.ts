@@ -1,8 +1,9 @@
 import { IBucketService, BucketInfo } from '../../interface/bucket-interface';
+import { FreelogContext, IMongodbOperation } from 'egg-freelog-base';
 import { ObjectStorageInfo } from '../../interface/object-storage-interface';
 export declare class BucketService implements IBucketService {
-    ctx: any;
-    bucketProvider: any;
+    ctx: FreelogContext;
+    bucketProvider: IMongodbOperation<BucketInfo>;
     bucketCreatedLimitCount: number;
     /**
      * 用户创建bucket
@@ -58,8 +59,8 @@ export declare class BucketService implements IBucketService {
     static generateBucketUniqueKey(bucketInfo: BucketInfo): string;
     /**
      * bucket中同一个object发生替换.重新计算整个bucket总文件大小
-     * @param {StorageObject} newStorageObject
-     * @param {StorageObject} oldStorageObject
+     * @param newObjectStorageInfo
+     * @param oldObjectStorageInfo
      */
     replaceStorageObjectEventHandle(newObjectStorageInfo: ObjectStorageInfo, oldObjectStorageInfo: ObjectStorageInfo): void;
     /**

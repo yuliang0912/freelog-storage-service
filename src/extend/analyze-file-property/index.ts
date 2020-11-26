@@ -17,8 +17,7 @@ export class FilePropertyAnalyzerHandler {
     /**
      * 获取资源文件属性
      * @param src
-     * @param {string} resourceType
-     * @returns {Promise<{fileProperty: any; analyzeStatus: number; error: object}>}
+     * @param resourceType
      */
     async analyzeFileProperty(src, resourceType: string): Promise<{ fileProperty: any, analyzeStatus: number, error: object }> {
         resourceType = resourceType.toLowerCase();
@@ -41,12 +40,11 @@ export class FilePropertyAnalyzerHandler {
 
     /**
      * 获取图片基础属性
-     * @param src, URL or readable stream
-     * @returns {Promise<object>}
+     * @param src
      */
     async _imageFileAnalyzeHandle(src): Promise<object> {
 
-        const result = await probe(src).catch(error => {
+        const result = await probe(src).catch(_error => {
             throw new ApplicationError(this.ctx.gettext('image-file-analyze-failed'));
         });
 

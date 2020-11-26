@@ -1,19 +1,18 @@
+import {validRange} from 'semver';
 import {provide, init, scope} from 'midway';
 import {ValidatorResult} from 'jsonschema';
-import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
-import {IJsonSchemaValidate} from '../../interface/common-interface';
-import {validRange} from 'semver';
+import {IJsonSchemaValidate, CommonJsonSchema} from 'egg-freelog-base';
 
 @provide()
 @scope('Singleton')
-export class ObjectDependencyValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
+export class ObjectDependencyValidator extends CommonJsonSchema implements IJsonSchemaValidate {
     /**
      * 用户节点数据操作校验
      * @param operations
      * @returns {ValidatorResult}
      */
     validate(operations): ValidatorResult {
-        return super.validate(operations, super.getSchema('/resourceDependencySchema'));
+        return super.validate(operations, this.schemas['/resourceDependencySchema']);
     }
 
     /**

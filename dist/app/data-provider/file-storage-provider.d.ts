@@ -1,4 +1,5 @@
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
-export default class FileStorageProvider extends MongoBaseOperation {
+import { MongodbOperation } from 'egg-freelog-base';
+import { FileStorageInfo } from '../../interface/file-storage-info-interface';
+export default class FileStorageProvider extends MongodbOperation<FileStorageInfo> {
     constructor(model: any);
 }

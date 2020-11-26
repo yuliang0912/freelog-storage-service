@@ -13,8 +13,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const midway_1 = require("midway");
-const MongoBaseOperation = require("egg-freelog-base/lib/database/mongo-base-operation");
-let ObjectStorageProvider = class ObjectStorageProvider extends MongoBaseOperation {
+const egg_freelog_base_1 = require("egg-freelog-base");
+let ObjectStorageProvider = class ObjectStorageProvider extends egg_freelog_base_1.MongodbOperation {
     constructor(model) {
         super(model);
     }
@@ -26,4 +26,4 @@ ObjectStorageProvider = __decorate([
     __metadata("design:paramtypes", [Object])
 ], ObjectStorageProvider);
 exports.default = ObjectStorageProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoib2JqZWN0LXN0b3JhZ2UtcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL2RhdGEtcHJvdmlkZXIvb2JqZWN0LXN0b3JhZ2UtcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEM7QUFDOUMseUZBQXlGO0FBSXpGLElBQXFCLHFCQUFxQixHQUExQyxNQUFxQixxQkFBc0IsU0FBUSxrQkFBa0I7SUFDakUsWUFBK0MsS0FBSztRQUNoRCxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUM7SUFDakIsQ0FBQztDQUNKLENBQUE7QUFKb0IscUJBQXFCO0lBRnpDLGdCQUFPLEVBQUU7SUFDVCxjQUFLLENBQUMsV0FBVyxDQUFDO0lBRUYsV0FBQSxlQUFNLENBQUMseUJBQXlCLENBQUMsQ0FBQTs7R0FEN0IscUJBQXFCLENBSXpDO2tCQUpvQixxQkFBcUIifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoib2JqZWN0LXN0b3JhZ2UtcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL2RhdGEtcHJvdmlkZXIvb2JqZWN0LXN0b3JhZ2UtcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEM7QUFDOUMsdURBQWtEO0FBS2xELElBQXFCLHFCQUFxQixHQUExQyxNQUFxQixxQkFBc0IsU0FBUSxtQ0FBbUM7SUFDbEYsWUFBK0MsS0FBSztRQUNoRCxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUM7SUFDakIsQ0FBQztDQUNKLENBQUE7QUFKb0IscUJBQXFCO0lBRnpDLGdCQUFPLEVBQUU7SUFDVCxjQUFLLENBQUMsV0FBVyxDQUFDO0lBRUYsV0FBQSxlQUFNLENBQUMseUJBQXlCLENBQUMsQ0FBQTs7R0FEN0IscUJBQXFCLENBSXpDO2tCQUpvQixxQkFBcUIifQ==

@@ -3,13 +3,15 @@ import { IBucketService } from '../../interface/bucket-interface';
 import { IFileStorageService } from '../../interface/file-storage-info-interface';
 import { IObjectStorageService } from '../../interface/object-storage-interface';
 import { IOutsideApiService } from '../../interface/common-interface';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class UserNodeDataObjectController {
+    ctx: FreelogContext;
     bucketService: IBucketService;
     fileStorageService: IFileStorageService;
     objectStorageService: IObjectStorageService;
     outsideApiService: IOutsideApiService;
     userNodeDataFileOperation: any;
-    createOrReplace(ctx: any): Promise<void>;
-    update(ctx: any): Promise<void>;
-    download(ctx: any): Promise<Buffer>;
+    createOrReplace(): Promise<void>;
+    update(): Promise<void>;
+    download(): Promise<Buffer>;
 }

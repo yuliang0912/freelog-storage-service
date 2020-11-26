@@ -10,5 +10,5 @@ declare class FileBaseInfoCalculateTransform extends Transform {
     _transform(chunk: any, encoding: any, callback: any): void;
     _final(callback: any): void;
 }
-export declare function fileBaseInfoCalculateTransform(context: IApplicationContext): (algorithm?: string, encoding?: string) => FileBaseInfoCalculateTransform;
+export declare function fileBaseInfoCalculateTransform(_context: IApplicationContext): (algorithm?: string, encoding?: string) => FileBaseInfoCalculateTransform;
 export {};

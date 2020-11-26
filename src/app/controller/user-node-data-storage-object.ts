@@ -1,21 +1,19 @@
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {inject, controller, get, post, put, provide, priority} from 'midway';
-import {LoginUser, ApplicationError, ArgumentError} from 'egg-freelog-base/index';
 import {IBucketService, SystemBucketName} from '../../interface/bucket-interface';
 import {IFileStorageService} from '../../interface/file-storage-info-interface';
 import {CreateUserNodeDataObjectOptions, IObjectStorageService} from '../../interface/object-storage-interface';
+import {IOutsideApiService, JsonObjectOperation, JsonObjectOperationTypeEnum} from '../../interface/common-interface';
 import {
-    IOutsideApiService,
-    JsonObjectOperation,
-    JsonObjectOperationTypeEnum
-} from '../../interface/common-interface';
-import {mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
+    IdentityTypeEnum, FreelogContext, visitorIdentityValidator, CommonRegex, ApplicationError, ArgumentError
+} from 'egg-freelog-base';
 
 @provide()
 @priority(1)
 @controller('/v1/storages/buckets/.UserNodeData')
 export class UserNodeDataObjectController {
 
+    @inject()
+    ctx: FreelogContext;
     @inject()
     bucketService: IBucketService;
     @inject()
@@ -27,10 +25,11 @@ export class UserNodeDataObjectController {
     @inject()
     userNodeDataFileOperation;
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @post('/objects')
-    async createOrReplace(ctx) {
+    async createOrReplace() {
 
+        const {ctx} = this;
         const nodeId = ctx.checkBody('nodeId').optional().toInt().value;
         const nodeDomain = ctx.checkBody('nodeDomain').optional().isNodeDomain().value;
         const userNodeData = ctx.checkBody('userNodeData').exist().isObject().value;
@@ -64,10 +63,11 @@ export class UserNodeDataObjectController {
         await this.objectStorageService.createOrUpdateUserNodeObject(objectInfo, createUserNodeDataObjectOptions).then(ctx.success);
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @put('/objects/:nodeId')
-    async update(ctx) {
+    async update() {
 
+        const {ctx} = this;
         const nodeId: number = ctx.checkParams('nodeId').exist().toInt().value;
         const removeFields: string[] = ctx.checkBody('removeFields').optional().isArray().default([]).value;
         const appendOrReplaceObject: object = ctx.checkBody('appendOrReplaceObject').optional().isObject().value;
@@ -104,15 +104,17 @@ export class UserNodeDataObjectController {
         }).then(ctx.success);
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/objects/:objectIdOrNodeId/customPick')
-    async download(ctx) {
+    async download() {
+
+        const {ctx} = this;
         const objectIdOrNodeId = ctx.checkParams('objectIdOrNodeId').exist().type('string').value;
         const fields: string[] = ctx.checkQuery('fields').optional().len(1).toSplitArray().default([]).value;
         ctx.validateParams();
 
         const bucketInfo = await this.bucketService.findOne({
-            userId: ctx.request.userId,
+            userId: ctx.userId,
             bucketName: SystemBucketName.UserNodeData
         });
         if (!bucketInfo) {
@@ -120,7 +122,7 @@ export class UserNodeDataObjectController {
         }
 
         const findCondition: any = {bucketId: bucketInfo.bucketId};
-        if (mongoObjectId.test(objectIdOrNodeId)) {
+        if (CommonRegex.mongoObjectId.test(objectIdOrNodeId)) {
             findCondition._id = objectIdOrNodeId;
         } else if (/^\d{8,10}$/.test(objectIdOrNodeId)) {
             const nodeInfo = await this.outsideApiService.getNodeInfoById(objectIdOrNodeId);
@@ -143,7 +145,7 @@ export class UserNodeDataObjectController {
             ctx.set('Connection', 'close');
             ctx.set('Transfer-Encoding', 'chunked');
         } else {
-            ctx.set('Content-length', fileStorageInfo.fileSize);
+            ctx.set('Content-length', fileStorageInfo.fileSize.toString());
         }
         ctx.attachment(storageObject.objectName);
         ctx.body = this.userNodeDataFileOperation.pick(fileStream, fields);

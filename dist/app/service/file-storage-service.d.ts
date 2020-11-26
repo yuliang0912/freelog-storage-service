@@ -1,14 +1,15 @@
+import { FreelogContext, IMongodbOperation } from 'egg-freelog-base';
 import { FileStorageInfo, IFileStorageService, FilePropertyAnalyzeInfo } from '../../interface/file-storage-info-interface';
 import { IBucketService } from '../../interface/bucket-interface';
 export declare class FileStorageService implements IFileStorageService {
-    ctx: any;
+    ctx: FreelogContext;
     filePropertyAnalyzeHandler: any;
-    fileStorageProvider: any;
-    systemAnalysisRecordProvider: any;
     userNodeDataFileOperation: any;
-    fileBaseInfoCalculateTransform: (algorithm?: string, encoding?: string) => any;
     objectStorageServiceClient: any;
     bucketService: IBucketService;
+    systemAnalysisRecordProvider: IMongodbOperation<any>;
+    fileBaseInfoCalculateTransform: (algorithm?: string, encoding?: string) => any;
+    fileStorageProvider: IMongodbOperation<FileStorageInfo>;
     /**
      * 上传文件,并分析文件属性
      * @param fileStream
@@ -18,8 +19,7 @@ export declare class FileStorageService implements IFileStorageService {
     upload(fileStream: any, resourceType: any): Promise<FileStorageInfo>;
     /**
      * 上传用户节点数据文件
-     * @param fileStream
-     * @returns {Promise<FileStorageInfo>}
+     * @param userNodeData
      */
     uploadUserNodeDataFile(userNodeData: object): Promise<FileStorageInfo>;
     /**
@@ -36,8 +36,8 @@ export declare class FileStorageService implements IFileStorageService {
     fileStreamErrorHandler(fileStream: any): Promise<any>;
     /**
      * 根据sha1值获取文件
-     * @param {string} sha1
-     * @returns {Promise<FileStorageInfo>}
+     * @param sha1
+     * @param args
      */
     findBySha1(sha1: string, ...args: any[]): Promise<FileStorageInfo>;
     /**
@@ -75,16 +75,15 @@ export declare class FileStorageService implements IFileStorageService {
     /**
      * 上传文件到临时目录
      * @param fileStream
-     * @returns {Promise<void>}
-     * @private
+     * @param isCheckSpace
+     * @param meta
      */
     _uploadFileToTemporaryDirectory(fileStream: any, isCheckSpace: boolean, meta?: any): Promise<FileStorageInfo>;
     /**
      * 复制文件(临时目录copy到正式目录),并且保存文件信息入库
-     * @param {FileStorageInfo} fileStorageInfo
+     * @param fileStorageInfo
      * @param targetDirectory
-     * @returns {Promise<any>}
-     * @private
+     * @param bucketName
      */
-    _copyFileAndSaveFileStorageInfo(fileStorageInfo: FileStorageInfo, targetDirectory: any, bucketName?: string): Promise<any>;
+    _copyFileAndSaveFileStorageInfo(fileStorageInfo: FileStorageInfo, targetDirectory: any, bucketName?: string): Promise<FileStorageInfo>;
 }

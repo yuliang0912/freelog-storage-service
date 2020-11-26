@@ -1,9 +1,13 @@
-import {scope, provide} from 'midway';
-import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
+import {scope, provide, plugin} from 'midway';
+import {MongooseModelBase} from 'egg-freelog-base/database/mongoose-model-base';
 
 @scope('Singleton')
 @provide('model.systemAnalysisRecords')
-export class SystemAnalysisRecords extends MongooseModelBase implements IMongooseModelBase {
+export class SystemAnalysisRecords extends MongooseModelBase {
+
+    constructor(@plugin('mongoose') mongoose) {
+        super(mongoose);
+    }
 
     buildMongooseModel() {
         const SystemAnalysisRecordScheme = new this.mongoose.Schema({

@@ -1,24 +1,29 @@
-import {inject, controller, get, post, provide} from 'midway';
-import {LoginUser, ArgumentError, ApplicationError, InternalClient} from 'egg-freelog-base';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {IFileStorageService} from '../../interface/file-storage-info-interface';
 import {isString} from 'lodash';
+import {inject, controller, get, post, provide} from 'midway';
+import {IFileStorageService} from '../../interface/file-storage-info-interface';
+import {
+    IdentityTypeEnum, ArgumentError, ApplicationError,
+    FreelogContext, visitorIdentityValidator
+} from 'egg-freelog-base';
 
 @provide()
 @controller('/v1/storages/files')
 export class FileStorageController {
 
     @inject()
+    ctx: FreelogContext;
+    @inject()
     fileStorageService: IFileStorageService;
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @post('/upload')
-    async uploadFile(ctx) {
+    async uploadFile() {
+        const {ctx} = this;
         const fileStream = await ctx.getFileStream({requireFile: false});
         if (!fileStream || !fileStream.filename) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'file'));
         }
-        ctx.request.body = fileStream.fields;
+        ctx.request['body'] = fileStream.fields;
         const resourceType: string = ctx.checkBody('resourceType').optional().isResourceType().toLow().value;
         ctx.validateParams();
         const fileStorageInfo = await this.fileStorageService.upload(fileStream, resourceType).catch(error => {
@@ -30,8 +35,9 @@ export class FileStorageController {
     }
 
     @post('/uploadImage')
-    @visitorIdentity(LoginUser)
-    async uploadImage(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async uploadImage() {
+        const {ctx} = this;
         const fileStream = await ctx.getFileStream({requireFile: false});
         if (!fileStream || !fileStream.filename) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'file'));
@@ -44,9 +50,10 @@ export class FileStorageController {
         });
     }
 
-    @visitorIdentity(LoginUser | InternalClient)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     @get('/fileIsExist')
-    async fileIsExist(ctx) {
+    async fileIsExist() {
+        const {ctx} = this;
         const sha1s: string[] = ctx.checkQuery('sha1').exist().toLowercase().isSplitSha1().toSplitArray().len(1, 100).value;
         ctx.validateParams();
 
@@ -60,22 +67,24 @@ export class FileStorageController {
     }
 
     @get('/:sha1')
-    @visitorIdentity(InternalClient)
-    async show(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.InternalClient)
+    async show() {
+        const {ctx} = this;
         const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
         ctx.validateParams();
         await this.fileStorageService.findBySha1(sha1).then(ctx.success);
     }
 
     @get('/:sha1/property')
-    // @visitorIdentity(InternalClient)
-    async fileProperty(ctx) {
+    // @visitorIdentityValidator(IdentityTypeEnum.InternalClient)
+    async fileProperty() {
+        const {ctx} = this;
         const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
         const resourceType = ctx.checkQuery('resourceType').exist().isResourceType().toLow().value;
         ctx.validateParams();
 
         const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
-        ctx.entityNullObjectCheck(fileStorageInfo, ctx.gettext('file-storage-entity-not-found'));
+        ctx.entityNullObjectCheck(fileStorageInfo, {msg: ctx.gettext('file-storage-entity-not-found')});
 
         const analyzeResult = await this.fileStorageService.analyzeFileProperty(fileStorageInfo, resourceType);
 
@@ -89,21 +98,22 @@ export class FileStorageController {
     }
 
     @get('/:sha1/download')
-    // @visitorIdentity(InternalClient)
-    async download(ctx) {
+    // @visitorIdentityValidator(IdentityTypeEnum.InternalClient)
+    async download() {
+        const {ctx} = this;
 
         const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
         const attachmentName = ctx.checkQuery('attachmentName').optional().type('string').value;
         ctx.validateParams();
 
         const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
-        ctx.entityNullObjectCheck(fileStorageInfo, ctx.gettext('file-storage-entity-not-found'));
+        ctx.entityNullObjectCheck(fileStorageInfo, {msg: ctx.gettext('file-storage-entity-not-found')});
 
         const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
         ctx.body = fileStream;
         if (isString(attachmentName) && attachmentName.length) {
             ctx.attachment(attachmentName);
         }
-        ctx.set('content-length', fileStorageInfo.fileSize);
+        ctx.set('content-length', fileStorageInfo.fileSize.toString());
     }
 }

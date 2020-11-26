@@ -60,7 +60,7 @@ class JsonObjectReplaceTransformStream extends StreamBase {
     }
 }
 
-export function jsonObjectReplaceTransformStream(context: IApplicationContext) {
+export function jsonObjectReplaceTransformStream(_context: IApplicationContext) {
     return (objectOperations: JsonObjectOperation[] = [], options = {}): JsonObjectReplaceTransformStream => {
         return new JsonObjectReplaceTransformStream(objectOperations, options);
     };

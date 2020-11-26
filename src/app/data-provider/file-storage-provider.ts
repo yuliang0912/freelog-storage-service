@@ -1,9 +1,10 @@
 import {provide, inject, scope} from 'midway';
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
+import {MongodbOperation} from 'egg-freelog-base';
+import {FileStorageInfo} from '../../interface/file-storage-info-interface';
 
 @provide()
 @scope('Singleton')
-export default class FileStorageProvider extends MongoBaseOperation {
+export default class FileStorageProvider extends MongodbOperation<FileStorageInfo> {
     constructor(@inject('model.fileStorageInfo') model) {
         super(model);
     }

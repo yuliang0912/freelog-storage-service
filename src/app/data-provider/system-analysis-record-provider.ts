@@ -1,9 +1,9 @@
 import {provide, inject, scope} from 'midway';
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
+import {MongodbOperation} from 'egg-freelog-base';
 
 @provide()
 @scope('Singleton')
-export default class SystemAnalysisRecordProvider extends MongoBaseOperation {
+export default class SystemAnalysisRecordProvider extends MongodbOperation<any> {
     constructor(@inject('model.systemAnalysisRecords') model) {
         super(model);
     }

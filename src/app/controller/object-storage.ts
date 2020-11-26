@@ -1,17 +1,20 @@
-import {inject, controller, get, del, post, put, provide} from 'midway';
-import {LoginUser, ApplicationError, ArgumentError} from 'egg-freelog-base/index';
 import {IBucketService} from '../../interface/bucket-interface';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
+import {controller, del, get, inject, post, provide, put} from 'midway';
 import {IFileStorageService} from '../../interface/file-storage-info-interface';
 import {IObjectStorageService} from '../../interface/object-storage-interface';
-import {isString, isEmpty} from 'lodash';
-import {strictBucketName} from 'egg-freelog-base/app/extend/helper/common_regex';
+import {isEmpty, isString} from 'lodash';
 import {IJsonSchemaValidate} from '../../interface/common-interface';
+import {
+    ApplicationError, ArgumentError, CommonRegex,
+    FreelogContext, IdentityTypeEnum, visitorIdentityValidator
+} from 'egg-freelog-base';
 
 @provide()
 @controller('/v1/storages/')
 export class ObjectController {
 
+    @inject()
+    ctx: FreelogContext;
     @inject()
     bucketService: IBucketService;
     @inject()
@@ -25,9 +28,10 @@ export class ObjectController {
     @inject()
     storageCommonGenerator;
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/buckets/_all/objects')
-    async myObjects(ctx) {
+    async myObjects() {
+        const {ctx} = this;
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
         const sort = ctx.checkQuery('sort').optional().value;
@@ -56,12 +60,13 @@ export class ObjectController {
         await this.objectStorageService.findIntervalList(condition, skip, limit, projection, sort).then(ctx.success);
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/buckets/:bucketName/objects')
-    async index(ctx) {
+    async index() {
+        const {ctx} = this;
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
-        const sort = ctx.checkQuery('sort').optional().value;
+        const sort = ctx.checkQuery('sort').optional().toSortObject().value;
         const bucketName = ctx.checkParams('bucketName').exist().isBucketName().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().toLow().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().value;
@@ -70,7 +75,7 @@ export class ObjectController {
         ctx.validateParams();
 
         const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.userId});
-        ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
+        ctx.entityNullObjectCheck(bucketInfo, {msg: ctx.gettext('bucket-entity-not-found')});
 
         const condition: any = {bucketId: bucketInfo.bucketId};
         if (resourceType && isLoadingTypeless) {
@@ -88,23 +93,25 @@ export class ObjectController {
         await this.objectStorageService.findIntervalList(condition, skip, limit, projection, sort).then(ctx.success);
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/buckets/:bucketName/objects/:objectId')
-    async show(ctx) {
+    async show() {
+        const {ctx} = this;
 
         const bucketName = ctx.checkParams('bucketName').exist().isBucketName().value;
         const objectId = ctx.checkParams('objectId').exist().isMongoObjectId().value;
         ctx.validateParams();
 
-        const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.request.userId});
-        ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
+        const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.userId});
+        ctx.entityNullObjectCheck(bucketInfo, {msg: ctx.gettext('bucket-entity-not-found')});
 
         await this.objectStorageService.findOne({_id: objectId, bucketId: bucketInfo.bucketId}).then(ctx.success);
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/objects/list')
-    async list(ctx) {
+    async list() {
+        const {ctx} = this;
         // 需要调用方对每个objectName单独做编码.然后多个之间使用逗号分隔
         const fullObjectNames = ctx.checkQuery('fullObjectNames').optional().toSplitArray().len(1, 200).default([]).value;
         const objectIds = ctx.checkQuery('objectIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 200).default([]).value;
@@ -118,7 +125,7 @@ export class ObjectController {
             if (!isString(bucketName) || !isString(objectName)) {
                 throw new ArgumentError(ctx.gettext('params-validate-failed', 'fullObjectName'));
             }
-            if (!strictBucketName.test(bucketName)) {
+            if (!CommonRegex.strictBucketName.test(bucketName)) {
                 throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'fullObjectName'));
             }
             const uniqueKey = this.storageCommonGenerator.generateObjectUniqueKey(bucketName, objectName);
@@ -131,9 +138,10 @@ export class ObjectController {
         await this.objectStorageService.find(condition, projection.join(' ')).then(ctx.success);
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/objects/:objectIdOrName')
-    async detail(ctx) {
+    async detail() {
+        const {ctx} = this;
 
         const objectIdOrName = ctx.checkParams('objectIdOrName').exist().decodeURIComponent().value;
         ctx.validateParams();
@@ -146,9 +154,10 @@ export class ObjectController {
         ctx.success(objectStorageInfo);
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @post('/buckets/:bucketName/objects')
-    async createOrReplace(ctx) {
+    async createOrReplace() {
+        const {ctx} = this;
 
         const bucketName = ctx.checkParams('bucketName').exist().isStrictBucketName().value;
         const objectName = ctx.checkBody('objectName').exist().value;
@@ -157,35 +166,36 @@ export class ObjectController {
         ctx.validateParams();
 
         const bucketInfo = await this.bucketService.findOne({
-            bucketName,
-            userId: ctx.request.userId
+            bucketName, userId: ctx.userId
         });
-        ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
+        ctx.entityNullObjectCheck(bucketInfo, {msg: ctx.gettext('bucket-entity-not-found')});
 
         const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
-        ctx.entityNullObjectCheck(fileStorageInfo, ctx.gettext('params-validate-failed', 'sha1'));
+        ctx.entityNullObjectCheck(fileStorageInfo, {msg: ctx.gettext('params-validate-failed', 'sha1')});
 
         const createOrUpdateFileOptions = {objectName, fileStorageInfo};
         await this.objectStorageService.createObject(bucketInfo, createOrUpdateFileOptions).then(ctx.success);
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @del('/buckets/:bucketName/objects/:objectIds')
-    async destroy(ctx) {
+    async destroy() {
+        const {ctx} = this;
 
         const bucketName = ctx.checkParams('bucketName').exist().isBucketName().value;
         const objectIds: string[] = ctx.checkParams('objectIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 100).value;
         ctx.validateParams();
 
-        const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.request.userId});
-        ctx.entityNullObjectCheck(bucketInfo, ctx.gettext('bucket-entity-not-found'));
+        const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.userId});
+        ctx.entityNullObjectCheck(bucketInfo, {msg: ctx.gettext('bucket-entity-not-found')});
 
         await this.objectStorageService.batchDeleteObjects(bucketInfo, objectIds).then(ctx.success);
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/objects/:objectIdOrName/file')
-    async download(ctx) {
+    async download() {
+        const {ctx} = this;
 
         const objectIdOrName = ctx.checkParams('objectIdOrName').exist().decodeURIComponent().value;
         ctx.validateParams();
@@ -200,24 +210,27 @@ export class ObjectController {
             throw new ApplicationError('file storage data is miss');
         }
 
-        const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
-        ctx.body = fileStream;
+        ctx.body = await this.fileStorageService.getFileStream(fileStorageInfo);
         ctx.attachment(objectStorageInfo.objectName);
-        ctx.set('content-length', fileStorageInfo.fileSize);
+        ctx.set('content-length', fileStorageInfo.fileSize.toString());
         if (objectStorageInfo.systemProperty.mime) {
             ctx.set('content-type', objectStorageInfo.systemProperty.mime);
         }
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @put('/objects/:objectIdOrName')
-    async updateProperty(ctx) {
+    async updateProperty() {
 
+        const {ctx} = this;
         const objectIdOrName = ctx.checkParams('objectIdOrName').exist().decodeURIComponent().value;
         const customPropertyDescriptors = ctx.checkBody('customPropertyDescriptors').optional().isArray().value;
         const dependencies = ctx.checkBody('dependencies').optional().isArray().value;
-        const resourceType = ctx.checkBody('resourceType').optional().isResourceType().toLow().value;
+        const resourceType = ctx.checkBody('resourceType').optional().type('string').value;
         const objectName = ctx.checkBody('objectName').optional().type('string').len(1, 100).value;
+        if (resourceType !== '' && !CommonRegex.resourceType.test(resourceType)) {
+            ctx.errors.push({resourceType: 'resourceType is not resourceType format.'});
+        }
         ctx.validateParams();
 
         const objectDependencyValidateResult = this.objectDependencyValidator.validate(dependencies);
@@ -246,14 +259,15 @@ export class ObjectController {
         }
 
         await this.objectStorageService.updateObject(objectStorageInfo, {
-            customPropertyDescriptors, dependencies, resourceType, objectName
+            customPropertyDescriptors, dependencies, resourceType: resourceType?.toLower(), objectName
         }).then(ctx.success);
     }
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/objects/:objectIdOrName/dependencyTree')
-    async dependencyTree(ctx) {
+    async dependencyTree() {
 
+        const {ctx} = this;
         const objectIdOrName = ctx.checkParams('objectIdOrName').exist().decodeURIComponent().value;
         const isContainRootNode = ctx.checkQuery('isContainRootNode').optional().default(false).toBoolean().value;
         ctx.validateParams();

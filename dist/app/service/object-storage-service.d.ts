@@ -1,9 +1,10 @@
+import { FreelogContext, PageResult } from 'egg-freelog-base';
 import { IObjectStorageService, ObjectStorageInfo, CreateObjectStorageOptions, CreateUserNodeDataObjectOptions, ObjectDependencyInfo, UpdateObjectStorageOptions, CommonObjectDependencyTreeInfo } from '../../interface/object-storage-interface';
 import { IBucketService, BucketInfo } from '../../interface/bucket-interface';
 import { FileStorageInfo, IFileStorageService } from '../../interface/file-storage-info-interface';
-import { IOutsideApiService, PageResult } from '../../interface/common-interface';
+import { IOutsideApiService } from '../../interface/common-interface';
 export declare class ObjectStorageService implements IObjectStorageService {
-    ctx: any;
+    ctx: FreelogContext;
     ossClient: any;
     uploadConfig: any;
     storageCommonGenerator: any;
@@ -14,22 +15,20 @@ export declare class ObjectStorageService implements IObjectStorageService {
     outsideApiService: IOutsideApiService;
     /**
      * 创建存储对象(存在时,则替换)
-     * @param {BucketInfo} bucketInfo
-     * @param {CreateObjectStorageInfoOptions} options
-     * @returns {Promise<ObjectStorageInfo>}
+     * @param bucketInfo
+     * @param options
      */
     createObject(bucketInfo: BucketInfo, options: CreateObjectStorageOptions): Promise<ObjectStorageInfo>;
     /**
      * 创建用户节点数据
-     * @param {CreateUserNodeDataObjectOptions} options
-     * @returns {Promise<ObjectStorageInfo>}
+     * @param objectStorageInfo
+     * @param options
      */
     createOrUpdateUserNodeObject(objectStorageInfo: ObjectStorageInfo, options: CreateUserNodeDataObjectOptions): Promise<ObjectStorageInfo>;
     /**
      * 更新用户存储数据
-     * @param {ObjectStorageInfo} oldObjectStorageInfo - 现有的对象存储信息
-     * @param {FileStorageInfo} newFileStorageInfo - 新的文件存储信息
-     * @returns {Promise<ObjectStorageInfo>}
+     * @param oldObjectStorageInfo
+     * @param options
      */
     updateObject(oldObjectStorageInfo: ObjectStorageInfo, options: UpdateObjectStorageOptions): Promise<ObjectStorageInfo>;
     /**
@@ -81,8 +80,9 @@ export declare class ObjectStorageService implements IObjectStorageService {
     /**
      * 生成存储对象的系统属性
      * @param fileStorageInfo
+     * @param objectName
      * @param resourceType
-     * @private
+     * @param analyzeFileErrorHandle
      */
     _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, objectName: string, resourceType: string, analyzeFileErrorHandle?: (error: any) => void): Promise<object>;
     /**
@@ -93,9 +93,7 @@ export declare class ObjectStorageService implements IObjectStorageService {
     _buildObjectDependencyTree(dependencies: ObjectDependencyInfo[]): Promise<CommonObjectDependencyTreeInfo[]>;
     /**
      * 检查依赖信息
-     * @param dependencyInfo
-     * @returns {Promise<{releases: Array, mocks: Array}>}
-     * @private
+     * @param dependencies
      */
     _checkDependencyInfo(dependencies: ObjectDependencyInfo[]): Promise<void>;
     /**

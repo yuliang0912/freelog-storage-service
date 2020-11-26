@@ -15,5 +15,5 @@ declare class JsonObjectReplaceTransformStream extends StreamBase {
     _transform(chunk: any, encoding: any, callback: any): any;
     _flush(callback: any): void;
 }
-export declare function jsonObjectReplaceTransformStream(context: IApplicationContext): (objectOperations?: JsonObjectOperation[], options?: {}) => JsonObjectReplaceTransformStream;
+export declare function jsonObjectReplaceTransformStream(_context: IApplicationContext): (objectOperations?: JsonObjectOperation[], options?: {}) => JsonObjectReplaceTransformStream;
 export {};

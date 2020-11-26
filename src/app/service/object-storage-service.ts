@@ -1,6 +1,6 @@
 import {satisfies} from 'semver';
 import {provide, config, plugin, inject} from 'midway';
-import {ApplicationError, ArgumentError} from 'egg-freelog-base';
+import {ApplicationError, ArgumentError, CommonRegex, FreelogContext, PageResult} from 'egg-freelog-base';
 import {assign, isEmpty, uniqWith, isArray, sumBy, isString, first, chain} from 'lodash';
 import {
     IObjectStorageService, ObjectStorageInfo, CreateObjectStorageOptions,
@@ -10,17 +10,15 @@ import {IBucketService, BucketInfo, BucketTypeEnum, SystemBucketName} from '../.
 import {FileStorageInfo, IFileStorageService} from '../../interface/file-storage-info-interface';
 import {
     IOutsideApiService,
-    PageResult,
     ResourceDependencyTreeInfo,
     ResourceInfo
 } from '../../interface/common-interface';
-import {mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide('objectStorageService')
 export class ObjectStorageService implements IObjectStorageService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @plugin()
     ossClient;
     @config('uploadConfig')
@@ -40,13 +38,12 @@ export class ObjectStorageService implements IObjectStorageService {
 
     /**
      * 创建存储对象(存在时,则替换)
-     * @param {BucketInfo} bucketInfo
-     * @param {CreateObjectStorageInfoOptions} options
-     * @returns {Promise<ObjectStorageInfo>}
+     * @param bucketInfo
+     * @param options
      */
     async createObject(bucketInfo: BucketInfo, options: CreateObjectStorageOptions): Promise<ObjectStorageInfo> {
 
-        options.objectName = options.objectName.replace(/[\\|\/|:|\*|\?|"|<|>|\||\s|@|\$|#]/g, '_');
+        options.objectName = options.objectName.replace(/[\\|\/:*?"<>\s@$#]/g, '_');
 
         const model: ObjectStorageInfo = {
             sha1: options.fileStorageInfo.sha1,
@@ -60,15 +57,16 @@ export class ObjectStorageService implements IObjectStorageService {
         const oldObjectStorageInfo = await this.findOneByName(bucketInfo.bucketName, options.objectName);
         if (!oldObjectStorageInfo) {
             model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, options.objectName, model.resourceType);
-            return this.objectStorageProvider.create(model).tap(() => {
+            return this.objectStorageProvider.create(model).then(objectInfo => {
                 this.bucketService.addStorageObjectEventHandle(model);
+                return objectInfo;
             });
         }
 
         // 替换对象时,如果没有资源类型,或者新资源检测通过,则保留依赖和自定义属性,否则就清空自定义属性以及依赖信息和资源类型
         model.dependencies = oldObjectStorageInfo.dependencies ?? [];
         model.customPropertyDescriptors = oldObjectStorageInfo.customPropertyDescriptors ?? [];
-        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, options.objectName, oldObjectStorageInfo.resourceType, function (error) {
+        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, options.objectName, oldObjectStorageInfo.resourceType, function () {
             model.resourceType = '';
             model.dependencies = [];
             model.customPropertyDescriptors = [];
@@ -88,8 +86,8 @@ export class ObjectStorageService implements IObjectStorageService {
 
     /**
      * 创建用户节点数据
-     * @param {CreateUserNodeDataObjectOptions} options
-     * @returns {Promise<ObjectStorageInfo>}
+     * @param objectStorageInfo
+     * @param options
      */
     async createOrUpdateUserNodeObject(objectStorageInfo: ObjectStorageInfo, options: CreateUserNodeDataObjectOptions): Promise<ObjectStorageInfo> {
 
@@ -114,8 +112,9 @@ export class ObjectStorageService implements IObjectStorageService {
             model.bucketName = bucketInfo.bucketName;
             model.uniqueKey = this.storageCommonGenerator.generateObjectUniqueKey(bucketInfo.bucketName, model.objectName);
 
-            return this.objectStorageProvider.create(model).tap((object) => {
+            return this.objectStorageProvider.create(model).then(object => {
                 this.bucketService.addStorageObjectEventHandle(object);
+                return object;
             });
         }
 
@@ -128,9 +127,8 @@ export class ObjectStorageService implements IObjectStorageService {
 
     /**
      * 更新用户存储数据
-     * @param {ObjectStorageInfo} oldObjectStorageInfo - 现有的对象存储信息
-     * @param {FileStorageInfo} newFileStorageInfo - 新的文件存储信息
-     * @returns {Promise<ObjectStorageInfo>}
+     * @param oldObjectStorageInfo
+     * @param options
      */
     async updateObject(oldObjectStorageInfo: ObjectStorageInfo, options: UpdateObjectStorageOptions): Promise<ObjectStorageInfo> {
 
@@ -247,7 +245,7 @@ export class ObjectStorageService implements IObjectStorageService {
      * @param args
      */
     async findOneByObjectIdOrName(objectIdOrFullName: string, ...args): Promise<ObjectStorageInfo> {
-        if (mongoObjectId.test(objectIdOrFullName)) {
+        if (CommonRegex.mongoObjectId.test(objectIdOrFullName)) {
             return this.findOne({_id: objectIdOrFullName}, ...args);
         } else if (objectIdOrFullName.includes('/')) {
             const [bucketName, objectName] = objectIdOrFullName.split('/');
@@ -342,8 +340,9 @@ export class ObjectStorageService implements IObjectStorageService {
     /**
      * 生成存储对象的系统属性
      * @param fileStorageInfo
+     * @param objectName
      * @param resourceType
-     * @private
+     * @param analyzeFileErrorHandle
      */
     async _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, objectName: string, resourceType: string, analyzeFileErrorHandle?: (error) => void): Promise<object> {
 
@@ -421,9 +420,7 @@ export class ObjectStorageService implements IObjectStorageService {
 
     /**
      * 检查依赖信息
-     * @param dependencyInfo
-     * @returns {Promise<{releases: Array, mocks: Array}>}
-     * @private
+     * @param dependencies
      */
     async _checkDependencyInfo(dependencies: ObjectDependencyInfo[]) {
 

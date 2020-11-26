@@ -1,12 +1,13 @@
 import {isEmpty} from 'lodash';
 import {provide, inject} from 'midway';
 import {IOutsideApiService, ResourceInfo, NodeInfo, ResourceDependencyTreeInfo} from '../../interface/common-interface';
+import {FreelogContext} from 'egg-freelog-base';
 
 @provide()
 export class OutsideApiService implements IOutsideApiService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
 
     /**
      * 批量获取资源
@@ -54,7 +55,7 @@ export class OutsideApiService implements IOutsideApiService {
 
     /**
      * 获取资源依赖树
-     * @param resourceId
+     * @param resourceIdOrName
      * @param options
      */
     async getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTreeInfo[]> {

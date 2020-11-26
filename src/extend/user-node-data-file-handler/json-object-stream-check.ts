@@ -1,12 +1,12 @@
 import {Readable} from 'stream';
 import {IApplicationContext, providerWrapper} from 'midway';
 import * as Verifier from 'stream-json/utils/Verifier';
-import {ApplicationError} from 'egg-freelog-base/index';
+import {ApplicationError} from 'egg-freelog-base';
 
 const sendToWormhole = require('stream-wormhole');
 const StreamArray = require('stream-json/streamers/StreamArray');
 
-export function jsonFileStreamCheck(context: IApplicationContext) {
+export function jsonFileStreamCheck(_context: IApplicationContext) {
     return (readableStream: Readable): Promise<boolean> => {
         const verifier = new Verifier();
         const streamArray = StreamArray.withParser();

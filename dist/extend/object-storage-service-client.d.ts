@@ -1,11 +1,11 @@
+import { IObjectStorageService } from 'egg-freelog-base';
 export declare class ObjectStorageServiceClient {
-    uploadConfig: any;
+    aliOssClient: (config: any) => IObjectStorageService;
+    uploadConfig: object;
     readonly __cacheMap__: Map<any, any>;
-    bucket: string;
     provider: string;
-    config: any;
+    bucket: string;
     constructor(uploadConfig: any);
-    setProvider(provider: string): this;
     setBucket(bucket: string): this;
-    build(): any;
+    build(): IObjectStorageService;
 }

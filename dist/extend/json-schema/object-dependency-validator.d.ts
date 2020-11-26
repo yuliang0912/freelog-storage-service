@@ -1,7 +1,6 @@
 import { ValidatorResult } from 'jsonschema';
-import * as freelogCommonJsonSchema from 'egg-freelog-base/app/extend/json-schema/common-json-schema';
-import { IJsonSchemaValidate } from '../../interface/common-interface';
-export declare class ObjectDependencyValidator extends freelogCommonJsonSchema implements IJsonSchemaValidate {
+import { IJsonSchemaValidate, CommonJsonSchema } from 'egg-freelog-base';
+export declare class ObjectDependencyValidator extends CommonJsonSchema implements IJsonSchemaValidate {
     /**
      * 用户节点数据操作校验
      * @param operations

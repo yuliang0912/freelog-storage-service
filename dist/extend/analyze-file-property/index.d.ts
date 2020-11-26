@@ -5,8 +5,7 @@ export declare class FilePropertyAnalyzerHandler {
     /**
      * 获取资源文件属性
      * @param src
-     * @param {string} resourceType
-     * @returns {Promise<{fileProperty: any; analyzeStatus: number; error: object}>}
+     * @param resourceType
      */
     analyzeFileProperty(src: any, resourceType: string): Promise<{
         fileProperty: any;
@@ -15,8 +14,7 @@ export declare class FilePropertyAnalyzerHandler {
     }>;
     /**
      * 获取图片基础属性
-     * @param src, URL or readable stream
-     * @returns {Promise<object>}
+     * @param src
      */
     _imageFileAnalyzeHandle(src: any): Promise<object>;
 }

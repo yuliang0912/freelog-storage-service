@@ -28,7 +28,7 @@ class JsonObjectPickTransformStream extends StreamBase {
     }
 }
 
-export function jsonObjectPickTransformStream(context: IApplicationContext) {
+export function jsonObjectPickTransformStream(_context: IApplicationContext) {
     return (pickFields: string[], options = {}): JsonObjectPickTransformStream => {
         return new JsonObjectPickTransformStream(pickFields, options);
     };
@@ -37,4 +37,4 @@ export function jsonObjectPickTransformStream(context: IApplicationContext) {
 providerWrapper([{
     id: 'jsonObjectPickTransformStream',
     provider: jsonObjectPickTransformStream,
-}])
+}]);

@@ -1,11 +1,13 @@
 import { IBucketService } from '../../interface/bucket-interface';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class BucketController {
+    ctx: FreelogContext;
     bucketService: IBucketService;
-    index(ctx: any): Promise<void>;
-    createdCount(ctx: any): Promise<void>;
-    create(ctx: any): Promise<void>;
-    destroy(ctx: any): Promise<void>;
-    isExistBucketName(ctx: any): Promise<void>;
-    spaceStatistics(ctx: any): Promise<void>;
-    show(ctx: any): Promise<void>;
+    index(): Promise<void>;
+    createdCount(): Promise<void>;
+    create(): Promise<void>;
+    destroy(): Promise<void>;
+    isExistBucketName(): Promise<void>;
+    spaceStatistics(): Promise<void>;
+    show(): Promise<void>;
 }

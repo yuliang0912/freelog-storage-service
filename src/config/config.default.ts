@@ -10,9 +10,7 @@ export default (appInfo: any) => {
         }
     };
 
-    config.middleware = [
-        'errorHandler', 'identityAuthentication'
-    ];
+    config.middleware = ['errorAutoSnapHandler', 'gatewayIdentityInfoHandler'];
 
     config.onerror = {
         all(err, ctx) {

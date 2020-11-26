@@ -1,6 +1,7 @@
-import { NodeInfo, PageResult } from './common-interface';
+import { NodeInfo } from './common-interface';
 import { FileStorageInfo } from './file-storage-info-interface';
 import { BucketInfo } from './bucket-interface';
+import { PageResult } from 'egg-freelog-base';
 export interface ObjectDependencyInfo {
     name: string;
     versionRange?: string;

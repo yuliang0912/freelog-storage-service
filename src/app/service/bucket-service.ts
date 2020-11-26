@@ -1,15 +1,15 @@
 import {provide, inject} from 'midway';
 import {IBucketService, BucketInfo, BucketTypeEnum} from '../../interface/bucket-interface';
-import {ApplicationError, ArgumentError} from 'egg-freelog-base/error';
+import {ApplicationError, ArgumentError, FreelogContext, IMongodbOperation} from 'egg-freelog-base';
 import {ObjectStorageInfo} from '../../interface/object-storage-interface';
 
 @provide('bucketService')
 export class BucketService implements IBucketService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
-    bucketProvider;
+    bucketProvider: IMongodbOperation<BucketInfo>;
     bucketCreatedLimitCount = 5;
 
     /**
@@ -27,7 +27,7 @@ export class BucketService implements IBucketService {
             bucketType: BucketTypeEnum.UserStorage
         });
         if (createdBucketCount >= this.bucketCreatedLimitCount) {
-            throw new ApplicationError(this.ctx.gettext('bucket-create-count-limit-validate-failed', this.bucketCreatedLimitCount));
+            throw new ApplicationError(this.ctx.gettext('bucket-create-count-limit-validate-failed', this.bucketCreatedLimitCount.toString()));
         }
 
         bucketInfo.bucketUniqueKey = BucketService.generateBucketUniqueKey(bucketInfo);
@@ -66,7 +66,7 @@ export class BucketService implements IBucketService {
      */
     async deleteBucket(bucketName: string): Promise<boolean> {
 
-        const userId = this.ctx.request.userId;
+        const userId = this.ctx.userId;
         const bucketInfo: BucketInfo = await this.bucketProvider.findOne({bucketName, userId});
 
         this.ctx.entityNullValueAndUserAuthorizationCheck(bucketInfo, {
@@ -75,7 +75,7 @@ export class BucketService implements IBucketService {
         });
 
         if (bucketInfo.totalFileSize > 0) {
-            throw new ApplicationError({msg: this.ctx.gettext('bucket-delete-validate-error')});
+            throw new ApplicationError(this.ctx.gettext('bucket-delete-validate-error'));
         }
 
         return this.bucketProvider.deleteOne({bucketName: bucketInfo.bucketName}).then(data => Boolean(data.n));
@@ -141,8 +141,8 @@ export class BucketService implements IBucketService {
 
     /**
      * bucket中同一个object发生替换.重新计算整个bucket总文件大小
-     * @param {StorageObject} newStorageObject
-     * @param {StorageObject} oldStorageObject
+     * @param newObjectStorageInfo
+     * @param oldObjectStorageInfo
      */
     replaceStorageObjectEventHandle(newObjectStorageInfo: ObjectStorageInfo, oldObjectStorageInfo: ObjectStorageInfo): void {
         if (oldObjectStorageInfo.systemProperty.fileSize === newObjectStorageInfo.systemProperty.fileSize) {
@@ -155,7 +155,7 @@ export class BucketService implements IBucketService {
             $inc: {
                 totalFileSize: newObjectStorageInfo.systemProperty.fileSize - oldObjectStorageInfo.systemProperty.fileSize
             }
-        });
+        }).then();
     }
 
     /**
@@ -165,7 +165,7 @@ export class BucketService implements IBucketService {
     addStorageObjectEventHandle(objectStorageInfo: ObjectStorageInfo): void {
         this.bucketProvider.updateOne({_id: objectStorageInfo.bucketId}, {
             $inc: {totalFileQuantity: 1, totalFileSize: objectStorageInfo.systemProperty.fileSize}
-        });
+        }).then();
     }
 
     /**
@@ -175,12 +175,12 @@ export class BucketService implements IBucketService {
     deleteStorageObjectEventHandle(objectStorageInfo: ObjectStorageInfo): void {
         this.bucketProvider.updateOne({_id: objectStorageInfo.bucketId}, {
             $inc: {totalFileQuantity: -1, totalFileSize: -objectStorageInfo.systemProperty.fileSize}
-        });
+        }).then();
     }
 
     batchDeleteStorageObjectEventHandle(bucketInfo: BucketInfo, deletedFileQuantity: number, totalFileSize: number) {
         this.bucketProvider.updateOne({_id: bucketInfo.bucketId}, {
             $inc: {totalFileQuantity: -deletedFileQuantity, totalFileSize: -totalFileSize}
-        });
+        }).then();
     }
 }

@@ -16,7 +16,7 @@ class FileBaseInfoCalculateTransform extends Transform {
 
     _transform(chunk, encoding, callback) {
         this.fileSize += chunk.length;
-        this.hashAlgorithm.update(chunk)
+        this.hashAlgorithm.update(chunk);
         this.push(chunk, encoding);
         this.emit('fileSize', this.fileSize);
         callback();
@@ -28,7 +28,7 @@ class FileBaseInfoCalculateTransform extends Transform {
     }
 }
 
-export function fileBaseInfoCalculateTransform(context: IApplicationContext) {
+export function fileBaseInfoCalculateTransform(_context: IApplicationContext) {
     return (algorithm = 'sha1', encoding = 'hex'): FileBaseInfoCalculateTransform => {
         return new FileBaseInfoCalculateTransform(algorithm, encoding);
     };
@@ -37,4 +37,4 @@ export function fileBaseInfoCalculateTransform(context: IApplicationContext) {
 providerWrapper([{
     id: 'fileBaseInfoCalculateTransform',
     provider: fileBaseInfoCalculateTransform,
-}])
+}]);

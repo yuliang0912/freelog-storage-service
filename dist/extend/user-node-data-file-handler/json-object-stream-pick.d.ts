@@ -5,5 +5,5 @@ declare class JsonObjectPickTransformStream extends StreamBase {
     _transform(chunk: any, encoding: any, callback: any): any;
     _flush(callback: any): void;
 }
-export declare function jsonObjectPickTransformStream(context: IApplicationContext): (pickFields: string[], options?: {}) => JsonObjectPickTransformStream;
+export declare function jsonObjectPickTransformStream(_context: IApplicationContext): (pickFields: string[], options?: {}) => JsonObjectPickTransformStream;
 export {};

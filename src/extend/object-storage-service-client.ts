@@ -1,18 +1,19 @@
-import {config, provide, scope} from 'midway';
 import {isObject, cloneDeep} from 'lodash';
-import {ApplicationError} from 'egg-freelog-base';
-import * as FileOssManager from 'egg-freelog-base/app/extend/file-oss/index';
+import {config, provide, scope, inject} from 'midway';
+import {ApplicationError, IObjectStorageService} from 'egg-freelog-base';
 
 @scope('Singleton')
 @provide('objectStorageServiceClient')
 export class ObjectStorageServiceClient {
 
-    uploadConfig: any;
+    @inject()
+    aliOssClient: (config) => IObjectStorageService;
+
+    uploadConfig: object;
     readonly __cacheMap__ = new Map();
 
-    public bucket = 'freelog-shenzhen';
     public provider = 'aliOss';
-    public config: any;
+    public bucket = 'freelog-shenzhen';
 
     constructor(@config('uploadConfig') uploadConfig) {
         if (!uploadConfig) {
@@ -21,29 +22,27 @@ export class ObjectStorageServiceClient {
         this.uploadConfig = cloneDeep(uploadConfig);
     }
 
-    setProvider(provider: string) {
-        this.provider = provider;
-        return this;
-    }
+    // 目前只支持阿里云
+    // setProvider(provider: string) {
+    //     this.provider = provider;
+    //     return this;
+    // }
 
     setBucket(bucket: string) {
         this.bucket = bucket;
         return this;
     }
 
-    build() {
-        this.config = this.uploadConfig[this.provider];
-        if (!isObject(this.config)) {
+    build(): IObjectStorageService {
+        const clientConfig = this.uploadConfig[this.provider];
+        if (!isObject(clientConfig)) {
             throw new ApplicationError('param provider is invalid');
         }
-        this.config['bucket'] = this.bucket;
         const key = this.provider + this.bucket + this.provider;
         if (!this.__cacheMap__.has(key)) {
-            const clientConfig = {
-                uploadConfig: {[this.provider]: this.config}
-            };
-            const client = new FileOssManager(clientConfig);
-            client.config = cloneDeep(this.config);
+            clientConfig['bucket'] = this.bucket;
+            const client = this.aliOssClient(clientConfig);
+            client['config'] = cloneDeep(clientConfig);
             this.__cacheMap__.set(key, client);
         }
         return this.__cacheMap__.get(key);

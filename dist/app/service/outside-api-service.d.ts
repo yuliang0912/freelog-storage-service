@@ -1,6 +1,7 @@
 import { IOutsideApiService, ResourceInfo, NodeInfo, ResourceDependencyTreeInfo } from '../../interface/common-interface';
+import { FreelogContext } from 'egg-freelog-base';
 export declare class OutsideApiService implements IOutsideApiService {
-    ctx: any;
+    ctx: FreelogContext;
     /**
      * 批量获取资源
      * @param resourceNames
@@ -27,7 +28,7 @@ export declare class OutsideApiService implements IOutsideApiService {
     getNodeInfoByDomain(nodeDomain: string, options?: object): Promise<NodeInfo>;
     /**
      * 获取资源依赖树
-     * @param resourceId
+     * @param resourceIdOrName
      * @param options
      */
     getResourceDependencyTree(resourceIdOrName: string, options?: object): Promise<ResourceDependencyTreeInfo[]>;

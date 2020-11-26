@@ -1,11 +1,15 @@
 import {omit} from 'lodash';
-import {scope, provide} from 'midway';
-import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
+import {scope, provide, plugin} from 'midway';
+import {MongooseModelBase} from 'egg-freelog-base/database/mongoose-model-base';
 
 // 文件实际存储信息
 @scope('Singleton')
 @provide('model.fileStorageInfo')
-export class FileStorageInfoModel extends MongooseModelBase implements IMongooseModelBase {
+export class FileStorageInfoModel extends MongooseModelBase {
+
+    constructor(@plugin('mongoose') mongoose) {
+        super(mongoose);
+    }
 
     buildMongooseModel() {
         const objectScheme = new this.mongoose.Schema({
