@@ -74,6 +74,8 @@ export class ObjectController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
+        await ctx.curlIntranetApi(`${ctx.webApi.resourceInfoV2}/list?resourceNames=12345676789%252F13&projection=resourceVersions,resourceName`);
+
         const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.userId});
         ctx.entityNullObjectCheck(bucketInfo, {msg: ctx.gettext('bucket-entity-not-found')});
 
