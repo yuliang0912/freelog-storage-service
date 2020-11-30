@@ -261,7 +261,7 @@ export class ObjectController {
         }
 
         await this.objectStorageService.updateObject(objectStorageInfo, {
-            customPropertyDescriptors, dependencies, resourceType: resourceType?.toLower(), objectName
+            customPropertyDescriptors, dependencies, resourceType: resourceType?.toLowerCase() , objectName
         }).then(ctx.success);
     }
 
