@@ -34,7 +34,7 @@ export class ObjectCustomPropertyValidator extends CommonJsonSchema implements I
                 required: true,
                 additionalProperties: false,
                 properties: {
-                    remark: {type: 'string', required: false, minLength: 1, maxLength: 15},
+                    remark: {type: 'string', required: true, minLength: 0, maxLength: 50},
                     key: {
                         type: 'string', required: true, minLength: 1, maxLength: 15,
                         pattern: '^[a-zA-Z0-9_]{1,20}$'

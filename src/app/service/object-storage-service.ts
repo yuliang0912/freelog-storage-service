@@ -445,8 +445,7 @@ export class ObjectStorageService implements IObjectStorageService {
         const invalidDependResources = dependResources.filter(x => !resourceMap.has(x.name.toLowerCase()));
         if (!isEmpty(invalidDependResources)) {
             throw new ApplicationError(this.ctx.gettext('resource-depend-release-invalid'), {
-                invalidDependResources,
-                resourceMap
+                invalidDependResources, resourceMap
             });
         }
         const invalidResourceVersionRanges = dependResources.filter(x => !resourceMap.get(x.name.toLowerCase()).resourceVersions.some(m => satisfies(m.version, x.versionRange ?? '*')));
