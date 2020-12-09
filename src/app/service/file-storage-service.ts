@@ -232,7 +232,7 @@ export class FileStorageService implements IFileStorageService {
         const objectKey = `${targetDirectory}/${fileStorageInfo.sha1}`;
 
         const ossClient = this.objectStorageServiceClient.setBucket(bucketName).build();
-        await ossClient.copyFile(objectKey, temporaryObjectKey);
+        await ossClient.copyObject(objectKey, temporaryObjectKey);
         fileStorageInfo.storageInfo.objectKey = objectKey;
         return this.fileStorageProvider.findOneAndUpdate({sha1: fileStorageInfo.sha1}, fileStorageInfo, {new: true}).then(data => {
             return data ?? this.fileStorageProvider.create(fileStorageInfo);
