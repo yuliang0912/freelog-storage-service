@@ -29,5 +29,6 @@ declare const _exports: {
     'user-node-data-file-size-limit-error': string;
     'image-file-analyze-failed': string;
     storage_full: string;
+    file_download_failed: string;
 };
 export = _exports;

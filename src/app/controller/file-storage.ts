@@ -1,9 +1,12 @@
 import {isString} from 'lodash';
-import {inject, controller, get, post, provide} from 'midway';
+import {controller, get, inject, post, provide} from 'midway';
 import {IFileStorageService} from '../../interface/file-storage-info-interface';
 import {
-    IdentityTypeEnum, ArgumentError, ApplicationError,
-    FreelogContext, visitorIdentityValidator
+    ApplicationError,
+    ArgumentError,
+    FreelogContext,
+    IdentityTypeEnum,
+    visitorIdentityValidator
 } from 'egg-freelog-base';
 
 @provide()
@@ -109,11 +112,15 @@ export class FileStorageController {
         const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
         ctx.entityNullObjectCheck(fileStorageInfo, {msg: ctx.gettext('file-storage-entity-not-found')});
 
-        const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
-        ctx.body = fileStream;
-        if (isString(attachmentName) && attachmentName.length) {
-            ctx.attachment(attachmentName);
+        try {
+            ctx.body = await this.fileStorageService.getFileStream(fileStorageInfo);
+            if (isString(attachmentName) && attachmentName.length) {
+                ctx.attachment(attachmentName);
+            }
+            ctx.set('content-length', fileStorageInfo.fileSize.toString());
+        } catch (error) {
+            ctx.status = 410;
+            throw new ApplicationError(ctx.gettext('file_download_failed') + error.toString());
         }
-        ctx.set('content-length', fileStorageInfo.fileSize.toString());
     }
 }

@@ -60,7 +60,9 @@ module.exports = {
 
     'image-file-analyze-failed': '文件分析失败,请重新选择正确格式的图片',
 
-    'storage_full': '存储空间剩余容量不足'
+    'storage_full': '存储空间剩余容量不足',
+
+    'file_download_failed': '文件下载失败'
 }
 
 

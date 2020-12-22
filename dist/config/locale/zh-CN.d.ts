@@ -51,5 +51,6 @@ declare const _exports: {
     'bucket-create-count-limit-validate-failed': string;
     'mock-convert-to-resource-depend-validate-failed': string;
     'object-circular-dependency-error': string;
+    file_download_failed: string;
 };
 export = _exports;

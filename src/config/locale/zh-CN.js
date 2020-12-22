@@ -109,6 +109,8 @@ module.exports = {
     'mock-convert-to-resource-depend-validate-failed': 'mock资源的依赖中存在其他mock,无法转换成资源',
 
     'object-circular-dependency-error': '对象的依赖项存在循环依赖,更新失败',
+
+    'file_download_failed': '文件下载失败'
 }
 
 
