@@ -74,8 +74,6 @@ export class ObjectController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        await ctx.curlIntranetApi(`${ctx.webApi.resourceInfoV2}/list?resourceNames=12345676789%252F13&projection=resourceVersions,resourceName`);
-
         const bucketInfo = await this.bucketService.findOne({bucketName, userId: ctx.userId});
         ctx.entityNullObjectCheck(bucketInfo, {msg: ctx.gettext('bucket-entity-not-found')});
 
@@ -180,6 +178,29 @@ export class ObjectController {
     }
 
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    @post('/objects/:objectIdOrName/cycleDependencyCheck')
+    async validateObjectDependencies() {
+        const {ctx} = this;
+        const objectIdOrName = ctx.checkParams('objectIdOrName').exist().decodeURIComponent().value;
+        const dependencies = ctx.checkBody('dependencies').exist().isArray().len(1).value;
+        ctx.validateParams();
+
+        const objectStorageInfo = await this.objectStorageService.findOneByObjectIdOrName(objectIdOrName);
+        ctx.entityNullValueAndUserAuthorizationCheck(objectStorageInfo, {
+            msg: ctx.gettext('params-validate-failed', 'objectIdOrName')
+        });
+        const objectDependencyValidateResult = this.objectDependencyValidator.validate(dependencies);
+        if (!isEmpty(objectDependencyValidateResult.errors)) {
+            throw new ArgumentError(ctx.gettext('params-format-validate-failed', 'dependencies'), {
+                errors: objectDependencyValidateResult.errors
+            });
+        }
+
+        const cycleDependCheckResult = await this.objectStorageService.cycleDependCheck(`${objectStorageInfo.bucketName}/${objectStorageInfo.objectName}`, dependencies, 1);
+        ctx.success(Boolean(!cycleDependCheckResult.ret));
+    }
+
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @del('/buckets/:bucketName/objects/:objectIds')
     async destroy() {
         const {ctx} = this;
@@ -261,7 +282,7 @@ export class ObjectController {
         }
 
         await this.objectStorageService.updateObject(objectStorageInfo, {
-            customPropertyDescriptors, dependencies, resourceType: resourceType?.toLowerCase() , objectName
+            customPropertyDescriptors, dependencies, resourceType: resourceType?.toLowerCase(), objectName
         }).then(ctx.success);
     }
 

@@ -103,7 +103,7 @@ export declare class ObjectStorageService implements IObjectStorageService {
      * @param deep
      * @private
      */
-    _cycleDependCheck(objectName: string, dependencies: ObjectDependencyInfo[], deep: number): Promise<{
+    cycleDependCheck(objectName: string, dependencies: ObjectDependencyInfo[], deep: number): Promise<{
         ret: boolean;
         deep?: number;
     }>;

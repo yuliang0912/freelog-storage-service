@@ -72,7 +72,7 @@ export class ObjectStorageService implements IObjectStorageService {
             model.customPropertyDescriptors = [];
         });
 
-        const cycleDependCheckResult = await this._cycleDependCheck(`${model.bucketName}/${model.objectName}`, model.dependencies, 1);
+        const cycleDependCheckResult = await this.cycleDependCheck(`${model.bucketName}/${model.objectName}`, model.dependencies, 1);
         if (cycleDependCheckResult.ret) {
             throw new ApplicationError(this.ctx.gettext('object-circular-dependency-error'), {
                 objectName: model.objectName, deep: cycleDependCheckResult.deep
@@ -153,7 +153,7 @@ export class ObjectStorageService implements IObjectStorageService {
         }
         if (isString(options.objectName) || isArray(options.dependencies)) {
             const objectFullName = `${oldObjectStorageInfo.bucketName}/${updateInfo.objectName ?? oldObjectStorageInfo.objectName}`;
-            const cycleDependCheckResult = await this._cycleDependCheck(objectFullName, updateInfo.dependencies ?? oldObjectStorageInfo.dependencies, 1);
+            const cycleDependCheckResult = await this.cycleDependCheck(objectFullName, updateInfo.dependencies ?? oldObjectStorageInfo.dependencies, 1);
             if (cycleDependCheckResult.ret) {
                 throw new ApplicationError(this.ctx.gettext('object-circular-dependency-error'), {
                     objectName: objectFullName,
@@ -472,7 +472,7 @@ export class ObjectStorageService implements IObjectStorageService {
      * @param deep
      * @private
      */
-    async _cycleDependCheck(objectName: string, dependencies: ObjectDependencyInfo[], deep: number): Promise<{ ret: boolean, deep?: number }> {
+    async cycleDependCheck(objectName: string, dependencies: ObjectDependencyInfo[], deep: number): Promise<{ ret: boolean, deep?: number }> {
 
         dependencies = dependencies.filter(x => x.type === 'object');
         if (deep > 20) {
@@ -488,6 +488,6 @@ export class ObjectStorageService implements IObjectStorageService {
         const dependObjects = await this.getObjectListByFullNames(dependencies.map(x => x.name), 'dependencies');
         const dependSubObjects = chain(dependObjects).map(m => m.dependencies ?? []).flattenDeep().value();
 
-        return this._cycleDependCheck(objectName, dependSubObjects, deep + 1);
+        return this.cycleDependCheck(objectName, dependSubObjects, deep + 1);
     }
 }

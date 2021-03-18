@@ -17,6 +17,7 @@ export declare class ObjectController {
     list(): Promise<void>;
     detail(): Promise<void>;
     createOrReplace(): Promise<void>;
+    validateObjectDependencies(): Promise<void>;
     destroy(): Promise<void>;
     download(): Promise<void>;
     updateProperty(): Promise<void>;

@@ -89,4 +89,8 @@ export interface IObjectStorageService {
     findIntervalList(condition: object, skip: number, limit: number, projection: string[], sort?: object): Promise<PageResult<ObjectStorageInfo>>;
     findAll(condition: object, page: number, pageSize: number): any;
     getDependencyTree(objectStorageInfo: ObjectStorageInfo, isContainRootNode: boolean): Promise<CommonObjectDependencyTreeInfo[]>;
+    cycleDependCheck(objectName: string, dependencies: ObjectDependencyInfo[], deep: number): Promise<{
+        ret: boolean;
+        deep?: number;
+    }>;
 }

@@ -21,8 +21,12 @@ export default () => {
         url: 'mongodb://127.0.0.1:27017/storage'
     };
 
+    // config.mongoose = {
+    //     url: 'mongodb://39.108.77.211:30772/storage'
+    // };
+
     config.localIdentity = {
-        userId: 50021,
+        userId: 50028,
         username: 'yuliang'
     };
 
