@@ -1,6 +1,6 @@
 export default class AppBootHook {
     private readonly app;
     constructor(app: any);
-    willReady(): Promise<void>;
+    willReady(): Promise<unknown>;
     decodeOssConfig(): void;
 }

@@ -80,7 +80,10 @@ export class FileStorageService implements IFileStorageService {
             if (analyzeResult.status === 2) {
                 throw new ApplicationError(analyzeResult.error);
             }
-            mime = analyzeResult.systemProperty['mime'];
+            if (!['jpg', 'png', 'gif'].includes(analyzeResult.systemProperty.mime?.toLocaleString())) {
+                throw new ApplicationError('图片只支持jpg、png、gif格式');
+            }
+            mime = analyzeResult.systemProperty.mime;
         }
         // 不允许超过2M
         if (fileStorageInfo.fileSize > 2097152) {

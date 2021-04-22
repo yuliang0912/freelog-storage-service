@@ -5,7 +5,7 @@ export default () => {
         listen: {
             port: 5002
         }
-    }
+    };
 
     config.mongoose = {
         url: 'mongodb://mongo-test.common:27017/storage'
@@ -16,7 +16,7 @@ export default () => {
             internal: true,
         },
         amzS3: {}
-    }
+    };
 
     return config;
 };

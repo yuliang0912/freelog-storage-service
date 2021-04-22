@@ -4,8 +4,8 @@
   "description": "飞致网络存储服务!",
   "private": true,
   "dependencies": {
-    "ali-oss": "^6.11.2",
-    "egg-freelog-base": "^3.0.25",
+    "ali-oss": "^6.15.2",
+    "egg-freelog-base": "^3.1.16",
     "egg-scripts": "^2.10.0",
     "image-size": "^0.8.3",
     "jsonschema": "^1.4.0",
@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
-    "@types/node": "^10.17.44",
+    "@types/node": "^14.14.41",
     "cross-env": "^6.0.0",
     "egg-ci": "^1.18.0",
     "midway-bin": "^1.20.3",

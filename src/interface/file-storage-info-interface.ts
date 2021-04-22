@@ -26,7 +26,9 @@ export interface FilePropertyAnalyzeInfo {
     provider: string;
     status: number;
     error?: string;
-    systemProperty?: object;
+    systemProperty?: {
+        [propertyName: string]: any;
+    };
 }
 
 export declare interface IFileStorageService {

@@ -1,18 +1,16 @@
 import {CryptoHelper} from 'egg-freelog-base';
+import mongoose from 'egg-freelog-base/database/mongoose';
 
 export default class AppBootHook {
     private readonly app;
 
     public constructor(app) {
         this.app = app;
-        // this.test().then();
     }
 
     async willReady() {
         this.decodeOssConfig();
-        process.on('uncaughtException', function (error) {
-            console.log('uncaughtException', error.message);
-        });
+        return mongoose(this.app);
     }
 
     decodeOssConfig() {
