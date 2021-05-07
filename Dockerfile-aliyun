@@ -8,7 +8,7 @@ WORKDIR /data/freelog-storage-service
 
 COPY . /data/freelog-storage-service
 
-RUN npm install
+RUN npm install  --production
 
 ENV NODE_ENV prod
 ENV EGG_SERVER_ENV prod
