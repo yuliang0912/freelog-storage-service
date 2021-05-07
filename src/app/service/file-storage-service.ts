@@ -80,8 +80,8 @@ export class FileStorageService implements IFileStorageService {
             if (analyzeResult.status === 2) {
                 throw new ApplicationError(analyzeResult.error);
             }
-            if (!['jpg', 'png', 'gif'].includes(analyzeResult.systemProperty.mime?.toLocaleString())) {
-                throw new ApplicationError('图片只支持jpg、png、gif格式');
+            if (!['jpg', 'jpe', 'jpeg', 'png', 'gif'].includes(analyzeResult.systemProperty.mime?.toLocaleString())) {
+                throw new ApplicationError('图片只支持jpg、jpe、jpeg、png、gif格式');
             }
             mime = analyzeResult.systemProperty.mime;
         }
