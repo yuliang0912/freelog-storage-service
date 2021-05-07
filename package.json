@@ -9,6 +9,7 @@
     "egg-scripts": "^2.10.0",
     "image-size": "^0.8.3",
     "jsonschema": "^1.4.0",
+    "lodash": "^4.17.21",
     "midway": "^1.20.3",
     "mime": "^2.4.6",
     "moment": "^2.29.1",
