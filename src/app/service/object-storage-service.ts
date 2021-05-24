@@ -110,7 +110,8 @@ export class ObjectStorageService implements IObjectStorageService {
             });
             model.bucketId = bucketInfo.bucketId;
             model.bucketName = bucketInfo.bucketName;
-            model.uniqueKey = this.storageCommonGenerator.generateObjectUniqueKey(bucketInfo.bucketName, model.objectName);
+            // 此处没有使用bucketName,因为所有用户的用户节点数据bucketName都是.UserNodeData
+            model.uniqueKey = this.storageCommonGenerator.generateObjectUniqueKey(bucketInfo.bucketId, model.objectName);
 
             return this.objectStorageProvider.create(model).then(object => {
                 this.bucketService.addStorageObjectEventHandle(object);
@@ -118,7 +119,6 @@ export class ObjectStorageService implements IObjectStorageService {
             });
         }
 
-        model.uniqueKey = this.storageCommonGenerator.generateObjectUniqueKey(objectStorageInfo.bucketName, model.objectName);
         return this.objectStorageProvider.findOneAndUpdate({_id: objectStorageInfo.objectId}, model, {new: true}).then(newObjectStorageInfo => {
             this.bucketService.replaceStorageObjectEventHandle(newObjectStorageInfo, objectStorageInfo);
             return newObjectStorageInfo;
