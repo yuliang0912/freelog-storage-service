@@ -92,11 +92,11 @@ export class BucketService implements IBucketService {
 
     /**
      * 查找多个bucket
-     * @param {object} condition
-     * @returns {Promise<BucketInfo>}
+     * @param condition
+     * @param args
      */
-    async find(condition: object): Promise<BucketInfo[]> {
-        return this.bucketProvider.find(condition);
+    async find(condition: object, ...args): Promise<BucketInfo[]> {
+        return this.bucketProvider.find(condition, ...args);
     }
 
     /**

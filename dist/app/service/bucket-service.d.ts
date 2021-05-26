@@ -31,10 +31,10 @@ export declare class BucketService implements IBucketService {
     findOne(condition: object): Promise<BucketInfo>;
     /**
      * 查找多个bucket
-     * @param {object} condition
-     * @returns {Promise<BucketInfo>}
+     * @param condition
+     * @param args
      */
-    find(condition: object): Promise<BucketInfo[]>;
+    find(condition: object, ...args: any[]): Promise<BucketInfo[]>;
     /**
      * 查找统计数量
      * @param {object} condition

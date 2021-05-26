@@ -21,7 +21,7 @@ export class BucketController {
         if (bucketType) {
             condition['bucketType'] = bucketType;
         }
-        await this.bucketService.find(condition).then(ctx.success);
+        await this.bucketService.find(condition, null, {bucketName: -1}).then(ctx.success);
     }
 
     @get('/Count') // 需要首字母大写,避免和bucketName冲突

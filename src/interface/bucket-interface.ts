@@ -39,7 +39,7 @@ export interface IBucketService {
 
     findOne(condition: object): Promise<BucketInfo>;
 
-    find(condition: object): Promise<BucketInfo[]>;
+    find(condition: object, ...args): Promise<BucketInfo[]>;
 
     count(condition: object): Promise<number>;
 

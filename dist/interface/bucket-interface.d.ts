@@ -30,7 +30,7 @@ export interface IBucketService {
     deleteStorageObjectEventHandle(objectStorageInfo: ObjectStorageInfo): void;
     batchDeleteStorageObjectEventHandle(bucketInfo: BucketInfo, deletedFileQuantity: number, totalFileSize: number): void;
     findOne(condition: object): Promise<BucketInfo>;
-    find(condition: object): Promise<BucketInfo[]>;
+    find(condition: object, ...args: any[]): Promise<BucketInfo[]>;
     count(condition: object): Promise<number>;
     spaceStatistics(userId: number): Promise<{
         storageLimit: number;
