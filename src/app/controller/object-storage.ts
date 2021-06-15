@@ -69,6 +69,7 @@ export class ObjectController {
         const sort = ctx.checkQuery('sort').optional().toSortObject().value;
         const bucketName = ctx.checkParams('bucketName').exist().isBucketName().value;
         const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().toLow().value;
+        const omitResourceType = ctx.checkQuery('omitResourceType').optional().isResourceType().toLow().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().value;
         const isLoadingTypeless = ctx.checkQuery('isLoadingTypeless').optional().in([0, 1]).default(1).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -82,6 +83,8 @@ export class ObjectController {
             condition.resourceType = {$in: [resourceType, '']};
         } else if (resourceType) {
             condition.resourceType = resourceType;
+        } else if (omitResourceType) {
+            condition.resourceType = {$ne: omitResourceType};
         } else if (!isLoadingTypeless) {
             condition.resourceType = {$ne: ''};
         }
