@@ -63,7 +63,7 @@ let FileStorageService = class FileStorageService {
             if (analyzeResult.status === 2) {
                 throw new egg_freelog_base_1.ApplicationError(analyzeResult.error);
             }
-            if (!['jpg', 'jpe', 'jpeg', 'png', 'gif'].includes(analyzeResult.systemProperty.mime?.toLocaleString())) {
+            if (!['jpg', 'jpe', 'jpeg', 'png', 'gif'].includes(analyzeResult.systemProperty.type?.toLocaleString())) {
                 throw new egg_freelog_base_1.ApplicationError('图片只支持jpg、jpe、jpeg、png、gif格式');
             }
             mime = analyzeResult.systemProperty.mime;
