@@ -2,9 +2,14 @@ import {inject, controller, get, post, put, provide, priority} from 'midway';
 import {IBucketService, SystemBucketName} from '../../interface/bucket-interface';
 import {IFileStorageService} from '../../interface/file-storage-info-interface';
 import {CreateUserNodeDataObjectOptions, IObjectStorageService} from '../../interface/object-storage-interface';
-import {IOutsideApiService, JsonObjectOperation, JsonObjectOperationTypeEnum} from '../../interface/common-interface';
 import {
-    IdentityTypeEnum, FreelogContext, visitorIdentityValidator, CommonRegex, ApplicationError, ArgumentError
+    IOutsideApiService,
+    JsonObjectOperation,
+    JsonObjectOperationTypeEnum,
+    NodeInfo
+} from '../../interface/common-interface';
+import {
+    IdentityTypeEnum, FreelogContext, visitorIdentityValidator, CommonRegex, ArgumentError
 } from 'egg-freelog-base';
 
 @provide()
@@ -43,26 +48,10 @@ export class UserNodeDataObjectController {
         if (!nodeInfo) {
             throw new ArgumentError(ctx.gettext('node-entity-not-found'));
         }
-        const fileStorageInfo = await this.fileStorageService.uploadUserNodeDataFile(userNodeData);
-        const createUserNodeDataObjectOptions: CreateUserNodeDataObjectOptions = {
-            userId: ctx.userId, nodeInfo,
-            fileStorageInfo: {
-                sha1: fileStorageInfo.sha1,
-                fileSize: fileStorageInfo.fileSize,
-                serviceProvider: fileStorageInfo.serviceProvider,
-                storageInfo: fileStorageInfo.storageInfo
-            }
-        };
-
-        const objectInfo = await this.objectStorageService.findOne({
-            userId: ctx.userId,
-            bucketName: SystemBucketName.UserNodeData,
-            objectName: `${nodeInfo.nodeDomain}.ncfg`
-        });
-
-        await this.objectStorageService.createOrUpdateUserNodeObject(objectInfo, createUserNodeDataObjectOptions).then(ctx.success);
+        await this._createUserNodeData(nodeInfo, userNodeData).then(ctx.success);
     }
 
+    // 为了方便前端开发,更新时如果不存在用户节点数据,则直接创建一份.省去了运行时get,create的两部操作.
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @put('/objects/:nodeId')
     async update() {
@@ -83,7 +72,7 @@ export class UserNodeDataObjectController {
             objectName: `${nodeInfo.nodeDomain}.ncfg`
         });
         if (!objectInfo) {
-            throw new ApplicationError(ctx.gettext('storage-object-not-found'));
+            return this._createUserNodeData(nodeInfo, appendOrReplaceObject ?? {}).then(ctx.success);
         }
         const fileStorageInfo = await this.fileStorageService.findBySha1(objectInfo.sha1);
         const fileStream = await this.fileStorageService.getFileStream(fileStorageInfo);
@@ -149,5 +138,32 @@ export class UserNodeDataObjectController {
         }
         ctx.attachment(storageObject.objectName);
         ctx.body = this.userNodeDataFileOperation.pick(fileStream, fields);
+    }
+
+    /**
+     * 创建用户节点数据
+     * @param nodeInfo
+     * @param userNodeData
+     */
+    async _createUserNodeData(nodeInfo: NodeInfo, userNodeData: object) {
+        const {ctx} = this;
+        const fileStorageInfo = await this.fileStorageService.uploadUserNodeDataFile(userNodeData);
+        const createUserNodeDataObjectOptions: CreateUserNodeDataObjectOptions = {
+            userId: ctx.userId, nodeInfo,
+            fileStorageInfo: {
+                sha1: fileStorageInfo.sha1,
+                fileSize: fileStorageInfo.fileSize,
+                serviceProvider: fileStorageInfo.serviceProvider,
+                storageInfo: fileStorageInfo.storageInfo
+            }
+        };
+
+        const objectInfo = await this.objectStorageService.findOne({
+            userId: ctx.userId,
+            bucketName: SystemBucketName.UserNodeData,
+            objectName: `${nodeInfo.nodeDomain}.ncfg`
+        });
+
+        return this.objectStorageService.createOrUpdateUserNodeObject(objectInfo, createUserNodeDataObjectOptions);
     }
 }
