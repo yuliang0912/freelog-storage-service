@@ -5,7 +5,7 @@ import {
     FileStorageInfo, IFileStorageService, ServiceProviderEnum, FilePropertyAnalyzeInfo
 } from '../../interface/file-storage-info-interface';
 import {isString} from 'lodash';
-import {PassThrough} from 'stream';
+import {PassThrough, Stream} from 'stream';
 import {IBucketService} from '../../interface/bucket-interface';
 
 const sendToWormhole = require('stream-wormhole');
@@ -55,14 +55,19 @@ export class FileStorageService implements IFileStorageService {
      */
     async uploadUserNodeDataFile(userNodeData: object): Promise<FileStorageInfo> {
 
-        const userNodeDataJsonBuffer = Buffer.from(JSON.stringify(userNodeData));
-        if (userNodeDataJsonBuffer.length > 536870912) {
-            throw new ApplicationError(this.ctx.gettext('user-node-data-file-size-limit-error'));
+        let bufferStream = null;
+        if (!(userNodeData instanceof Stream)) {
+            const userNodeDataJsonBuffer = Buffer.from(JSON.stringify(userNodeData));
+            if (userNodeDataJsonBuffer.length > 536870912) {
+                throw new ApplicationError(this.ctx.gettext('user-node-data-file-size-limit-error'));
+            }
+            bufferStream = new PassThrough();
+            bufferStream.end(userNodeDataJsonBuffer);
+        } else {
+            bufferStream = userNodeData;
         }
-        const bufferStream = new PassThrough();
-        bufferStream.end(userNodeDataJsonBuffer);
-        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(bufferStream, false);
 
+        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(bufferStream, false);
         return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'user-node-data');
     }
 

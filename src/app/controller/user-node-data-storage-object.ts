@@ -82,7 +82,7 @@ export class UserNodeDataObjectController {
         }));
         removeFields.forEach(item => objectOperations.push({key: item, type: JsonObjectOperationTypeEnum.Remove}));
 
-        const transformStream = this.userNodeDataFileOperation.edit(fileStream, objectOperations);
+        const transformStream = await this.userNodeDataFileOperation.edit(fileStream, objectOperations);
         transformStream.filename = objectInfo.objectName;
 
         const newFileStorageInfo = await this.fileStorageService.uploadUserNodeDataFile(transformStream);
