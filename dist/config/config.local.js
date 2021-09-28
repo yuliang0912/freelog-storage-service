@@ -27,7 +27,7 @@ exports.default = () => {
     //     url: 'mongodb://39.108.77.211:30772/storage'
     // };
     config.localIdentity = {
-        userId: 50017,
+        userId: 50028,
         username: 'yuliang'
     };
     return config;

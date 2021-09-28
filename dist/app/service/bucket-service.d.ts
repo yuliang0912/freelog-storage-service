@@ -1,9 +1,11 @@
 import { IBucketService, BucketInfo } from '../../interface/bucket-interface';
 import { FreelogContext, IMongodbOperation } from 'egg-freelog-base';
 import { ObjectStorageInfo } from '../../interface/object-storage-interface';
+import { NodeInfo } from '../../interface/common-interface';
 export declare class BucketService implements IBucketService {
     ctx: FreelogContext;
     bucketProvider: IMongodbOperation<BucketInfo>;
+    objectStorageProvider: IMongodbOperation<ObjectStorageInfo>;
     bucketCreatedLimitCount: number;
     /**
      * 用户创建bucket
@@ -17,6 +19,12 @@ export declare class BucketService implements IBucketService {
      * @returns {Promise<BucketInfo>}
      */
     createOrFindSystemBucket(bucketInfo: BucketInfo): Promise<BucketInfo>;
+    /**
+     * 清空用户节点数据
+     * @param bucketInfo
+     * @param nodeInfo
+     */
+    clearUserNodeData(bucketInfo: BucketInfo, nodeInfo?: NodeInfo): Promise<boolean>;
     /**
      * 删除bucket
      * @param bucketName

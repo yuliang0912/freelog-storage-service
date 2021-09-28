@@ -2,6 +2,7 @@ import {provide, inject} from 'midway';
 import {IBucketService, BucketInfo, BucketTypeEnum} from '../../interface/bucket-interface';
 import {ApplicationError, ArgumentError, FreelogContext, IMongodbOperation} from 'egg-freelog-base';
 import {ObjectStorageInfo} from '../../interface/object-storage-interface';
+import {NodeInfo} from '../../interface/common-interface';
 
 @provide('bucketService')
 export class BucketService implements IBucketService {
@@ -10,6 +11,8 @@ export class BucketService implements IBucketService {
     ctx: FreelogContext;
     @inject()
     bucketProvider: IMongodbOperation<BucketInfo>;
+    @inject()
+    objectStorageProvider: IMongodbOperation<ObjectStorageInfo>;
     bucketCreatedLimitCount = 5;
 
     /**
@@ -57,6 +60,21 @@ export class BucketService implements IBucketService {
         }
 
         return this.bucketProvider.create(bucketInfo);
+    }
+
+    /**
+     * 清空用户节点数据
+     * @param bucketInfo
+     * @param nodeInfo
+     */
+    async clearUserNodeData(bucketInfo: BucketInfo, nodeInfo?: NodeInfo): Promise<boolean> {
+        const condition: Partial<ObjectStorageInfo> = {bucketId: bucketInfo.bucketId};
+        if (nodeInfo) {
+            condition.objectName = `${nodeInfo.nodeDomain}.ncfg`;
+        }
+        const task1 = this.bucketProvider.updateOne({_id: bucketInfo.bucketId}, {totalFileSize: 0});
+        const task2 = this.objectStorageProvider.deleteMany(condition);
+        return Promise.all([task1, task2]).then(() => true);
     }
 
     /**

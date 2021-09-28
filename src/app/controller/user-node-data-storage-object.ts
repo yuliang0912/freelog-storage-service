@@ -1,4 +1,4 @@
-import {inject, controller, get, post, put, provide, priority} from 'midway';
+import {inject, controller, get, post, put, provide, priority, del} from 'midway';
 import {IBucketService, SystemBucketName} from '../../interface/bucket-interface';
 import {IFileStorageService} from '../../interface/file-storage-info-interface';
 import {CreateUserNodeDataObjectOptions, IObjectStorageService} from '../../interface/object-storage-interface';
@@ -51,6 +51,30 @@ export class UserNodeDataObjectController {
         await this._createUserNodeData(nodeInfo, userNodeData).then(ctx.success);
     }
 
+    // 清理用户节点数据
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    @del('/objects/clear')
+    async clearUserNodeData() {
+
+        const {ctx} = this;
+        const nodeId = ctx.checkBody('nodeId').optional().toInt().value;
+        const nodeDomain = ctx.checkBody('nodeDomain').optional().isNodeDomain().value;
+        ctx.validateParams();
+
+        const userNodeDataBucket = await this.bucketService.findOne({userId: ctx.userId, bucketType: 2});
+        if (!userNodeDataBucket) {
+            return ctx.success(true);
+        }
+
+        let nodeInfo = null;
+        if (nodeId) {
+            nodeInfo = await this.outsideApiService.getNodeInfoById(nodeId);
+        } else if (nodeDomain) {
+            nodeInfo = await this.outsideApiService.getNodeInfoByDomain(nodeDomain);
+        }
+        await this.bucketService.clearUserNodeData(userNodeDataBucket, nodeInfo).then(ctx.success);
+    }
+
     // 为了方便前端开发,更新时如果不存在用户节点数据,则直接创建一份.省去了运行时get,create的两部操作.
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @put('/objects/:nodeId')
@@ -66,6 +90,7 @@ export class UserNodeDataObjectController {
         if (!nodeInfo) {
             throw new ArgumentError(ctx.gettext('node-entity-not-found'));
         }
+        ctx.entityNullValueAndUserAuthorizationCheck(nodeInfo, {property: 'ownerUserId'});
         const objectInfo = await this.objectStorageService.findOne({
             userId: ctx.userId,
             bucketName: SystemBucketName.UserNodeData,
@@ -92,6 +117,15 @@ export class UserNodeDataObjectController {
             fileStorageInfo: newFileStorageInfo
         }).then(ctx.success);
     }
+
+    // // 清理用户节点数据
+    // @del('/objects')
+    // async delete() {
+    //     const {ctx} = this;
+    //     const nodeId = ctx.checkQuery('nodeId').exist().toInt().value;
+    //     ctx.validateParams();
+    //
+    // }
 
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/objects/:objectIdOrNodeId/customPick')
