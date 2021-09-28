@@ -87,8 +87,8 @@ export class UserNodeDataObjectController {
     async clearUserNodeData() {
 
         const {ctx} = this;
-        const nodeIds = ctx.checkQuery('nodeIds').optional().isSplitNumber().toSplitArray().len(1, 100).value;
-        let nodeDomains = ctx.checkQuery('nodeDomains').optional().toSplitArray().len(1, 100).value;
+        const nodeIds = ctx.checkBody('nodeIds').optional().len(1, 100).value;
+        let nodeDomains = ctx.checkBody('nodeDomains').optional().len(1, 100).value;
         ctx.validateParams();
 
         const userNodeDataBucket = await this.bucketService.findOne({userId: ctx.userId, bucketType: 2});
@@ -97,6 +97,9 @@ export class UserNodeDataObjectController {
         }
         if (!isEmpty(nodeIds || [])) {
             nodeDomains = await this.outsideApiService.getNodeList(nodeIds).then(list => list.map(x => x.nodeDomain));
+            if (isEmpty(nodeDomains)) {
+                return ctx.success(false);
+            }
         }
         await this.bucketService.clearUserNodeData(userNodeDataBucket, nodeDomains).then(ctx.success);
     }
