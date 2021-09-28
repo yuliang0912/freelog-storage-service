@@ -54,6 +54,23 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
+     * 批量获取节点
+     * @param nodeIds
+     * @param nodeDomains
+     */
+    async getNodeList(nodeIds?: number[], nodeDomains?: string[]): Promise<NodeInfo[]> {
+        let query = '';
+        if (!isEmpty(nodeIds || [])) {
+            query = `nodeIds=${nodeIds.toString()}`;
+        } else if (!isEmpty(nodeDomains || [])) {
+            query = `nodeDomains=${nodeDomains.toString()}`;
+        } else {
+            return [];
+        }
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.nodeInfoV2}/list?${query}`);
+    }
+
+    /**
      * 获取资源依赖树
      * @param resourceIdOrName
      * @param options

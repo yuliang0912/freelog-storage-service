@@ -11,6 +11,7 @@ import {
 import {
     IdentityTypeEnum, FreelogContext, visitorIdentityValidator, CommonRegex, ArgumentError
 } from 'egg-freelog-base';
+import {pick, isEmpty} from 'lodash';
 
 @provide()
 @priority(1)
@@ -29,6 +30,35 @@ export class UserNodeDataObjectController {
     outsideApiService: IOutsideApiService;
     @inject()
     userNodeDataFileOperation;
+
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    @get('/objects')
+    async index() {
+        const {ctx} = this;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').optional().toSortObject().value;
+        ctx.validateParams();
+
+        const bucketInfo = await this.bucketService.findOne({userId: ctx.userId, bucketType: 2});
+        if (!bucketInfo) {
+            return ctx.success({skip, limit, totalItem: 0, dataList: []});
+        }
+
+        const condition = {bucketId: bucketInfo.bucketId};
+        const nodeDataObjectPageResult = await this.objectStorageService.findIntervalList(condition, skip, limit, [], sort);
+        if (nodeDataObjectPageResult.dataList.length) {
+            const nodeDomains = nodeDataObjectPageResult.dataList.map(x => x.objectName.replace('.ncfg', ''));
+            const nodeList = await this.outsideApiService.getNodeList(undefined, nodeDomains);
+            nodeDataObjectPageResult.dataList = nodeDataObjectPageResult.dataList.map(item => {
+                item = (item as any).toObject();
+                const nodeInfo = nodeList.find(x => x.nodeDomain.toLowerCase() === item.objectName.replace('.ncfg', '').toLowerCase());
+                item['nodeInfo'] = pick(nodeInfo, ['nodeId', 'nodeName', 'nodeDomain']);
+                return item;
+            });
+        }
+        return ctx.success(nodeDataObjectPageResult);
+    }
 
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @post('/objects')
@@ -57,22 +87,18 @@ export class UserNodeDataObjectController {
     async clearUserNodeData() {
 
         const {ctx} = this;
-        const nodeId = ctx.checkBody('nodeId').optional().toInt().value;
-        const nodeDomain = ctx.checkBody('nodeDomain').optional().isNodeDomain().value;
+        const nodeIds = ctx.checkQuery('nodeIds').optional().isSplitNumber().toSplitArray().len(1, 100).value;
+        let nodeDomains = ctx.checkQuery('nodeDomains').optional().toSplitArray().len(1, 100).value;
         ctx.validateParams();
 
         const userNodeDataBucket = await this.bucketService.findOne({userId: ctx.userId, bucketType: 2});
         if (!userNodeDataBucket) {
             return ctx.success(true);
         }
-
-        let nodeInfo = null;
-        if (nodeId) {
-            nodeInfo = await this.outsideApiService.getNodeInfoById(nodeId);
-        } else if (nodeDomain) {
-            nodeInfo = await this.outsideApiService.getNodeInfoByDomain(nodeDomain);
+        if (!isEmpty(nodeIds || [])) {
+            nodeDomains = await this.outsideApiService.getNodeList(nodeIds).then(list => list.map(x => x.nodeDomain));
         }
-        await this.bucketService.clearUserNodeData(userNodeDataBucket, nodeInfo).then(ctx.success);
+        await this.bucketService.clearUserNodeData(userNodeDataBucket, nodeDomains).then(ctx.success);
     }
 
     // 为了方便前端开发,更新时如果不存在用户节点数据,则直接创建一份.省去了运行时get,create的两部操作.

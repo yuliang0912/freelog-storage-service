@@ -29,8 +29,10 @@ export default () => {
     //     url: 'mongodb://39.108.77.211:30772/storage'
     // };
 
+    config.gatewayUrl = 'http://api.testfreelog.com';
+
     config.localIdentity = {
-        userId: 50028,
+        userId: 50031,
         username: 'yuliang'
     };
 

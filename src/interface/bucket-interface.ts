@@ -1,5 +1,4 @@
 import {ObjectStorageInfo} from './object-storage-interface';
-import {NodeInfo} from './common-interface';
 
 export enum BucketTypeEnum {UserStorage = 1, SystemStorage = 2}
 
@@ -25,7 +24,7 @@ export interface BucketInfo {
  */
 export interface IBucketService {
 
-    clearUserNodeData(bucketInfo: BucketInfo, nodeInfo?: NodeInfo): Promise<boolean>;
+    clearUserNodeData(bucketInfo: BucketInfo, nodeDomains?: string[]): Promise<boolean>;
 
     createBucket(bucket: BucketInfo): Promise<BucketInfo>;
 

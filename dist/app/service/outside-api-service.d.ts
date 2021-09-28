@@ -27,6 +27,12 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     getNodeInfoByDomain(nodeDomain: string, options?: object): Promise<NodeInfo>;
     /**
+     * 批量获取节点
+     * @param nodeIds
+     * @param nodeDomains
+     */
+    getNodeList(nodeIds?: number[], nodeDomains?: string[]): Promise<NodeInfo[]>;
+    /**
      * 获取资源依赖树
      * @param resourceIdOrName
      * @param options

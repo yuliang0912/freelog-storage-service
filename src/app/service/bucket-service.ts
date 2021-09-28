@@ -2,7 +2,7 @@ import {provide, inject} from 'midway';
 import {IBucketService, BucketInfo, BucketTypeEnum} from '../../interface/bucket-interface';
 import {ApplicationError, ArgumentError, FreelogContext, IMongodbOperation} from 'egg-freelog-base';
 import {ObjectStorageInfo} from '../../interface/object-storage-interface';
-import {NodeInfo} from '../../interface/common-interface';
+import {isEmpty} from 'lodash';
 
 @provide('bucketService')
 export class BucketService implements IBucketService {
@@ -65,12 +65,12 @@ export class BucketService implements IBucketService {
     /**
      * 清空用户节点数据
      * @param bucketInfo
-     * @param nodeInfo
+     * @param nodeDomains
      */
-    async clearUserNodeData(bucketInfo: BucketInfo, nodeInfo?: NodeInfo): Promise<boolean> {
+    async clearUserNodeData(bucketInfo: BucketInfo, nodeDomains?: string[]): Promise<boolean> {
         const condition: Partial<ObjectStorageInfo> = {bucketId: bucketInfo.bucketId};
-        if (nodeInfo) {
-            condition.objectName = `${nodeInfo.nodeDomain}.ncfg`;
+        if (!isEmpty(nodeDomains || [])) {
+            condition.objectName = {$in: nodeDomains.map(x => `${x}.ncfg`)} as any;
         }
         const task1 = this.bucketProvider.updateOne({_id: bucketInfo.bucketId}, {totalFileSize: 0});
         const task2 = this.objectStorageProvider.deleteMany(condition);

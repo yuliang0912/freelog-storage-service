@@ -11,6 +11,7 @@ export declare class UserNodeDataObjectController {
     objectStorageService: IObjectStorageService;
     outsideApiService: IOutsideApiService;
     userNodeDataFileOperation: any;
+    index(): Promise<FreelogContext>;
     createOrReplace(): Promise<void>;
     clearUserNodeData(): Promise<FreelogContext>;
     update(): Promise<FreelogContext>;

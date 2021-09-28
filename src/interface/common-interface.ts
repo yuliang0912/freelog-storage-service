@@ -67,5 +67,7 @@ export interface IOutsideApiService {
 
     getNodeInfoByDomain(nodeDomain: string, options?: object): Promise<NodeInfo>;
 
+    getNodeList(nodeIds?: number[], nodeDomains?: string[]): Promise<NodeInfo[]>
+
     getResourceDependencyTree(resourceId: string, options?: object): Promise<ResourceDependencyTreeInfo[]>;
 }
