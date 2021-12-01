@@ -271,6 +271,9 @@ export class ObjectController {
                 errors: customPropertyDescriptorValidateResult.errors
             });
         }
+        if (customPropertyDescriptors?.some(x => x.type !== 'editableText' && x.defaultValue.length < 1)) {
+            throw new ArgumentError('自定义属性格式校验失败,请确保defaultValue有效');
+        }
 
         const objectStorageInfo = await this.objectStorageService.findOneByObjectIdOrName(objectIdOrName);
         ctx.entityNullValueAndUserAuthorizationCheck(objectStorageInfo, {

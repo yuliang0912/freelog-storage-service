@@ -41,7 +41,7 @@ export class ObjectCustomPropertyValidator extends CommonJsonSchema implements I
                     },
                     defaultValue: {
                         // 考虑到UI文本框输入,目前限定为字符串.后期可能修改为any
-                        type: 'string', required: true, minLength: 1, maxLength: 30
+                        type: 'string', required: true, minLength: 0, maxLength: 30
                     },
                     type: {
                         type: 'string',
