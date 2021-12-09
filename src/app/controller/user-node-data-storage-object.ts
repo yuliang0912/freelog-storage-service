@@ -119,7 +119,7 @@ export class UserNodeDataObjectController {
         if (!nodeInfo) {
             throw new ArgumentError(ctx.gettext('node-entity-not-found'));
         }
-        ctx.entityNullValueAndUserAuthorizationCheck(nodeInfo, {property: 'ownerUserId'});
+        ctx.entityNullObjectCheck(nodeInfo);
         const objectInfo = await this.objectStorageService.findOne({
             userId: ctx.userId,
             bucketName: SystemBucketName.UserNodeData,
