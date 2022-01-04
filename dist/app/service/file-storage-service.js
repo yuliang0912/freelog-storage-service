@@ -75,7 +75,7 @@ let FileStorageService = class FileStorageService {
             mime = analyzeResult.systemProperty.mime;
         }
         // 不允许超过2M
-        if (fileStorageInfo.fileSize > 2097152) {
+        if (fileStorageInfo.fileSize > 5242880) {
             throw new egg_freelog_base_1.ApplicationError(this.ctx.gettext('user-node-data-file-size-limit-error'));
         }
         const objectKey = `preview-image/${fileStorageInfo.sha1}${fileStream.filename.includes('.') ? fileStream.filename.substr(fileStream.filename.lastIndexOf('.')) : ''}`;

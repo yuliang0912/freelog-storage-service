@@ -91,7 +91,7 @@ export class FileStorageService implements IFileStorageService {
             mime = analyzeResult.systemProperty.mime;
         }
         // 不允许超过2M
-        if (fileStorageInfo.fileSize > 2097152) {
+        if (fileStorageInfo.fileSize > 5242880) {
             throw new ApplicationError(this.ctx.gettext('user-node-data-file-size-limit-error'));
         }
 
