@@ -15,7 +15,7 @@ export default (appInfo: any) => {
     config.onerror = {
         all(err, ctx) {
             ctx.type = 'application/json';
-            ctx.body = JSON.stringify({ret: -1, msg: err.toString(), data: null});
+            ctx.body = JSON.stringify({ret: -1, errCode: 1, msg: err.toString(), data: null});
             ctx.status = 500;
         }
     };
@@ -36,7 +36,8 @@ export default (appInfo: any) => {
 
     config.bodyParser = {
         enable: true,
-        enableTypes: ['json', 'form', 'text']
+        enableTypes: ['json', 'form', 'text'],
+        formLimit: '50mb',
     };
 
     config.multipart = {
