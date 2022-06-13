@@ -40,7 +40,7 @@ exports.default = (appInfo) => {
         fieldNameSize: 100,
         fieldSize: '100kb',
         fields: 20,
-        fileSize: '100mb',
+        fileSize: '200mb',
         files: 10,
         fileExtensions: [],
         whitelist: (fileName) => true,
