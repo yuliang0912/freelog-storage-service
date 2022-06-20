@@ -21,7 +21,8 @@ export class FileStorageInfoModel extends MongooseModelBase {
                 region: {type: String, required: true}, // 区域
                 bucket: {type: String, required: true}, // bucket
                 objectKey: {type: String, required: true}, // 实际存储的objectKey与用户端不同,此处为系统生成
-            }
+            },
+            metaInfo: {type: this.mongoose.Schema.Types.Mixed, required: false, default: null}
         }, {
             versionKey: false,
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},

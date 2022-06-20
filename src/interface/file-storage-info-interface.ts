@@ -18,6 +18,9 @@ export declare interface FileStorageInfo {
     referencedQuantity?: number;
     serviceProvider: ServiceProviderEnum;
     storageInfo: AliOssInfo | AmazonS3Info;
+    metaInfo?: {
+        [key: string]: number | string;
+    };
 }
 
 export interface FilePropertyAnalyzeInfo {

@@ -79,7 +79,6 @@ export class FileStorageController {
     }
 
     @get('/:sha1/property')
-    // @visitorIdentityValidator(IdentityTypeEnum.InternalClient)
     async fileProperty() {
         const {ctx} = this;
         const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
@@ -90,7 +89,6 @@ export class FileStorageController {
         ctx.entityNullObjectCheck(fileStorageInfo, {msg: ctx.gettext('file-storage-entity-not-found')});
 
         const analyzeResult = await this.fileStorageService.analyzeFileProperty(fileStorageInfo, resourceType);
-
         if (analyzeResult.status === 1) {
             return ctx.success(Object.assign({fileSize: fileStorageInfo.fileSize}, analyzeResult.systemProperty));
         }

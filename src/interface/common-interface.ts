@@ -1,4 +1,5 @@
 import {ValidatorResult} from 'jsonschema';
+import {EachMessagePayload} from 'kafkajs';
 
 export interface NodeInfo {
     nodeId: number;
@@ -70,4 +71,24 @@ export interface IOutsideApiService {
     getNodeList(nodeIds?: number[], nodeDomains?: string[]): Promise<NodeInfo[]>
 
     getResourceDependencyTree(resourceId: string, options?: object): Promise<ResourceDependencyTreeInfo[]>;
+}
+
+export interface IKafkaSubscribeMessageHandle {
+
+    subscribeTopicName: string;
+
+    consumerGroupId: string;
+
+    messageHandle(payload: EachMessagePayload): Promise<void>;
+}
+
+export interface IFileMetaAnalyseResult {
+    sha1: string;
+    resourceId: string;
+    filename: string;
+    code: number;
+    msg: string;
+    fileMeta: {
+        [key: string]: any
+    };
 }

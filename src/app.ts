@@ -10,7 +10,9 @@ export default class AppBootHook {
 
     async willReady() {
         this.decodeOssConfig();
-        return mongoose(this.app);
+        await mongoose(this.app).then(() => {
+            return this.app.applicationContext.getAsync('kafkaStartup');
+        });
     }
 
     decodeOssConfig() {

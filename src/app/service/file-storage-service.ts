@@ -7,6 +7,8 @@ import {
 import {isString} from 'lodash';
 import {PassThrough, Stream} from 'stream';
 import {IBucketService} from '../../interface/bucket-interface';
+import {KafkaClient} from '../../kafka/client';
+import {isNullOrUndefined} from 'egg-freelog-base/lib/freelog-common-func';
 
 const sendToWormhole = require('stream-wormhole');
 
@@ -15,6 +17,8 @@ export class FileStorageService implements IFileStorageService {
 
     @inject()
     ctx: FreelogContext;
+    @inject()
+    kafkaClient: KafkaClient;
     @inject()
     filePropertyAnalyzeHandler;
     @inject()
@@ -37,16 +41,10 @@ export class FileStorageService implements IFileStorageService {
      * @returns {Promise<FileStorageInfo>}
      */
     async upload(fileStream, resourceType): Promise<FileStorageInfo> {
-
-        const fileStorageInfo = await this._uploadFileToTemporaryDirectory(fileStream, true);
-        if (this.isCanAnalyzeFileProperty(resourceType)) {
-            await this.analyzeFileProperty(fileStorageInfo, resourceType).then(analyzeResult => {
-                if (analyzeResult.status === 2) {
-                    throw new ApplicationError(analyzeResult.error);
-                }
-            });
-        }
-        return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'resource-file-storage');
+        const tempFileStorageInfo = await this._uploadFileToTemporaryDirectory(fileStream, true);
+        const fileStorage = await this._copyFileAndSaveFileStorageInfo(tempFileStorageInfo, 'resource-file-storage');
+        this.sendAnalyzeFilePropertyTask(fileStorage, fileStream.filename).then();
+        return fileStorage;
     }
 
     /**
@@ -192,6 +190,31 @@ export class FileStorageService implements IFileStorageService {
             status: analyzeResult.analyzeStatus
         });
         return cacheResult;
+    }
+
+    /**
+     * 分析文件属性(有专门的分析服务)
+     * @param fileStorageInfo
+     * @param filename
+     */
+    sendAnalyzeFilePropertyTask(fileStorageInfo: FileStorageInfo, filename: string) {
+        if (!isNullOrUndefined(fileStorageInfo.metaInfo)) {
+            return;
+        }
+        return this.kafkaClient.send({
+            acks: -1,
+            topic: 'file-meta-analyse-task-topic',
+            messages: [{
+                key: fileStorageInfo.sha1,
+                value: JSON.stringify({
+                    sha1: fileStorageInfo.sha1,
+                    fileSize: fileStorageInfo.fileSize,
+                    serviceProvider: fileStorageInfo.serviceProvider,
+                    storageInfo: fileStorageInfo.storageInfo,
+                    filename
+                })
+            }]
+        });
     }
 
     /**
