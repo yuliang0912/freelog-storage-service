@@ -197,9 +197,9 @@ export class FileStorageService implements IFileStorageService {
      * @param fileStorageInfo
      * @param filename
      */
-    sendAnalyzeFilePropertyTask(fileStorageInfo: FileStorageInfo, filename: string) {
+    async sendAnalyzeFilePropertyTask(fileStorageInfo: FileStorageInfo, filename: string) {
         if (!isNullOrUndefined(fileStorageInfo.metaInfo)) {
-            return;
+            return true;
         }
         return this.kafkaClient.send({
             acks: -1,
@@ -211,9 +211,14 @@ export class FileStorageService implements IFileStorageService {
                     fileSize: fileStorageInfo.fileSize,
                     serviceProvider: fileStorageInfo.serviceProvider,
                     storageInfo: fileStorageInfo.storageInfo,
-                    filename
+                    filename,
+                    attachData: {userId: this.ctx.userId}
                 })
             }]
+        }).then(() => {
+            return this.fileStorageProvider.updateOne({sha1: fileStorageInfo.sha1}, {
+                metaAnalyzeStatus: 1
+            });
         });
     }
 

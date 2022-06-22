@@ -86,6 +86,7 @@ export interface IFileMetaAnalyseResult {
     sha1: string;
     resourceId: string;
     filename: string;
+    // 0: 正常 1:解析失败
     code: number;
     msg: string;
     fileMeta: {

@@ -1,8 +1,10 @@
 import { FreelogContext, IMongodbOperation } from 'egg-freelog-base';
 import { FileStorageInfo, IFileStorageService, FilePropertyAnalyzeInfo } from '../../interface/file-storage-info-interface';
 import { IBucketService } from '../../interface/bucket-interface';
+import { KafkaClient } from '../../kafka/client';
 export declare class FileStorageService implements IFileStorageService {
     ctx: FreelogContext;
+    kafkaClient: KafkaClient;
     filePropertyAnalyzeHandler: any;
     userNodeDataFileOperation: any;
     objectStorageServiceClient: any;
@@ -72,6 +74,16 @@ export declare class FileStorageService implements IFileStorageService {
      * @private
      */
     analyzeFileProperty(fileStorageInfo: FileStorageInfo, resourceType: string): Promise<FilePropertyAnalyzeInfo>;
+    /**
+     * 分析文件属性(有专门的分析服务)
+     * @param fileStorageInfo
+     * @param filename
+     */
+    sendAnalyzeFilePropertyTask(fileStorageInfo: FileStorageInfo, filename: string): Promise<true | {
+        n: number;
+        nModified: number;
+        ok: number;
+    }>;
     /**
      * 上传文件到临时目录
      * @param fileStream

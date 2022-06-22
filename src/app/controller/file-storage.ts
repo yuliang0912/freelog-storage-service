@@ -1,4 +1,4 @@
-import {isString} from 'lodash';
+import {isString, pick} from 'lodash';
 import {controller, get, inject, post, provide} from 'midway';
 import {IFileStorageService} from '../../interface/file-storage-info-interface';
 import {
@@ -69,8 +69,19 @@ export class FileStorageController {
         ctx.success(result);
     }
 
+    @get('/:sha1/info')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async fileSimpleInfo() {
+        const {ctx} = this;
+        const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
+        ctx.validateParams();
+        await this.fileStorageService.findBySha1(sha1).then(data => {
+            ctx.success(data ? pick(data, ['sha1', 'fileSize', 'metaInfo', 'metaAnalyzeStatus']) : null);
+        });
+    }
+
     @get('/:sha1')
-    @visitorIdentityValidator(IdentityTypeEnum.InternalClient)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async show() {
         const {ctx} = this;
         const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
@@ -80,6 +91,7 @@ export class FileStorageController {
 
     @get('/:sha1/property')
     async fileProperty() {
+        throw new ApplicationError('接口已停用');
         const {ctx} = this;
         const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
         const resourceType = ctx.checkQuery('resourceType').exist().isResourceType().toLow().value;

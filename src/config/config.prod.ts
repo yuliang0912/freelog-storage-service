@@ -12,5 +12,18 @@ export default () => {
         amzS3: {}
     };
 
+    config.kafka = {
+        enable: true,
+        clientId: 'freelog-storage-service',
+        logLevel: 1, // logLevel.ERROR,
+        brokers: ['kafka-0.production:9092', 'kafka-1.production:9092', 'kafka-2.production:9092'],
+        connectionTimeout: 3000,
+        retry: {
+            initialRetryTime: 5000,
+            retries: 20
+        }
+    };
+
+
     return config;
 };

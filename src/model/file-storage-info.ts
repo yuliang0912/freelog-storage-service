@@ -22,6 +22,7 @@ export class FileStorageInfoModel extends MongooseModelBase {
                 bucket: {type: String, required: true}, // bucket
                 objectKey: {type: String, required: true}, // 实际存储的objectKey与用户端不同,此处为系统生成
             },
+            metaAnalyzeStatus: {type: Number, default: 0, required: true}, // 0:未解析 1:解析中 2:解析成功 3:解析失败
             metaInfo: {type: this.mongoose.Schema.Types.Mixed, required: false, default: null}
         }, {
             versionKey: false,
