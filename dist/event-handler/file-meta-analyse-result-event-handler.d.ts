@@ -6,6 +6,7 @@ import { IMongodbOperation } from 'egg-freelog-base';
  */
 export declare class FileMetaAnalyseResultEventHandler implements IKafkaSubscribeMessageHandle {
     fileStorageProvider: IMongodbOperation<any>;
+    objectStorageServiceClient: any;
     consumerGroupId: string;
     subscribeTopicName: string;
     constructor();

@@ -217,7 +217,12 @@ export class UserNodeDataObjectController {
                 sha1: fileStorageInfo.sha1,
                 fileSize: fileStorageInfo.fileSize,
                 serviceProvider: fileStorageInfo.serviceProvider,
-                storageInfo: fileStorageInfo.storageInfo
+                storageInfo: fileStorageInfo.storageInfo,
+                metaAnalyzeStatus: 2,
+                metaInfo: {
+                    fileSize: fileStorageInfo.fileSize,
+                    mime: 'application/octet-stream'
+                }
             }
         };
 

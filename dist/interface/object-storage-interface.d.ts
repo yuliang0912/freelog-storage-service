@@ -16,7 +16,7 @@ export interface CommonObjectDependencyTreeInfo {
     fileSha1: string;
     versions?: string[];
     type: 'object' | 'resource';
-    resourceType: string;
+    resourceType: string[];
     dependencies: CommonObjectDependencyTreeInfo[];
 }
 export interface ObjectStorageInfo {
@@ -25,7 +25,7 @@ export interface ObjectStorageInfo {
     objectId?: string;
     objectName: string;
     bucketName: string;
-    resourceType: string;
+    resourceType: string[];
     bucketId?: string;
     systemProperty?: SystemPropertyInfo;
     customPropertyDescriptors?: object[];
@@ -52,7 +52,7 @@ export interface CreateUserNodeDataObjectOptions {
 export interface UpdateObjectStorageOptions {
     customPropertyDescriptors?: object[];
     dependencies?: ObjectDependencyInfo;
-    resourceType?: string;
+    resourceType?: string[];
     objectName?: string;
 }
 /**

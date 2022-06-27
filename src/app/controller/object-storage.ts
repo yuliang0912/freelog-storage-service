@@ -8,6 +8,7 @@ import {
     ApplicationError, ArgumentError, CommonRegex,
     FreelogContext, IdentityTypeEnum, visitorIdentityValidator
 } from 'egg-freelog-base';
+import {ResourceTypeRepairService} from '../service/resource-type-repair-service';
 
 @provide()
 @controller('/v1/storages/')
@@ -27,6 +28,13 @@ export class ObjectController {
     objectCustomPropertyValidator: IJsonSchemaValidate;
     @inject()
     storageCommonGenerator;
+    @inject()
+    resourceTypeRepairService: ResourceTypeRepairService;
+
+    @get('/resourceTypeRepair')
+    async resourceTypeRepair() {
+        await this.resourceTypeRepairService.resourceTypeRepair().then(() => this.ctx.success(true));
+    }
 
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/buckets/_all/objects')
@@ -35,7 +43,7 @@ export class ObjectController {
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
         const sort = ctx.checkQuery('sort').optional().value;
-        const resourceType = ctx.checkQuery('resourceType').optional().isResourceType().toLow().value;
+        const resourceType = ctx.checkQuery('resourceType').optional().value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().value;
         const isLoadingTypeless = ctx.checkQuery('isLoadingTypeless').optional().in([0, 1]).default(1).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -175,7 +183,12 @@ export class ObjectController {
 
         const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
         ctx.entityNullObjectCheck(fileStorageInfo, {msg: ctx.gettext('params-validate-failed', 'sha1')});
-
+        if (fileStorageInfo.metaAnalyzeStatus === 1) {
+            throw new ArgumentError('文件属性正在分析中,请稍后再试!');
+        }
+        if (fileStorageInfo.metaAnalyzeStatus !== 2) {
+            throw new ArgumentError(ctx.gettext('file-analyze-failed'));
+        }
         const createOrUpdateFileOptions = {objectName, fileStorageInfo};
         await this.objectStorageService.createObject(bucketInfo, createOrUpdateFileOptions).then(ctx.success);
     }
@@ -252,11 +265,8 @@ export class ObjectController {
         const objectIdOrName = ctx.checkParams('objectIdOrName').exist().decodeURIComponent().value;
         const customPropertyDescriptors = ctx.checkBody('customPropertyDescriptors').optional().isArray().value;
         const dependencies = ctx.checkBody('dependencies').optional().isArray().value;
-        const resourceType = ctx.checkBody('resourceType').optional().type('string').value;
+        const resourceType = ctx.checkBody('resourceType').optional().isArray().len(1, 5).value;
         const objectName = ctx.checkBody('objectName').optional().type('string').len(1, 100).value;
-        if (resourceType !== '' && !CommonRegex.resourceType.test(resourceType)) {
-            ctx.errors.push({resourceType: 'resourceType is not resourceType format.'});
-        }
         ctx.validateParams();
 
         const objectDependencyValidateResult = this.objectDependencyValidator.validate(dependencies);
@@ -288,7 +298,7 @@ export class ObjectController {
         }
 
         await this.objectStorageService.updateObject(objectStorageInfo, {
-            customPropertyDescriptors, dependencies, resourceType: resourceType?.toLowerCase(), objectName
+            customPropertyDescriptors, dependencies, resourceType, objectName
         }).then(ctx.success);
     }
 

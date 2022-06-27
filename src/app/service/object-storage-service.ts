@@ -1,13 +1,13 @@
 import {satisfies} from 'semver';
-import {provide, config, plugin, inject} from 'midway';
+import {provide, config, inject} from 'midway';
 import {ApplicationError, ArgumentError, CommonRegex, FreelogContext, PageResult} from 'egg-freelog-base';
-import {assign, isEmpty, uniqWith, isArray, sumBy, isString, first, chain} from 'lodash';
+import {isEmpty, uniqWith, isArray, sumBy, isString, first, chain} from 'lodash';
 import {
     IObjectStorageService, ObjectStorageInfo, CreateObjectStorageOptions,
     CreateUserNodeDataObjectOptions, ObjectDependencyInfo, UpdateObjectStorageOptions, CommonObjectDependencyTreeInfo
 } from '../../interface/object-storage-interface';
 import {IBucketService, BucketInfo, BucketTypeEnum, SystemBucketName} from '../../interface/bucket-interface';
-import {FileStorageInfo, IFileStorageService} from '../../interface/file-storage-info-interface';
+import {IFileStorageService} from '../../interface/file-storage-info-interface';
 import {
     IOutsideApiService,
     ResourceDependencyTreeInfo,
@@ -19,16 +19,12 @@ export class ObjectStorageService implements IObjectStorageService {
 
     @inject()
     ctx: FreelogContext;
-    @plugin()
-    ossClient;
     @config('uploadConfig')
     uploadConfig;
     @inject()
     storageCommonGenerator;
     @inject()
     objectStorageProvider;
-    @inject()
-    systemAnalysisRecordProvider;
     @inject()
     bucketService: IBucketService;
     @inject()
@@ -51,26 +47,26 @@ export class ObjectStorageService implements IObjectStorageService {
             bucketId: bucketInfo.bucketId,
             bucketName: bucketInfo.bucketName,
             userId: bucketInfo.userId,
-            resourceType: '',
+            systemProperty: options.fileStorageInfo.metaInfo,
+            resourceType: [],
             uniqueKey: this.storageCommonGenerator.generateObjectUniqueKey(bucketInfo.bucketName, options.objectName)
         };
         const oldObjectStorageInfo = await this.findOneByName(bucketInfo.bucketName, options.objectName);
         if (!oldObjectStorageInfo) {
-            model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, options.objectName, model.resourceType);
             return this.objectStorageProvider.create(model).then(objectInfo => {
                 this.bucketService.addStorageObjectEventHandle(model);
                 return objectInfo;
             });
         }
 
-        // 替换对象时,如果没有资源类型,或者新资源检测通过,则保留依赖和自定义属性,否则就清空自定义属性以及依赖信息和资源类型
         model.dependencies = oldObjectStorageInfo.dependencies ?? [];
         model.customPropertyDescriptors = oldObjectStorageInfo.customPropertyDescriptors ?? [];
-        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, options.objectName, oldObjectStorageInfo.resourceType, function () {
-            model.resourceType = '';
-            model.dependencies = [];
-            model.customPropertyDescriptors = [];
-        });
+        // 替换对象时,如果没有资源类型,或者新资源检测通过,则保留依赖和自定义属性,否则就清空自定义属性以及依赖信息和资源类型
+        // model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, options.objectName, oldObjectStorageInfo.resourceType, function () {
+        //     model.resourceType = [];
+        //     model.dependencies = [];
+        //     model.customPropertyDescriptors = [];
+        // });
 
         const cycleDependCheckResult = await this.cycleDependCheck(`${model.bucketName}/${model.objectName}`, model.dependencies, 1);
         if (cycleDependCheckResult.ret) {
@@ -97,10 +93,9 @@ export class ObjectStorageService implements IObjectStorageService {
             bucketId: objectStorageInfo?.bucketId,
             bucketName: objectStorageInfo?.bucketName,
             userId: options.userId,
-            resourceType: 'node-config'
+            resourceType: ['node-config'],
+            systemProperty: options.fileStorageInfo.metaInfo
         };
-
-        model.systemProperty = await this._buildObjectSystemProperty(options.fileStorageInfo, model.objectName, model.resourceType);
 
         if (!objectStorageInfo) {
             const bucketInfo = await this.bucketService.createOrFindSystemBucket({
@@ -135,13 +130,6 @@ export class ObjectStorageService implements IObjectStorageService {
         const updateInfo: any = {};
         if (isArray(options.customPropertyDescriptors)) {
             updateInfo.customPropertyDescriptors = options.customPropertyDescriptors;
-        }
-        if (isString(options.resourceType)) {
-            updateInfo.resourceType = options.resourceType;
-            if (options.resourceType !== oldObjectStorageInfo.resourceType && this.fileStorageService.isCanAnalyzeFileProperty(options.resourceType)) {
-                const fileStorageInfo = await this.fileStorageService.findBySha1(oldObjectStorageInfo.sha1);
-                updateInfo.systemProperty = await this._buildObjectSystemProperty(fileStorageInfo, options.objectName ?? oldObjectStorageInfo.objectName, options.resourceType);
-            }
         }
         if (isString(options.objectName)) {
             updateInfo.objectName = options.objectName;
@@ -335,36 +323,6 @@ export class ObjectStorageService implements IObjectStorageService {
             fileSha1: objectStorageInfo.sha1,
             dependencies: await this._buildObjectDependencyTree(objectStorageInfo.dependencies ?? [])
         }];
-    }
-
-    /**
-     * 生成存储对象的系统属性
-     * @param fileStorageInfo
-     * @param objectName
-     * @param resourceType
-     * @param analyzeFileErrorHandle
-     */
-    async _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, objectName: string, resourceType: string, analyzeFileErrorHandle?: (error) => void): Promise<object> {
-
-        let systemProperty = {
-            fileSize: fileStorageInfo.fileSize,
-            mime: this.storageCommonGenerator.generateMimeType(objectName)
-        };
-        if (!this.fileStorageService.isCanAnalyzeFileProperty(resourceType)) {
-            return systemProperty;
-        }
-        const cacheAnalyzeResult = await this.fileStorageService.analyzeFileProperty(fileStorageInfo, resourceType);
-        if (cacheAnalyzeResult.status === 1) {
-            systemProperty = assign(systemProperty, cacheAnalyzeResult.systemProperty);
-        }
-        if (cacheAnalyzeResult.status === 2) {
-            if (analyzeFileErrorHandle) {
-                analyzeFileErrorHandle(cacheAnalyzeResult.error);
-            } else {
-                throw new ApplicationError(cacheAnalyzeResult.error);
-            }
-        }
-        return systemProperty;
     }
 
     /**

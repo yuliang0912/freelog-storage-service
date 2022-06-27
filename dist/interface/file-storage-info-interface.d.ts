@@ -18,13 +18,14 @@ export declare interface FileStorageInfo {
     referencedQuantity?: number;
     serviceProvider: ServiceProviderEnum;
     storageInfo: AliOssInfo | AmazonS3Info;
+    metaAnalyzeStatus?: number;
     metaInfo?: {
         [key: string]: number | string;
     };
 }
 export interface FilePropertyAnalyzeInfo {
     sha1: string;
-    resourceType: string;
+    resourceType: string[];
     provider: string;
     status: number;
     error?: string;
@@ -42,5 +43,4 @@ export declare interface IFileStorageService {
     isCanAnalyzeFileProperty(resourceType: string): boolean;
     getSignatureUrl(fileStorageInfo: FileStorageInfo): string;
     getFileStream(fileStorageInfo: FileStorageInfo): Promise<any>;
-    analyzeFileProperty(fileStorageInfo: FileStorageInfo, resourceType: string): Promise<FilePropertyAnalyzeInfo>;
 }

@@ -12,7 +12,7 @@ export declare enum JsonObjectOperationTypeEnum {
 export interface ResourceInfo {
     resourceId?: string;
     resourceName: string;
-    resourceType: string;
+    resourceType: string[];
     userId: number;
     username: string;
     resourceVersions: any[];
@@ -39,7 +39,7 @@ export interface ResourceDependencyTreeInfo {
     version: string;
     versions: string[];
     versionRange: string;
-    resourceType: string;
+    resourceType: string[];
     versionId: string;
     fileSha1: string;
     baseUpcastResources: any[];

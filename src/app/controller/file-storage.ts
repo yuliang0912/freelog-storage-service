@@ -92,22 +92,22 @@ export class FileStorageController {
     @get('/:sha1/property')
     async fileProperty() {
         throw new ApplicationError('接口已停用');
-        const {ctx} = this;
-        const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
-        const resourceType = ctx.checkQuery('resourceType').exist().isResourceType().toLow().value;
-        ctx.validateParams();
-
-        const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
-        ctx.entityNullObjectCheck(fileStorageInfo, {msg: ctx.gettext('file-storage-entity-not-found')});
-
-        const analyzeResult = await this.fileStorageService.analyzeFileProperty(fileStorageInfo, resourceType);
-        if (analyzeResult.status === 1) {
-            return ctx.success(Object.assign({fileSize: fileStorageInfo.fileSize}, analyzeResult.systemProperty));
-        }
-        if (analyzeResult.status === 2) {
-            return ctx.error(new ApplicationError(analyzeResult.error));
-        }
-        ctx.success({fileSize: fileStorageInfo.fileSize});
+        // const {ctx} = this;
+        // const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
+        // const resourceType = ctx.checkQuery('resourceType').exist().isResourceType().toLow().value;
+        // ctx.validateParams();
+        //
+        // const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
+        // ctx.entityNullObjectCheck(fileStorageInfo, {msg: ctx.gettext('file-storage-entity-not-found')});
+        //
+        // const analyzeResult = await this.fileStorageService.analyzeFileProperty(fileStorageInfo, resourceType);
+        // if (analyzeResult.status === 1) {
+        //     return ctx.success(Object.assign({fileSize: fileStorageInfo.fileSize}, analyzeResult.systemProperty));
+        // }
+        // if (analyzeResult.status === 2) {
+        //     return ctx.error(new ApplicationError(analyzeResult.error));
+        // }
+        // ctx.success({fileSize: fileStorageInfo.fileSize});
     }
 
     @get('/:sha1/download')

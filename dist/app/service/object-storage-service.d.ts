@@ -1,15 +1,13 @@
 import { FreelogContext, PageResult } from 'egg-freelog-base';
 import { IObjectStorageService, ObjectStorageInfo, CreateObjectStorageOptions, CreateUserNodeDataObjectOptions, ObjectDependencyInfo, UpdateObjectStorageOptions, CommonObjectDependencyTreeInfo } from '../../interface/object-storage-interface';
 import { IBucketService, BucketInfo } from '../../interface/bucket-interface';
-import { FileStorageInfo, IFileStorageService } from '../../interface/file-storage-info-interface';
+import { IFileStorageService } from '../../interface/file-storage-info-interface';
 import { IOutsideApiService } from '../../interface/common-interface';
 export declare class ObjectStorageService implements IObjectStorageService {
     ctx: FreelogContext;
-    ossClient: any;
     uploadConfig: any;
     storageCommonGenerator: any;
     objectStorageProvider: any;
-    systemAnalysisRecordProvider: any;
     bucketService: IBucketService;
     fileStorageService: IFileStorageService;
     outsideApiService: IOutsideApiService;
@@ -77,14 +75,6 @@ export declare class ObjectStorageService implements IObjectStorageService {
      * @param isContainRootNode
      */
     getDependencyTree(objectStorageInfo: ObjectStorageInfo, isContainRootNode: boolean): Promise<CommonObjectDependencyTreeInfo[]>;
-    /**
-     * 生成存储对象的系统属性
-     * @param fileStorageInfo
-     * @param objectName
-     * @param resourceType
-     * @param analyzeFileErrorHandle
-     */
-    _buildObjectSystemProperty(fileStorageInfo: FileStorageInfo, objectName: string, resourceType: string, analyzeFileErrorHandle?: (error: any) => void): Promise<object>;
     /**
      * 构建存储对象依赖树
      * @param dependencies

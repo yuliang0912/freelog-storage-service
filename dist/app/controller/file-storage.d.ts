@@ -8,6 +8,6 @@ export declare class FileStorageController {
     fileIsExist(): Promise<void>;
     fileSimpleInfo(): Promise<void>;
     show(): Promise<void>;
-    fileProperty(): Promise<void | FreelogContext>;
+    fileProperty(): Promise<void>;
     download(): Promise<void>;
 }

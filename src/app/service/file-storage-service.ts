@@ -66,6 +66,8 @@ export class FileStorageService implements IFileStorageService {
         }
 
         const fileStorageInfo = await this._uploadFileToTemporaryDirectory(bufferStream, false);
+        fileStorageInfo.metaAnalyzeStatus = 2;
+        fileStorageInfo.metaInfo.mime = 'application/json';
         return this._copyFileAndSaveFileStorageInfo(fileStorageInfo, 'user-node-data');
     }
 
@@ -247,6 +249,10 @@ export class FileStorageService implements IFileStorageService {
             sha1: fileBaseInfoTransform.hashAlgorithmValue,
             fileSize: fileBaseInfoTransform.fileSize,
             serviceProvider: ServiceProviderEnum.AliOss,
+            metaAnalyzeStatus: 0,
+            metaInfo: {
+                fileSize: fileBaseInfoTransform.fileSize
+            },
             storageInfo: {
                 region, bucket, objectKey: temporaryObjectKey
             }

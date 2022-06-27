@@ -33,7 +33,7 @@ export class ObjectStorageInfo extends MongooseModelBase {
             objectName: {type: String, required: true}, // 取值于文件名
             bucketId: {type: String, required: true},
             bucketName: {type: String, required: true},
-            resourceType: {type: String, required: false, default: ''}, // 类型可以为空
+            resourceType: {type: [String], required: false, default: []}, // 类型可以为空
             uniqueKey: {type: String, required: true},
             systemProperty: {type: this.mongoose.Schema.Types.Mixed, required: false, default: {}}, //  系统meta,例如图片的宽高等
             customPropertyDescriptors: {type: [CustomPropertyDescriptorScheme], default: [], required: false},
