@@ -51,6 +51,9 @@ export class ObjectStorageService implements IObjectStorageService {
             resourceType: [],
             uniqueKey: this.storageCommonGenerator.generateObjectUniqueKey(bucketInfo.bucketName, options.objectName)
         };
+        if (!options.fileStorageInfo.metaInfo) {
+            model.systemProperty = {fileSize: options.fileStorageInfo.fileSize};
+        }
         const oldObjectStorageInfo = await this.findOneByName(bucketInfo.bucketName, options.objectName);
         if (!oldObjectStorageInfo) {
             return this.objectStorageProvider.create(model).then(objectInfo => {
@@ -96,7 +99,9 @@ export class ObjectStorageService implements IObjectStorageService {
             resourceType: ['node-config'],
             systemProperty: options.fileStorageInfo.metaInfo
         };
-
+        if (!options.fileStorageInfo.metaInfo) {
+            model.systemProperty = {fileSize: options.fileStorageInfo.fileSize};
+        }
         if (!objectStorageInfo) {
             const bucketInfo = await this.bucketService.createOrFindSystemBucket({
                 bucketName: SystemBucketName.UserNodeData,

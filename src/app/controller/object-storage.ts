@@ -36,6 +36,11 @@ export class ObjectController {
         await this.resourceTypeRepairService.resourceTypeRepair().then(() => this.ctx.success(true));
     }
 
+    @get('/metaInfoRepair')
+    async metaInfoRepair() {
+        await this.resourceTypeRepairService.fileStorageMetaInfoRepair().then(() => this.ctx.success(true));
+    }
+
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @get('/buckets/_all/objects')
     async myObjects() {

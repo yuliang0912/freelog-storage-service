@@ -14,6 +14,7 @@ export declare class ObjectController {
     storageCommonGenerator: any;
     resourceTypeRepairService: ResourceTypeRepairService;
     resourceTypeRepair(): Promise<void>;
+    metaInfoRepair(): Promise<void>;
     myObjects(): Promise<void>;
     index(): Promise<void>;
     show(): Promise<void>;
