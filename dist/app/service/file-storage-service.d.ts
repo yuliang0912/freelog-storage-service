@@ -98,4 +98,5 @@ export declare class FileStorageService implements IFileStorageService {
      * @param bucketName
      */
     _copyFileAndSaveFileStorageInfo(fileStorageInfo: FileStorageInfo, targetDirectory: any, bucketName?: string): Promise<FileStorageInfo>;
+    private getFileExt;
 }

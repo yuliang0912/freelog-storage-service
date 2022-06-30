@@ -219,9 +219,10 @@ export class UserNodeDataObjectController {
                 serviceProvider: fileStorageInfo.serviceProvider,
                 storageInfo: fileStorageInfo.storageInfo,
                 metaAnalyzeStatus: 2,
+                fileExtNames: ['.ncfg'],
                 metaInfo: {
                     fileSize: fileStorageInfo.fileSize,
-                    mime: 'application/octet-stream'
+                    mime: 'application/json'
                 }
             }
         };

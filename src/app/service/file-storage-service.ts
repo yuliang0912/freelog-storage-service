@@ -4,7 +4,7 @@ import {ApplicationError, FreelogContext, IMongodbOperation} from 'egg-freelog-b
 import {
     FileStorageInfo, IFileStorageService, ServiceProviderEnum, FilePropertyAnalyzeInfo
 } from '../../interface/file-storage-info-interface';
-import {isString} from 'lodash';
+import {isString, difference} from 'lodash';
 import {PassThrough, Stream} from 'stream';
 import {IBucketService} from '../../interface/bucket-interface';
 import {KafkaClient} from '../../kafka/client';
@@ -243,6 +243,7 @@ export class FileStorageService implements IFileStorageService {
             }
         }
 
+        const fileExtName = this.getFileExt(fileStream.filename);
         // 此处代码后期需要等egg-freelog-base优化
         const {region, bucket} = ossClient.config;
         return {
@@ -250,6 +251,7 @@ export class FileStorageService implements IFileStorageService {
             fileSize: fileBaseInfoTransform.fileSize,
             serviceProvider: ServiceProviderEnum.AliOss,
             metaAnalyzeStatus: 0,
+            fileExtNames: fileExtName ? [fileExtName] : [],
             metaInfo: {
                 fileSize: fileBaseInfoTransform.fileSize
             },
@@ -268,16 +270,26 @@ export class FileStorageService implements IFileStorageService {
     async _copyFileAndSaveFileStorageInfo(fileStorageInfo: FileStorageInfo, targetDirectory, bucketName = 'freelog-shenzhen') {
         const existingFileStorageInfo = await this.findBySha1(fileStorageInfo.sha1);
         if (existingFileStorageInfo) {
+            if (difference(fileStorageInfo.fileExtNames, existingFileStorageInfo.fileExtNames).length) {
+                await this.fileStorageProvider.updateOne({sha1: fileStorageInfo.sha1}, {
+                    $addToSet: {fileExtNames: fileStorageInfo.fileExtNames},
+                });
+                existingFileStorageInfo.fileExtNames.push(...fileStorageInfo.fileExtNames);
+            }
             return existingFileStorageInfo;
         }
         const temporaryObjectKey = fileStorageInfo.storageInfo.objectKey;
         const objectKey = `${targetDirectory}/${fileStorageInfo.sha1}`;
-
         const ossClient = this.objectStorageServiceClient.setBucket(bucketName).build();
         await ossClient.copyObject(objectKey, temporaryObjectKey);
         fileStorageInfo.storageInfo.objectKey = objectKey;
-        return this.fileStorageProvider.findOneAndUpdate({sha1: fileStorageInfo.sha1}, fileStorageInfo, {new: true}).then(data => {
-            return data ?? this.fileStorageProvider.create(fileStorageInfo);
-        });
+        return this.fileStorageProvider.create(fileStorageInfo);
+    }
+
+    private getFileExt(filename: string) {
+        if (!filename || filename.indexOf('.') <= 0) {
+            return null;
+        }
+        return filename.substring(filename.lastIndexOf('.'));
     }
 }

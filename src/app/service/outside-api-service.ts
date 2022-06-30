@@ -24,6 +24,16 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
+     * 根据sha1获取资源版本号
+     * @param sha1
+     * @param options
+     */
+    async getResourceVersionBySha1(sha1: string, options?: object): Promise<Array<{ filename: string }>> {
+        const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/files/${sha1}/versions?${optionParams.join('&')}`);
+    }
+
+    /**
      * 获取节点信息
      * @param nodeId
      * @param options

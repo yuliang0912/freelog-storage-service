@@ -17,8 +17,8 @@ export class FileMetaAnalyseResultEventHandler implements IKafkaSubscribeMessage
     @inject()
     objectStorageServiceClient;
 
-    consumerGroupId = 'freelog-storage-service#file-meta-event-handle-group';
-    subscribeTopicName = 'file-meta-analyse-result-topic';
+    consumerGroupId = 'freelog-storage-service#file-meta-event-handle-group-temp';
+    subscribeTopicName = 'file-meta-analyse-result-topic';  // 'file-meta-analyse-result-topic';
 
     constructor() {
         this.messageHandle = this.messageHandle.bind(this);

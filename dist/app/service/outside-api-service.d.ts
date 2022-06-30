@@ -9,6 +9,14 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     getResourceListByNames(resourceNames: string[], options?: object): Promise<ResourceInfo[]>;
     /**
+     * 根据sha1获取资源版本号
+     * @param sha1
+     * @param options
+     */
+    getResourceVersionBySha1(sha1: string, options?: object): Promise<Array<{
+        filename: string;
+    }>>;
+    /**
      * 获取节点信息
      * @param nodeId
      * @param options

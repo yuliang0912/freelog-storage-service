@@ -20,6 +20,7 @@ export declare interface FileStorageInfo {
     storageInfo: AliOssInfo | AmazonS3Info;
     // 0:未解析 1:解析中 2:解析成功 3:解析失败
     metaAnalyzeStatus?: number;
+    fileExtNames: string[];
     metaInfo?: {
         [key: string]: number | string;
     };

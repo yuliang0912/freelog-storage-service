@@ -3,6 +3,7 @@ import {IMongodbOperation} from 'egg-freelog-base';
 import {first} from 'lodash';
 import {FileStorageInfo} from '../../interface/file-storage-info-interface';
 import {FileStorageService} from './file-storage-service';
+import {OutsideApiService} from './outside-api-service';
 
 @provide()
 export class ResourceTypeRepairService {
@@ -12,6 +13,8 @@ export class ResourceTypeRepairService {
     fileStorageProvider: IMongodbOperation<FileStorageInfo>;
     @inject()
     fileStorageService: FileStorageService;
+    @inject()
+    outsideApiService: OutsideApiService;
 
     async resourceTypeRepair() {
         this.objectStorageProvider.find({}, 'resourceType').then(async list => {
@@ -23,12 +26,32 @@ export class ResourceTypeRepairService {
     }
 
     async fileStorageMetaInfoRepair() {
-        await this.fileStorageProvider.find({}).then(list => {
+        await this.fileStorageProvider.find({}).then(async list => {
             for (const fileStorageInfo of list) {
-                if (!fileStorageInfo.metaInfo) {
-                    this.fileStorageService.sendAnalyzeFilePropertyTask(fileStorageInfo, 'unknown');
+                let filename = 'unknow';
+                if (fileStorageInfo.fileExtNames.length) {
+                    filename += fileStorageInfo.fileExtNames[0];
                 }
+                this.fileStorageService.sendAnalyzeFilePropertyTask(fileStorageInfo, filename).then();
+                // const fileExtSet = new Set<string>();
+                // await this.outsideApiService.getResourceVersionBySha1(fileStorageInfo.sha1).then(list => {
+                //     list.forEach(x => fileExtSet.add(this.getFileExt(x.filename)));
+                // });
+                // await this.objectStorageProvider.find({sha1: fileStorageInfo.sha1}, 'objectName').then(list => {
+                //     list.forEach(x => fileExtSet.add(this.getFileExt(x.objectName)));
+                // });
+                // const fileExtNames = uniq([...fileExtSet.values()].filter(x => x?.length));
+                // this.fileStorageProvider.updateOne({sha1: fileStorageInfo.sha1}, {
+                //     fileExtNames
+                // }).then();
             }
         });
     }
+
+    // private getFileExt(filename: string) {
+    //     if (!filename || filename.indexOf('.') <= 0) {
+    //         return null;
+    //     }
+    //     return filename.substring(filename.lastIndexOf('.'));
+    // }
 }
