@@ -10,4 +10,5 @@ export declare class FileStorageController {
     show(): Promise<void>;
     fileProperty(): Promise<void>;
     download(): Promise<void>;
+    fileStorageUrl(): Promise<void>;
 }

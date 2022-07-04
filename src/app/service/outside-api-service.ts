@@ -30,7 +30,7 @@ export class OutsideApiService implements IOutsideApiService {
      */
     async getResourceVersionBySha1(sha1: string, options?: object): Promise<Array<{ filename: string }>> {
         const optionParams = options ? Object.entries(options).map(([key, value]) => `${key}=${value}`) : [];
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/files/${sha1}/versions?${optionParams.join('&')}`);
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/files/${sha1}/versions/admin?${optionParams.join('&')}`);
     }
 
     /**

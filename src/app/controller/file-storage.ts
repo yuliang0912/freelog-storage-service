@@ -133,4 +133,21 @@ export class FileStorageController {
             throw new ApplicationError(ctx.gettext('file_download_failed') + error.toString());
         }
     }
+
+    @get('/:sha1/storageUrl')
+    async fileStorageUrl() {
+        const {ctx} = this;
+        const sha1 = ctx.checkParams('sha1').exist().isSha1().value;
+        ctx.validateParams();
+
+        const fileStorageInfo = await this.fileStorageService.findBySha1(sha1);
+        ctx.entityNullObjectCheck(fileStorageInfo, {msg: ctx.gettext('file-storage-entity-not-found')});
+
+        const options = {
+            'content-type': fileStorageInfo.metaInfo.mime,
+            'expires': 600
+        };
+        const url = this.fileStorageService.getSignatureUrl(fileStorageInfo, options);
+        ctx.redirect(url);
+    }
 }

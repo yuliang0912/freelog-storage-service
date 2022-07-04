@@ -31,9 +31,6 @@ export class FileMetaAnalyseResultEventHandler implements IKafkaSubscribeMessage
     async messageHandle(payload: EachMessagePayload): Promise<void> {
         const {message} = payload;
         const eventInfo: IFileMetaAnalyseResult = JSON.parse(message.value.toString());
-        if (eventInfo.sha1 === 'a4a36fb2163edf82e74b4c923c0ba003050fcb3c') {
-            console.log('event', JSON.stringify(message));
-        }
         await this.fileStorageProvider.updateOne({sha1: eventInfo.sha1}, {
             metaAnalyzeStatus: eventInfo.code === 0 ? 2 : 3,
             metaInfo: eventInfo.fileMeta

@@ -52,7 +52,7 @@ export declare interface IFileStorageService {
 
     isCanAnalyzeFileProperty(resourceType: string): boolean;
 
-    getSignatureUrl(fileStorageInfo: FileStorageInfo): string;
+    getSignatureUrl(fileStorageInfo: FileStorageInfo, options?: object): string;
 
     getFileStream(fileStorageInfo: FileStorageInfo): Promise<any>;
 

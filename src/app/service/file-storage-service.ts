@@ -8,7 +8,6 @@ import {isString, difference} from 'lodash';
 import {PassThrough, Stream} from 'stream';
 import {IBucketService} from '../../interface/bucket-interface';
 import {KafkaClient} from '../../kafka/client';
-import {isNullOrUndefined} from 'egg-freelog-base/lib/freelog-common-func';
 
 const sendToWormhole = require('stream-wormhole');
 
@@ -43,7 +42,7 @@ export class FileStorageService implements IFileStorageService {
     async upload(fileStream, resourceType): Promise<FileStorageInfo> {
         const tempFileStorageInfo = await this._uploadFileToTemporaryDirectory(fileStream, true);
         const fileStorage = await this._copyFileAndSaveFileStorageInfo(tempFileStorageInfo, 'resource-file-storage');
-        this.sendAnalyzeFilePropertyTask(fileStorage, fileStream.filename).then();
+        this.sendAnalyzeFilePropertyTask(fileStorage, fileStream.filename).then().catch(x => console.error('消息发送失败'));
         return fileStorage;
     }
 
@@ -137,12 +136,13 @@ export class FileStorageService implements IFileStorageService {
     /**
      * 获取签名的文件URL读取路径
      * @param {FileStorageInfo} fileStorageInfo
+     * @param options
      * @returns {string}
      */
-    getSignatureUrl(fileStorageInfo: FileStorageInfo): string {
+    getSignatureUrl(fileStorageInfo: FileStorageInfo, options?: object): string {
         const ossClient = this.objectStorageServiceClient.setBucket(fileStorageInfo.storageInfo.bucket).build();
-        return ossClient.client.signatureUrl(fileStorageInfo.storageInfo.objectKey, {
-            method: 'GET', expires: 180
+        return ossClient.client.signatureUrl(fileStorageInfo.storageInfo.objectKey, options || {
+            method: 'GET', expires: 60
         });
     }
 
@@ -200,7 +200,7 @@ export class FileStorageService implements IFileStorageService {
      * @param filename
      */
     async sendAnalyzeFilePropertyTask(fileStorageInfo: FileStorageInfo, filename: string) {
-        if (!isNullOrUndefined(fileStorageInfo.metaInfo)) {
+        if (fileStorageInfo.metaAnalyzeStatus === 2) {
             return true;
         }
         return this.kafkaClient.send({

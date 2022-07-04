@@ -15,6 +15,15 @@ export class AliOssClient implements IObjectStorageService {
     }
 
     /**
+     * 获取签名的对象访问URL
+     * @param objectName
+     * @param options
+     */
+    signatureUrl(objectName: string, options?: object) {
+        return this.client.signatureUrl(objectName, options);
+    }
+
+    /**
      * 复制对象
      * @param toObjectName
      * @param fromObjectName

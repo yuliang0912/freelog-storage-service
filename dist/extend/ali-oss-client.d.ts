@@ -7,6 +7,12 @@ export declare class AliOssClient implements IObjectStorageService {
     serverProvider: 'aliOss';
     constructor(config: object);
     /**
+     * 获取签名的对象访问URL
+     * @param objectName
+     * @param options
+     */
+    signatureUrl(objectName: string, options?: object): any;
+    /**
      * 复制对象
      * @param toObjectName
      * @param fromObjectName

@@ -51,9 +51,10 @@ export declare class FileStorageService implements IFileStorageService {
     /**
      * 获取签名的文件URL读取路径
      * @param {FileStorageInfo} fileStorageInfo
+     * @param options
      * @returns {string}
      */
-    getSignatureUrl(fileStorageInfo: FileStorageInfo): string;
+    getSignatureUrl(fileStorageInfo: FileStorageInfo, options?: object): string;
     /**
      * 获取文件流
      * @param {FileStorageInfo} fileStorageInfo

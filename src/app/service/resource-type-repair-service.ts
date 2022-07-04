@@ -32,12 +32,9 @@ export class ResourceTypeRepairService {
                 if (fileStorageInfo.fileExtNames.length) {
                     filename += fileStorageInfo.fileExtNames[0];
                 }
-                if (fileStorageInfo.sha1 === 'a4a36fb2163edf82e74b4c923c0ba003050fcb3c') {
-                    console.log(fileStorageInfo.sha1, filename);
-                }
                 this.fileStorageService.sendAnalyzeFilePropertyTask(fileStorageInfo, filename).then();
                 // const fileExtSet = new Set<string>();
-                // await this.outsideApiService.getResourceVersionBySha1(fileStorageInfo.sha1).then(list => {
+                // await this.outsideApiService.getResourceVersionBySha1(fileStorageInfo.sha1, {projection: 'filename'}).then(list => {
                 //     list.forEach(x => fileExtSet.add(this.getFileExt(x.filename)));
                 // });
                 // await this.objectStorageProvider.find({sha1: fileStorageInfo.sha1}, 'objectName').then(list => {

@@ -42,6 +42,6 @@ export declare interface IFileStorageService {
     findBySha1(sha1: string): Promise<FileStorageInfo>;
     fileStreamErrorHandler(fileStream: any): Promise<any>;
     isCanAnalyzeFileProperty(resourceType: string): boolean;
-    getSignatureUrl(fileStorageInfo: FileStorageInfo): string;
+    getSignatureUrl(fileStorageInfo: FileStorageInfo, options?: object): string;
     getFileStream(fileStorageInfo: FileStorageInfo): Promise<any>;
 }
