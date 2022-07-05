@@ -144,6 +144,9 @@ export class ObjectStorageService implements IObjectStorageService {
             await this._checkDependencyInfo(options.dependencies);
             updateInfo.dependencies = options.dependencies;
         }
+        if (isArray(options.resourceType)) {
+            updateInfo.resourceType = options.resourceType;
+        }
         if (isString(options.objectName) || isArray(options.dependencies)) {
             const objectFullName = `${oldObjectStorageInfo.bucketName}/${updateInfo.objectName ?? oldObjectStorageInfo.objectName}`;
             const cycleDependCheckResult = await this.cycleDependCheck(objectFullName, updateInfo.dependencies ?? oldObjectStorageInfo.dependencies, 1);

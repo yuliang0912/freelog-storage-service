@@ -6,8 +6,8 @@ export declare class FileStorageController {
     uploadFile(): Promise<void>;
     uploadImage(): Promise<void>;
     fileIsExist(): Promise<void>;
-    fileSimpleInfo(): Promise<void>;
     list(): Promise<void>;
+    fileSimpleInfo(): Promise<void>;
     show(): Promise<void>;
     fileProperty(): Promise<void>;
     download(): Promise<void>;
