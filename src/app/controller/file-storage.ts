@@ -76,7 +76,7 @@ export class FileStorageController {
         const sha1s: string[] = ctx.checkQuery('sha1').exist().toLowercase().isSplitSha1().toSplitArray().len(1, 100).value;
         ctx.validateParams();
         const sha1Map = await this.fileStorageService.find({sha1: {$in: sha1s}}).then(list => {
-            return new Map(list.map(x => [x.sha1,  pick(x, ['sha1', 'fileSize', 'metaInfo', 'metaAnalyzeStatus'])]));
+            return new Map(list.map(x => [x.sha1, pick(x, ['sha1', 'fileSize', 'metaInfo', 'metaAnalyzeStatus'])]));
         });
         ctx.success(sha1s.map(sha1 => {
             const item = sha1Map.has(sha1) ? sha1Map.get(sha1) : null;
@@ -149,6 +149,7 @@ export class FileStorageController {
         }
     }
 
+    // 测试性质的接口,不用在生产环境使用
     @get('/:sha1/storageUrl')
     async fileStorageUrl() {
         const {ctx} = this;

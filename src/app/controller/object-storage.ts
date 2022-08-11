@@ -38,6 +38,7 @@ export class ObjectController {
 
     @get('/metaInfoRepair')
     async metaInfoRepair() {
+        // await this.fileStorageService.fileStorageProvider.updateMany({}, {metaAnalyzeStatus: 0}).then(() => this.ctx.success(true));
         await this.resourceTypeRepairService.fileStorageMetaInfoRepair().then(() => this.ctx.success(true));
     }
 

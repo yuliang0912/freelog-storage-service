@@ -157,10 +157,10 @@ export class ObjectStorageService implements IObjectStorageService {
                 });
             }
         }
-        if (isString(options.objectName) && !updateInfo.systemProperty) {
-            updateInfo.systemProperty = oldObjectStorageInfo.systemProperty;
-            updateInfo.systemProperty.mime = this.storageCommonGenerator.generateMimeType(options.objectName);
-        }
+        // if (isString(options.objectName) && !updateInfo.systemProperty) {
+        //     updateInfo.systemProperty = oldObjectStorageInfo.systemProperty;
+        //     updateInfo.systemProperty.mime = this.storageCommonGenerator.generateMimeType(options.objectName);
+        // }
         if (isEmpty(Object.keys(updateInfo))) {
             throw new ArgumentError('please check args');
         }

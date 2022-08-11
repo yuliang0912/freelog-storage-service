@@ -1,3 +1,5 @@
+import {IMongodbOperation} from 'egg-freelog-base';
+
 export enum ServiceProviderEnum {AliOss = 'aliOss', AmazonS3 = 'amazonS3'}
 
 export declare interface AliOssInfo {
@@ -38,6 +40,8 @@ export interface FilePropertyAnalyzeInfo {
 }
 
 export declare interface IFileStorageService {
+    fileStorageProvider: IMongodbOperation<FileStorageInfo>;
+
     upload(fileStream, resourceType): Promise<FileStorageInfo>;
 
     uploadUserNodeDataFile(userNodeDate): Promise<FileStorageInfo>;
